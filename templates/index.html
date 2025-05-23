@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Security Toolkit - Home{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card bg-dark text-white">
+            <div class="card-body">
+                <h2 class="dashboard-heading"><i class="fas fa-shield-alt me-2"></i>Security Toolkit Dashboard</h2>
+                <p class="dashboard-subtitle mb-0">Run multiple security tools simultaneously from a unified web interface. Select a tool below to begin.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    {% for tool_id, tool in tools.items() %}
+    <div class="col">
+        <div class="card h-100 tool-card">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-terminal me-2"></i>{{ tool.name }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">{{ tool.description }}</p>
+            </div>
+            <div class="card-footer bg-white">
+                <a href="{{ url_for('tool_page', tool_id=tool_id) }}" class="btn btn-primary w-100">
+                    <i class="fas fa-play me-2"></i>Launch Tool
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Quick Guide Section -->
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="fas fa-book me-2"></i>Quick Guide</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Getting Started</h5>
+                        <ol>
+                            <li>Select a tool from the options above</li>
+                            <li>Enter the target information (IP address, URL, etc.)</li>
+                            <li>Configure any additional options as needed</li>
+                            <li>Run the tool and monitor its progress</li>
+                        </ol>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Managing Tasks</h5>
+                        <ul>
+                            <li>View all running and completed tasks in the <a href="{{ url_for('list_tasks') }}">Tasks</a> section</li>
+                            <li>Multiple tools can run simultaneously</li>
+                            <li>Tasks can be stopped at any time</li>
+                            <li>Results are saved automatically for later review</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

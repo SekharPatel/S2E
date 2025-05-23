@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+
+{% block title %}Task Details - Security Toolkit{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('list_tasks') }}">Tasks</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Task Details</li>
+    </ol>
+</nav>
+
+<div class="card mb-4">
+    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+        <h4 class="mb-0">
+            <i class="fas fa-file-alt me-2"></i>Task Details
+        </h4>
+        {% if task.status == 'running' %}
+        <button id="stopBtn" class="btn btn-sm btn-danger">
+            <i class="fas fa-stop me-1"></i>Stop Task
+        </button>
+        {% endif %}
+    </div>
+    <div class="card-body">
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <dl class="row">
+                    <dt class="col-sm-4">Task ID</dt>
+                    <dd class="col-sm-8"><code>{{ task_id }}</code></dd>
+                    
+                    <dt class="col-sm-4">Tool</dt>
+                    <dd class="col-sm-8">{{ tool_name }}</dd>
+                    
+                    <dt class="col-sm-4">Command</dt>
+                    <dd class="col-sm-8"><code>{{ task.command }}</code></dd>
+                </dl>
+            </div>
+            <div class="col-md-6">
+                <dl class="row">
+                    <dt class="col-sm-4">Status</dt>
+                    <dd class="col-sm-8">
+                        <span class="badge {{ task.status }}">
+                            {% if task.status == 'running' %}
+                                <i class="fas fa-spinner fa-spin me-1"></i>
+                            {% elif task.status == 'completed' %}
+                                <i class="fas fa-check me-1"></i>
+                            {% elif task.status == 'failed' or task.status == 'error' %}
+                                <i class="fas fa-times me-1"></i>
+                            {% elif task.status == 'stopped' %}
+                                <i class="fas fa-stop me-1"></i>
+                            {% else %}
+                                <i class="fas fa-clock me-1"></i>
+                            {% endif %}
+                            {{ task.status|capitalize }}
+                        </span>
+                    </dd>
+                    
+                    <dt class="col-sm-4">Start Time</dt>
+                    <dd class="col-sm-8">{{ task.start_time.split('T')[0] }} {{ task.start_time.split('T')[1].split('.')[0] }}</dd>
+                    
+                    {% if task.status != 'running' and task.status != 'starting' %}
+                    <dt class="col-sm-4">Duration</dt>
+                    <dd class="col-sm-8" id="taskDuration">Calculating...</dd>
+                    {% endif %}
+                </dl>
+            </div>
+        </div>
+        
+        <div class="card mb-0">
+            <div class="card-header bg-light">
+                <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="output-tab" data-bs-toggle="tab" data-bs-target="#output" type="button" role="tab" aria-controls="output" aria-selected="true">
+                            <i class="fas fa-terminal me-1"></i>Output
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="analysis-tab" data-bs-toggle="tab" data-bs-target="#analysis" type="button" role="tab" aria-controls="analysis" aria-selected="false">
+                            <i class="fas fa-chart-bar me-1"></i>Analysis
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content">
+                    <div class="tab-pane fade show active" id="output" role="tabpanel" aria-labelledby="output-tab">
+                        <div class="d-flex justify-content-end mb-2">
+                            <button id="copyOutputBtn" class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-copy me-1"></i>Copy Output
+                            </button>
+                        </div>
+                        <div class="terminal">{{ output }}</div>
+                    </div>
+                    <div class="tab-pane fade" id="analysis" role="tabpanel" aria-labelledby="analysis-tab">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>Automated analysis is under development and will be available in future updates.
+                        </div>
+                        <div class="text-center p-4">
+                            <i class="fas fa-chart-line fa-3x mb-3 text-muted"></i>
+                            <h5>Output Analysis</h5>
+                            <p class="text-muted">This feature will provide automated analysis of tool outputs.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Handle stop task button
+        $("#stopBtn").click(function() {
+            if (confirm("Are you sure you want to stop this task?")) {
+                stopTask();
+            }
+        });
+        
+        // Handle copy output button
+        $("#copyOutputBtn").click(function() {
+            const outputText = $(".terminal").text();
+            navigator.clipboard.writeText(outputText).then(function() {
+                const originalText = $("#copyOutputBtn").html();
+                $("#copyOutputBtn").html('<i class="fas fa-check me-1"></i>Copied!');
+                setTimeout(function() {
+                    $("#copyOutputBtn").html(originalText);
+                }, 2000);
+            });
+        });
+        
+        // Calculate duration
+        if ($("#taskDuration").length > 0) {
+            calculateDuration();
+        }
+        
+        // Auto-refresh if task is still running
+        {% if task.status == 'running' or task.status == 'starting' %}
+        let refreshInterval = setInterval(function() {
+            $.ajax({
+                url: "{{ url_for('task_status', task_id=task_id) }}",
+                type: "GET",
+                success: function(response) {
+                    if (response.status !== "running" && response.status !== "starting") {
+                        // If task is complete, reload page
+                        clearInterval(refreshInterval);
+                        location.reload();
+                    }
+                },
+                error: function() {
+                    clearInterval(refreshInterval);
+                }
+            });
+        }, 5000);
+        {% endif %}
+    });
+    
+    function stopTask() {
+        $("#stopBtn").prop("disabled", true).html('<i class="fas fa-spinner fa-spin me-1"></i>Stopping...');
+        
+        $.ajax({
+            url: "{{ url_for('stop_task', task_id=task_id) }}",
+            type: "POST",
+            success: function(response) {
+                if (response.status === "success") {
+                    // Reload the page to show updated status
+                    location.reload();
+                } else {
+                    alert("Error: " + response.message);
+                    $("#stopBtn").prop("disabled", false).html('<i class="fas fa-stop me-1"></i>Stop Task');
+                }
+            },
+            error: function(xhr) {
+                let errorMsg = "An error occurred";
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    errorMsg = response.message || errorMsg;
+                } catch (e) {}
+                
+                alert("Error: " + errorMsg);
+                $("#stopBtn").prop("disabled", false).html('<i class="fas fa-stop me-1"></i>Stop Task');
+            }
+        });
+    }
+    
+    function calculateDuration() {
+        // For a real implementation, you would get the end time from the server
+        // Here we'll just parse from the output
+        const outputText = $(".terminal").text();
+        
+        // Try to extract start and finish times
+        const startMatch = outputText.match(/Started: ([0-9-]+ [0-9:]+)/);
+        const finishMatch = outputText.match(/Finished: ([0-9-]+ [0-9:]+)/);
+        
+        if (startMatch && finishMatch) {
+            const startTime = new Date(startMatch[1]);
+            const finishTime = new Date(finishMatch[1]);
+            
+            if (!isNaN(startTime) && !isNaN(finishTime)) {
+                const durationMs = finishTime - startTime;
+                const seconds = Math.floor(durationMs / 1000);
+                
+                if (seconds < 60) {
+                    $("#taskDuration").text(seconds + " seconds");
+                } else if (seconds < 3600) {
+                    const minutes = Math.floor(seconds / 60);
+                    const remainingSeconds = seconds % 60;
+                    $("#taskDuration").text(minutes + " min " + remainingSeconds + " sec");
+                } else {
+                    const hours = Math.floor(seconds / 3600);
+                    const minutes = Math.floor((seconds % 3600) / 60);
+                    $("#taskDuration").text(hours + " hr " + minutes + " min");
+                }
+                return;
+            }
+        }
+        
+        // If we couldn't calculate, show "Unknown"
+        $("#taskDuration").text("Unknown");
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,10 @@
+Flask>=2.0.0
+Werkzeug>=2.0.0
+python-dotenv>=0.19.0
+pytest>=6.0.0  # for testing
+flask-session>=0.4.0
+watchdog>=2.1.0  # for development auto-reload
+gunicorn>=20.1.0  # for production deployment
+python-dateutil>=2.8.2  # for date handling
+requests>=2.26.0  # for HTTP requests
+cryptography>=3.4.0  # for security features

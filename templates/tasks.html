@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}Tasks - Security Toolkit{% endblock %}
+
+{% block content %}
+<div class="card mb-4">
+    <div class="card-header bg-dark text-white">
+        <h4 class="mb-0">
+            <i class="fas fa-tasks me-2"></i>Task Manager
+        </h4>
+    </div>
+    <div class="card-body">
+        {% if tasks %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Task ID</th>
+                            <th>Tool</th>
+                            <th>Start Time</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for task in tasks %}
+                        <tr>
+                            <td><code>{{ task.task_id }}</code></td>
+                            <td>{{ task.tool_name }}</td>
+                            <td>
+                                <span title="{{ task.start_time }}">
+                                    {{ task.start_time.split('T')[0] }} {{ task.start_time.split('T')[1].split('.')[0] }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge {{ task.status }}">
+                                    {% if task.status == 'running' %}
+                                        <i class="fas fa-spinner fa-spin me-1"></i>
+                                    {% elif task.status == 'completed' %}
+                                        <i class="fas fa-check me-1"></i>
+                                    {% elif task.status == 'failed' or task.status == 'error' %}
+                                        <i class="fas fa-times me-1"></i>
+                                    {% elif task.status == 'stopped' %}
+                                        <i class="fas fa-stop me-1"></i>
+                                    {% else %}
+                                        <i class="fas fa-clock me-1"></i>
+                                    {% endif %}
+                                    {{ task.status|capitalize }}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('task_details', task_id=task.task_id) }}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-eye me-1"></i>View
+                                </a>
+                                {% if task.status == 'running' %}
+                                <button class="btn btn-sm btn-danger stop-task" data-task-id="{{ task.task_id }}">
+                                    <i class="fas fa-stop me-1"></i>Stop
+                                </button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center p-4">
+                <i class="fas fa-clipboard-list fa-3x mb-3 text-muted"></i>
+                <h5>No Tasks Found</h5>
+                <p class="text-muted">There are no tasks to display. Start a new task from the home page.</p>
+                <a href="{{ url_for('index') }}" class="btn btn-primary">Go to Home</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Task Statistics -->
+<div class="row">
+    <div class="col-md-4">
+        <div class="card text-white bg-primary mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">Running Tasks</h6>
+                        <h2 class="mb-0">
+                            {{ tasks|selectattr('status', 'equalto', 'running')|list|length }}
+                        </h2>
+                    </div>
+                    <i class="fas fa-play-circle fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-success mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">Completed Tasks</h6>
+                        <h2 class="mb-0">
+                            {{ tasks|selectattr('status', 'equalto', 'completed')|list|length }}
+                        </h2>
+                    </div>
+                    <i class="fas fa-check-circle fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-danger mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">Failed Tasks</h6>
+                        <h2 class="mb-0">
+                            {{ tasks|selectattr('status', 'in', ['failed', 'error'])|list|length }}
+                        </h2>
+                    </div>
+                    <i class="fas fa-times-circle fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Handle stop task buttons
+        $(".stop-task").click(function() {
+            const taskId = $(this).data("task-id");
+            if (confirm("Are you sure you want to stop this task?")) {
+                stopTask(taskId, $(this));
+            }
+        });
+    });
+    
+    function stopTask(taskId, buttonElement) {
+        buttonElement.prop("disabled", true).html('<i class="fas fa-spinner fa-spin me-1"></i>Stopping...');
+        
+        $.ajax({
+            url: "{{ url_for('stop_task', task_id='TASK_ID') }}".replace('TASK_ID', taskId),
+            type: "POST",
+            success: function(response) {
+                if (response.status === "success") {
+                    // Reload the page to show updated status
+                    location.reload();
+                } else {
+                    alert("Error: " + response.message);
+                    buttonElement.prop("disabled", false).html('<i class="fas fa-stop me-1"></i>Stop');
+                }
+            },
+            error: function(xhr) {
+                let errorMsg = "An error occurred";
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    errorMsg = response.message || errorMsg;
+                } catch (e) {}
+                
+                alert("Error: " + errorMsg);
+                buttonElement.prop("disabled", false).html('<i class="fas fa-stop me-1"></i>Stop');
+            }
+        });
+    }
+</script>
+{% endblock %}
