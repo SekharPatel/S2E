@@ -17,7 +17,7 @@ TOOLS = {
         'name': 'Nmap',
         'description': 'Network scanner for discovering hosts and services',
         'command': 'nmap {target} {options}',
-        'default_options': ' ',
+        'default_options': '',
         'help_text': 'Target can be IP address, hostname, or subnet (e.g., 192.168.1.1, example.com, 192.168.1.0/24)'
     },
     'searchsploit': {
@@ -90,32 +90,37 @@ def run_tool(task_id, command):
         output_file = f"output/{task_id}.txt"
         
         # Log start time
-        with open(output_file, 'w') as f:
+        with open(output_file, 'w', encoding='utf-8') as f:
             f.write(f"Command: {command}\n")
             f.write(f"Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
             f.write("-" * 50 + "\n")
         
-        # Execute command and capture output in real-time
+        # Execute command with proper encoding settings
         process = subprocess.Popen(
             command, 
             shell=True, 
             stdout=subprocess.PIPE, 
             stderr=subprocess.STDOUT,
             bufsize=1,
-            universal_newlines=True
+            universal_newlines=False,
+            encoding='utf-8',
+            errors='replace'
         )
         
         TASKS[task_id]['process'] = process
         TASKS[task_id]['status'] = 'running'
         
-        # Stream the output to file
-        with open(output_file, 'a') as f:
+        # Stream the output to file with proper encoding
+        with open(output_file, 'a', encoding='utf-8') as f:
             for line in process.stdout:
-                f.write(line)
-                # Also store recent output in memory for UI updates
-                TASKS[task_id]['recent_output'].append(line.strip())
-                if len(TASKS[task_id]['recent_output']) > 100:  # Keep only last 100 lines
-                    TASKS[task_id]['recent_output'].pop(0)
+                try:
+                    cleaned_line = line.encode('ascii', errors='replace').decode('ascii')
+                    f.write(cleaned_line)
+                    TASKS[task_id]['recent_output'].append(cleaned_line.strip())
+                    if len(TASKS[task_id]['recent_output']) > 100:
+                        TASKS[task_id]['recent_output'].pop(0)
+                except Exception as e:
+                    f.write(f"[Error processing output: {str(e)}]\n")
         
         # Check return code
         return_code = process.wait()
@@ -265,11 +270,22 @@ def task_status(task_id):
     # Get the most recent output lines
     recent_output = task_info.get('recent_output', [])
     
-    # Clean the output lines for display
+    # Clean and encode the output lines properly
     cleaned_output = []
     for line in recent_output:
-        cleaned_line = line.replace('<', '&lt;').replace('>', '&gt;')
-        cleaned_output.append(cleaned_line)
+        try:
+            # Handle binary output and decode with proper encoding
+            if isinstance(line, bytes):
+                line = line.decode('utf-8', errors='replace')
+            # Clean and sanitize the output
+            cleaned_line = (line.strip()
+                          .replace('<', '&lt;')
+                          .replace('>', '&gt;')
+                          .encode('ascii', errors='replace')
+                          .decode('ascii'))
+            cleaned_output.append(cleaned_line)
+        except Exception as e:
+            cleaned_output.append(f"[Error decoding output line: {str(e)}]")
     
     response = {
         'status': task_info['status'],
