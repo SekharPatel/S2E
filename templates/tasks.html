@@ -2,17 +2,88 @@
 
 {% block title %}Tasks - Security Toolkit{% endblock %}
 
+{% block extra_css %}
+    <!-- You might want to put these styles in style.css or a new dashboard.css linked in base.html -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/tasks.css') }}">
+    <style>
+    .scan-card {
+        background: #070711;
+        border: 1.5px solid #b0b0b0;
+        border-radius: 12px;
+        margin: 2.5rem 0 1.5rem 0;
+        padding: 2rem 2rem 1.5rem 2rem;
+        box-shadow: 0 2px 16px rgba(0,0,0,0.10);
+        color: #fff;
+        max-width: 900px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .scan-card-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 0.7rem;
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
+    }
+    .scan-status-badge {
+        background: #1a237e;
+        color: #fff;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        padding: 0.2rem 0.8rem;
+        margin-left: 0.7rem;
+        font-weight: 600;
+    }
+    .scan-progress-bar {
+        width: 100%;
+        height: 10px;
+        background: #18181b;
+        border-radius: 6px;
+        margin: 1.2rem 0 1.2rem 0;
+        overflow: hidden;
+    }
+    .scan-progress-bar-inner {
+        height: 100%;
+        background: #0a2a6b;
+        border-radius: 6px;
+        transition: width 0.3s;
+    }
+    .scan-log-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #fff;
+    }
+    .scan-log {
+        background: #000;
+        color: #00ff99;
+        font-family: 'Fira Mono', 'Consolas', 'Menlo', monospace;
+        font-size: 0.98rem;
+        border-radius: 8px;
+        padding: 1.2rem 1rem;
+        min-height: 80px;
+        margin-bottom: 0.2rem;
+        border: 1px solid rgba(255,255,255,0.06);
+        overflow-x: auto;
+        white-space: pre-wrap;
+        word-break: break-all;
+    }
+    </style>
+{% endblock %}
+
 {% block content %}
-<div class="card mb-4">
-    <div class="card-header bg-dark text-white">
-        <h4 class="mb-0">
+<div class="tasks-container">
+    <div class="tasks-header">
+        <h1 class="tasks-main-title">
             <i class="fas fa-tasks me-2"></i>Task Manager
-        </h4>
+        </h1>
     </div>
-    <div class="card-body">
+
+    <div class="tasks-content-wrapper">
         {% if tasks %}
-            <div class="table-responsive">
-                <table class="table table-hover">
+            <div class="tasks-table-responsive">
+                <table class="tasks-table">
                     <thead>
                         <tr>
                             <th>Task ID</th>
@@ -24,8 +95,8 @@
                     </thead>
                     <tbody>
                         {% for task in tasks %}
-                        <tr>
-                            <td><code>{{ task.task_id }}</code></td>
+                        <tr class="task-row" data-status="{{ task.status }}">
+                            <td><code class="task-id-code">{{ task.task_id }}</code></td>
                             <td>{{ task.tool_name }}</td>
                             <td>
                                 <span title="{{ task.start_time }}">
@@ -33,7 +104,7 @@
                                 </span>
                             </td>
                             <td>
-                                <span class="badge {{ task.status }}">
+                                <span class="task-status-badge status-{{ task.status|lower }}">
                                     {% if task.status == 'running' %}
                                         <i class="fas fa-spinner fa-spin me-1"></i>
                                     {% elif task.status == 'completed' %}
@@ -43,17 +114,17 @@
                                     {% elif task.status == 'stopped' %}
                                         <i class="fas fa-stop me-1"></i>
                                     {% else %}
-                                        <i class="fas fa-clock me-1"></i>
+                                        <i class="fas fa-clock me-1"></i> <!-- For pending or unknown -->
                                     {% endif %}
                                     {{ task.status|capitalize }}
                                 </span>
                             </td>
-                            <td>
-                                <a href="{{ url_for('task_details', task_id=task.task_id) }}" class="btn btn-sm btn-primary">
+                            <td class="task-actions">
+                                <a href="{{ url_for('task_details', task_id=task.task_id) }}" class="signin-button btn-small">
                                     <i class="fas fa-eye me-1"></i>View
                                 </a>
                                 {% if task.status == 'running' %}
-                                <button class="btn btn-sm btn-danger stop-task" data-task-id="{{ task.task_id }}">
+                                <button class="btn-secondary btn-small btn-danger-themed stop-task" data-task-id="{{ task.task_id }}">
                                     <i class="fas fa-stop me-1"></i>Stop
                                 </button>
                                 {% endif %}
@@ -64,104 +135,75 @@
                 </table>
             </div>
         {% else %}
-            <div class="text-center p-4">
-                <i class="fas fa-clipboard-list fa-3x mb-3 text-muted"></i>
-                <h5>No Tasks Found</h5>
-                <p class="text-muted">There are no tasks to display. Start a new task from the home page.</p>
-                <a href="{{ url_for('index') }}" class="btn btn-primary">Go to Home</a>
+            <div class="no-tasks-placeholder">
+                <i class="fas fa-clipboard-list fa-3x icon-muted"></i>
+                <h5 class="no-tasks-title">No Tasks Found</h5>
+                <p class="no-tasks-text">There are no tasks to display. Start a new task.</p>
+                <a href="{{ url_for('index') }}" class="signin-button">
+                    <i class="fas fa-home me-1"></i>Go to Home
+                </a>
             </div>
         {% endif %}
     </div>
+
+    {% if tasks %}
+    <div id="scan-results-section">
+        {% for task in tasks if task.status == 'running' %}
+        <div class="scan-card" id="scan-card-{{ task.task_id }}">
+            <div class="scan-card-title">
+                Scan Results
+                <span class="scan-status-badge">Scanning</span>
+            </div>
+            <div>Scanning in progress...</div>
+            <div class="scan-progress-bar">
+                <div class="scan-progress-bar-inner" id="progress-bar-{{ task.task_id }}" style="width: 10%"></div>
+            </div>
+            <div class="scan-log-title">Scan Log</div>
+            <div class="scan-log" id="scan-log-{{ task.task_id }}">Loading...</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
 </div>
 
 <!-- Task Statistics -->
-<div class="row">
-    <div class="col-md-4">
-        <div class="card text-white bg-primary mb-4">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="card-title">Running Tasks</h6>
-                        <h2 class="mb-0">
-                            {{ tasks|selectattr('status', 'equalto', 'running')|list|length }}
-                        </h2>
-                    </div>
-                    <i class="fas fa-play-circle fa-3x opacity-50"></i>
-                </div>
+<div class="task-stats-grid">
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div>
+                <h6 class="stat-card-title">Running Tasks</h6>
+                <h2 class="stat-card-value">
+                    {{ tasks|selectattr('status', 'equalto', 'running')|list|length }}
+                </h2>
             </div>
+            <i class="fas fa-play-circle fa-3x stat-icon running"></i>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card text-white bg-success mb-4">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="card-title">Completed Tasks</h6>
-                        <h2 class="mb-0">
-                            {{ tasks|selectattr('status', 'equalto', 'completed')|list|length }}
-                        </h2>
-                    </div>
-                    <i class="fas fa-check-circle fa-3x opacity-50"></i>
-                </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div>
+                <h6 class="stat-card-title">Completed Tasks</h6>
+                <h2 class="stat-card-value">
+                    {{ tasks|selectattr('status', 'equalto', 'completed')|list|length }}
+                </h2>
             </div>
+            <i class="fas fa-check-circle fa-3x stat-icon completed"></i>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card text-white bg-danger mb-4">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="card-title">Failed Tasks</h6>
-                        <h2 class="mb-0">
-                            {{ tasks|selectattr('status', 'in', ['failed', 'error'])|list|length }}
-                        </h2>
-                    </div>
-                    <i class="fas fa-times-circle fa-3x opacity-50"></i>
-                </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div>
+                <h6 class="stat-card-title">Failed/Errored</h6>
+                <h2 class="stat-card-value">
+                    {{ tasks|selectattr('status', 'in', ['failed', 'error'])|list|length }}
+                </h2>
             </div>
+            <i class="fas fa-times-circle fa-3x stat-icon failed"></i>
         </div>
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
-<script>
-    $(document).ready(function() {
-        // Handle stop task buttons
-        $(".stop-task").click(function() {
-            const taskId = $(this).data("task-id");
-            if (confirm("Are you sure you want to stop this task?")) {
-                stopTask(taskId, $(this));
-            }
-        });
-    });
-    
-    function stopTask(taskId, buttonElement) {
-        buttonElement.prop("disabled", true).html('<i class="fas fa-spinner fa-spin me-1"></i>Stopping...');
-        
-        $.ajax({
-            url: "{{ url_for('stop_task', task_id='TASK_ID') }}".replace('TASK_ID', taskId),
-            type: "POST",
-            success: function(response) {
-                if (response.status === "success") {
-                    // Reload the page to show updated status
-                    location.reload();
-                } else {
-                    alert("Error: " + response.message);
-                    buttonElement.prop("disabled", false).html('<i class="fas fa-stop me-1"></i>Stop');
-                }
-            },
-            error: function(xhr) {
-                let errorMsg = "An error occurred";
-                try {
-                    const response = JSON.parse(xhr.responseText);
-                    errorMsg = response.message || errorMsg;
-                } catch (e) {}
-                
-                alert("Error: " + errorMsg);
-                buttonElement.prop("disabled", false).html('<i class="fas fa-stop me-1"></i>Stop');
-            }
-        });
-    }
-</script>
+<script src="{{ url_for('static', filename='js/tasks.js') }}"></script>
 {% endblock %}

@@ -2,223 +2,364 @@
 
 {% block title %}Task Details - Security Toolkit{% endblock %}
 
-{% block content %}
-<nav aria-label="breadcrumb">
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
-        <li class="breadcrumb-item"><a href="{{ url_for('list_tasks') }}">Tasks</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Task Details</li>
-    </ol>
-</nav>
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/task_details.css') }}">
+<style>
+    /* Basic Tab Styles */
+    .tabs-nav {
+        display: flex;
+        border-bottom: 1px solid rgba(255,255,255,0.2);
+        margin-bottom: 1.5rem;
+    }
+    .tabs-nav-item {
+        padding: 0.75rem 1.25rem;
+        cursor: pointer;
+        border: 1px solid transparent;
+        border-bottom: none;
+        margin-bottom: -1px; /* Overlap with container border */
+        font-size: 1rem;
+        font-weight: 500;
+        color: #a5b4fc;
+        transition: color 0.2s, border-color 0.2s;
+    }
+    .tabs-nav-item:hover {
+        color: #fff;
+    }
+    .tabs-nav-item.active {
+        color: #fff;
+        border-color: rgba(255,255,255,0.2) rgba(255,255,255,0.2) #0a0a0f; /* Left, Top, Right, Bottom (transparent like background) */
+        border-radius: 6px 6px 0 0;
+        background-color: rgba(20, 20, 30, 0.97); /* Match card background */
+        position: relative;
+        bottom: -1px; /* Sits on top of the line */
+    }
+    .tab-content {
+        display: none;
+    }
+    .tab-content.active {
+        display: block;
+    }
 
-<div class="card mb-4">
-    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-        <h4 class="mb-0">
-            <i class="fas fa-file-alt me-2"></i>Task Details
-        </h4>
-        {% if task.status == 'running' %}
-        <button id="stopBtn" class="btn btn-sm btn-danger">
-            <i class="fas fa-stop me-1"></i>Stop Task
-        </button>
-        {% endif %}
-    </div>
-    <div class="card-body">
-        <div class="row mb-4">
-            <div class="col-md-6">
-                <dl class="row">
-                    <dt class="col-sm-4">Task ID</dt>
-                    <dd class="col-sm-8"><code>{{ task_id }}</code></dd>
-                    
-                    <dt class="col-sm-4">Tool</dt>
-                    <dd class="col-sm-8">{{ tool_name }}</dd>
-                    
-                    <dt class="col-sm-4">Command</dt>
-                    <dd class="col-sm-8"><code>{{ task.command }}</code></dd>
+    /* Analysis Table Styles */
+    .analysis-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+        color: #e0e0e0;
+    }
+    .analysis-table th, .analysis-table td {
+        border: 1px solid rgba(255,255,255,0.15);
+        padding: 0.6rem 0.8rem;
+        text-align: left;
+        font-size: 0.95rem;
+    }
+    .analysis-table th {
+        background-color: rgba(255,255,255,0.05);
+        font-weight: 600;
+        color: #a5b4fc;
+    }
+    .analysis-table td code {
+        background-color: rgba(255,255,255,0.1);
+        padding: 0.2em 0.4em;
+        border-radius: 4px;
+        font-size: 0.9em;
+    }
+    .analysis-actions button {
+        font-size: 0.85rem;
+        padding: 0.3rem 0.7rem;
+        margin-right: 0.5rem;
+        margin-top: 0.3rem;
+        border-radius: 20px; /* Pill shape */
+        background: #23243a;
+        color: #fff;
+        border: 1px solid #8025db;
+        cursor: pointer;
+        transition: background 0.2s, color 0.2s;
+    }
+    .analysis-actions button:hover {
+        background: #8025db;
+    }
+    .analysis-host-block {
+        margin-bottom: 1.5rem;
+        padding: 1rem;
+        background-color: rgba(255,255,255,0.03);
+        border-radius: 8px;
+    }
+    .analysis-host-title {
+        font-size: 1.2rem;
+        color: #fff;
+        margin-bottom: 0.8rem;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        padding-bottom: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="task-details-container">
+    <div class="task-details-card">
+        <h2 class="task-details-title"><i class="fas fa-file-alt me-2"></i>Task Details</h2>
+        <div class="task-details-row">
+            <div class="task-details-col">
+                <dl>
+                    <dt>Task ID</dt>
+                    <dd><code>{{ task_id }}</code></dd>
+                    <dt>Tool</dt>
+                    <dd>{{ tool_name }}</dd>
+                    <dt>Command</dt>
+                    <dd><code>{{ task.command }}</code></dd>
                 </dl>
             </div>
-            <div class="col-md-6">
-                <dl class="row">
-                    <dt class="col-sm-4">Status</dt>
-                    <dd class="col-sm-8">
-                        <span class="badge {{ task.status }}">
-                            {% if task.status == 'running' %}
-                                <i class="fas fa-spinner fa-spin me-1"></i>
-                            {% elif task.status == 'completed' %}
-                                <i class="fas fa-check me-1"></i>
-                            {% elif task.status == 'failed' or task.status == 'error' %}
-                                <i class="fas fa-times me-1"></i>
-                            {% elif task.status == 'stopped' %}
-                                <i class="fas fa-stop me-1"></i>
-                            {% else %}
-                                <i class="fas fa-clock me-1"></i>
-                            {% endif %}
-                            {{ task.status|capitalize }}
-                        </span>
-                    </dd>
-                    
-                    <dt class="col-sm-4">Start Time</dt>
-                    <dd class="col-sm-8">{{ task.start_time.split('T')[0] }} {{ task.start_time.split('T')[1].split('.')[0] }}</dd>
-                    
-                    {% if task.status != 'running' and task.status != 'starting' %}
-                    <dt class="col-sm-4">Duration</dt>
-                    <dd class="col-sm-8" id="taskDuration">Calculating...</dd>
-                    {% endif %}
+            <div class="task-details-col">
+                <dl>
+                    <dt>Status</dt>
+                    <dd><span class="task-status-badge status-{{ task.status|lower }}">
+                        {% if task.status == 'running' %}
+                            <i class="fas fa-spinner fa-spin me-1"></i>
+                        {% elif task.status == 'completed' %}
+                            <i class="fas fa-check me-1"></i>
+                        {% elif task.status == 'failed' or task.status == 'error' %}
+                            <i class="fas fa-times me-1"></i>
+                        {% elif task.status == 'stopped' %}
+                            <i class="fas fa-stop me-1"></i>
+                        {% else %}
+                            <i class="fas fa-clock me-1"></i>
+                        {% endif %}
+                        {{ task.status|capitalize }}
+                    </span></dd>
+                    <dt>Start Time</dt>
+                    <dd>{{ task.start_time.split('T')[0] }} {{ task.start_time.split('T')[1].split('.')[0] }}</dd>
                 </dl>
             </div>
         </div>
-        
-        <div class="card mb-0">
-            <div class="card-header bg-light">
-                <ul class="nav nav-tabs card-header-tabs" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="output-tab" data-bs-toggle="tab" data-bs-target="#output" type="button" role="tab" aria-controls="output" aria-selected="true">
-                            <i class="fas fa-terminal me-1"></i>Output
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="analysis-tab" data-bs-toggle="tab" data-bs-target="#analysis" type="button" role="tab" aria-controls="analysis" aria-selected="false">
-                            <i class="fas fa-chart-bar me-1"></i>Analysis
-                        </button>
-                    </li>
-                </ul>
+
+        <!-- Tabs Navigation -->
+        <div class="tabs-nav">
+            <div class="tabs-nav-item active" data-tab="rawOutputTab">Raw Output</div>
+            {% if show_analysis_tab %}
+            <div class="tabs-nav-item" data-tab="analysisTab">Nmap Analysis</div>
+            {% endif %}
+        </div>
+
+        <!-- Tab Content -->
+        <div id="rawOutputTab" class="tab-content active">
+            <div class="task-details-section">
+                <h3 class="task-details-subtitle"><i class="fas fa-terminal me-2"></i>Output</h3>
+                <div class="task-details-terminal">{{ output|safe }}</div>
+                <button id="copyOutputBtn" class="signin-button btn-small" style="margin-top:1rem;"><i class="fas fa-copy me-1"></i>Copy Output</button>
             </div>
-            <div class="card-body">
-                <div class="tab-content">
-                    <div class="tab-pane fade show active" id="output" role="tabpanel" aria-labelledby="output-tab">
-                        <div class="d-flex justify-content-end mb-2">
-                            <button id="copyOutputBtn" class="btn btn-sm btn-outline-secondary">
-                                <i class="fas fa-copy me-1"></i>Copy Output
-                            </button>
-                        </div>
-                        <div class="terminal">{{ output }}</div>
-                    </div>
-                    <div class="tab-pane fade" id="analysis" role="tabpanel" aria-labelledby="analysis-tab">
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle me-2"></i>Automated analysis is under development and will be available in future updates.
-                        </div>
-                        <div class="text-center p-4">
-                            <i class="fas fa-chart-line fa-3x mb-3 text-muted"></i>
-                            <h5>Output Analysis</h5>
-                            <p class="text-muted">This feature will provide automated analysis of tool outputs.</p>
-                        </div>
-                    </div>
+        </div>
+
+        {% if show_analysis_tab %}
+        <div id="analysisTab" class="tab-content">
+            <div class="task-details-section">
+                <h3 class="task-details-subtitle"><i class="fas fa-chart-bar me-2"></i>Parsed Nmap Results</h3>
+                <div id="analysisContent">
+                    <p>Loading analysis...</p>
                 </div>
             </div>
         </div>
+        {% endif %}
+
+        {% if task.status == 'running' %}
+        <button id="stopBtn" class="btn-secondary btn-danger-themed" style="margin-top:2rem;"><i class="fas fa-stop me-1"></i>Stop Task</button>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    $(document).ready(function() {
-        // Handle stop task button
-        $("#stopBtn").click(function() {
-            if (confirm("Are you sure you want to stop this task?")) {
-                stopTask();
+document.addEventListener('DOMContentLoaded', function() {
+    // Tab switching logic
+    const tabItems = document.querySelectorAll('.tabs-nav-item');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    tabItems.forEach(item => {
+        item.addEventListener('click', function() {
+            tabItems.forEach(i => i.classList.remove('active'));
+            tabContents.forEach(c => c.classList.remove('active'));
+
+            this.classList.add('active');
+            document.getElementById(this.dataset.tab).classList.add('active');
+
+            if (this.dataset.tab === 'analysisTab' && !this.dataset.loaded) {
+                loadNmapAnalysis();
+                this.dataset.loaded = true; // Mark as loaded to prevent multiple fetches
             }
         });
-        
-        // Handle copy output button
-        $("#copyOutputBtn").click(function() {
-            const outputText = $(".terminal").text();
-            navigator.clipboard.writeText(outputText).then(function() {
-                const originalText = $("#copyOutputBtn").html();
-                $("#copyOutputBtn").html('<i class="fas fa-check me-1"></i>Copied!');
-                setTimeout(function() {
-                    $("#copyOutputBtn").html(originalText);
-                }, 2000);
-            });
-        });
-        
-        // Calculate duration
-        if ($("#taskDuration").length > 0) {
-            calculateDuration();
-        }
-        
-        // Auto-refresh if task is still running
-        {% if task.status == 'running' or task.status == 'starting' %}
-        let refreshInterval = setInterval(function() {
-            $.ajax({
-                url: "{{ url_for('task_status', task_id=task_id) }}",
-                type: "GET",
-                success: function(response) {
-                    if (response.status !== "running" && response.status !== "starting") {
-                        // If task is complete, reload page
-                        clearInterval(refreshInterval);
-                        location.reload();
-                    }
-                },
-                error: function() {
-                    clearInterval(refreshInterval);
-                }
-            });
-        }, 5000);
-        {% endif %}
     });
-    
-    function stopTask() {
-        $("#stopBtn").prop("disabled", true).html('<i class="fas fa-spinner fa-spin me-1"></i>Stopping...');
+
+    // Copy output to clipboard
+    const copyBtn = document.getElementById('copyOutputBtn');
+    if (copyBtn) {
+        copyBtn.onclick = function() {
+            const outputText = document.querySelector('.task-details-terminal').innerText;
+            navigator.clipboard.writeText(outputText)
+                .then(() => {
+                    copyBtn.innerHTML = '<i class="fas fa-check me-1"></i>Copied!';
+                    setTimeout(() => { copyBtn.innerHTML = '<i class="fas fa-copy me-1"></i>Copy Output'; }, 1200);
+                })
+                .catch(err => {
+                    console.error('Failed to copy text: ', err);
+                    copyBtn.innerHTML = '<i class="fas fa-times me-1"></i>Copy Failed';
+                    setTimeout(() => { copyBtn.innerHTML = '<i class="fas fa-copy me-1"></i>Copy Output'; }, 1500);
+                });
+        };
+    }
+
+    // Load Nmap Analysis Data
+    function loadNmapAnalysis() {
+        const analysisContentDiv = document.getElementById('analysisContent');
+        if (!analysisContentDiv) return;
         
-        $.ajax({
-            url: "{{ url_for('stop_task', task_id=task_id) }}",
-            type: "POST",
-            success: function(response) {
-                if (response.status === "success") {
-                    // Reload the page to show updated status
-                    location.reload();
+        const taskId = "{{ task_id }}"; // Get task_id from Jinja context
+        fetch(`/task/${taskId}/analyze_nmap`)
+            .then(response => response.json())
+            .then(result => {
+                if (result.status === 'success' && result.data) {
+                    renderAnalysis(result.data, analysisContentDiv);
                 } else {
-                    alert("Error: " + response.message);
-                    $("#stopBtn").prop("disabled", false).html('<i class="fas fa-stop me-1"></i>Stop Task');
+                    analysisContentDiv.innerHTML = `<p style="color: #ef4444;">Error loading analysis: ${result.message || 'Unknown error'}</p>`;
                 }
-            },
-            error: function(xhr) {
-                let errorMsg = "An error occurred";
-                try {
-                    const response = JSON.parse(xhr.responseText);
-                    errorMsg = response.message || errorMsg;
-                } catch (e) {}
-                
-                alert("Error: " + errorMsg);
-                $("#stopBtn").prop("disabled", false).html('<i class="fas fa-stop me-1"></i>Stop Task');
+            })
+            .catch(error => {
+                console.error('Error fetching Nmap analysis:', error);
+                analysisContentDiv.innerHTML = `<p style="color: #ef4444;">Could not fetch analysis data. Check console.</p>`;
+            });
+    }
+
+    // Render Parsed Nmap Data
+    function renderAnalysis(data, container) {
+        if (!data.hosts || data.hosts.length === 0) {
+            container.innerHTML = '<p>No open ports or host information found in the Nmap scan.</p>';
+            return;
+        }
+
+        let html = '';
+        const followUpActions = JSON.parse('{{ follow_up_actions | tojson | safe }}');
+        const originalNmapTarget = "{{ task.original_target or '' }}";
+
+
+        data.hosts.forEach(hostInfo => {
+            html += `<div class="analysis-host-block">`;
+            html += `<h4 class="analysis-host-title">Host: ${hostInfo.host} ${hostInfo.ip && hostInfo.ip !== hostInfo.host ? '('+hostInfo.ip+')' : ''}</h4>`;
+
+            if (!hostInfo.ports || hostInfo.ports.length === 0) {
+                html += '<p>No open ports found for this host.</p>';
+            } else {
+                html += '<table class="analysis-table">';
+                html += `<thead><tr>
+                            <th>Port/Proto</th>
+                            <th>Service</th>
+                            <th>Version</th>
+                            <th>Actions</th>
+                         </tr></thead><tbody>`;
+                hostInfo.ports.forEach(p => {
+                    html += `<tr>
+                                <td><code>${p.port}/${p.protocol}</code></td>
+                                <td>${p.service || 'N/A'}</td>
+                                <td>${p.version || 'N/A'}</td>
+                                <td class="analysis-actions">`;
+                    
+                    Object.keys(followUpActions).forEach(actionId => {
+                        const actionConfig = followUpActions[actionId];
+                        // Check if all required placeholders for this action can be filled
+                        let canRun = true;
+                        if (actionConfig.query_format.includes("{version}") && !p.version) {
+                            canRun = false;
+                        }
+                        if (actionConfig.query_format.includes("{service}") && !p.service) {
+                            canRun = false;
+                        }
+                        // Add more checks if needed for other placeholders
+
+                        if (canRun) {
+                             html += `<button class="run-follow-up" 
+                                        data-action-id="${actionId}" 
+                                        data-port="${p.port}" 
+                                        data-protocol="${p.protocol}" 
+                                        data-service="${p.service || ''}" 
+                                        data-version="${p.version || ''}"
+                                        title="Run ${actionConfig.name} for ${p.service} ${p.version || ''}">
+                                     <i class="fas fa-play-circle me-1"></i> ${actionConfig.name}
+                                     </button>`;
+                        }
+                    });
+                    html += `</td></tr>`;
+                });
+                html += '</tbody></table>';
             }
+            html += `</div>`; // end analysis-host-block
+        });
+        container.innerHTML = html;
+
+        // Add event listeners to newly created follow-up buttons
+        document.querySelectorAll('.run-follow-up').forEach(button => {
+            button.addEventListener('click', handleFollowUpClick);
         });
     }
     
-    function calculateDuration() {
-        // For a real implementation, you would get the end time from the server
-        // Here we'll just parse from the output
-        const outputText = $(".terminal").text();
-        
-        // Try to extract start and finish times
-        const startMatch = outputText.match(/Started: ([0-9-]+ [0-9:]+)/);
-        const finishMatch = outputText.match(/Finished: ([0-9-]+ [0-9:]+)/);
-        
-        if (startMatch && finishMatch) {
-            const startTime = new Date(startMatch[1]);
-            const finishTime = new Date(finishMatch[1]);
-            
-            if (!isNaN(startTime) && !isNaN(finishTime)) {
-                const durationMs = finishTime - startTime;
-                const seconds = Math.floor(durationMs / 1000);
-                
-                if (seconds < 60) {
-                    $("#taskDuration").text(seconds + " seconds");
-                } else if (seconds < 3600) {
-                    const minutes = Math.floor(seconds / 60);
-                    const remainingSeconds = seconds % 60;
-                    $("#taskDuration").text(minutes + " min " + remainingSeconds + " sec");
-                } else {
-                    const hours = Math.floor(seconds / 3600);
-                    const minutes = Math.floor((seconds % 3600) / 60);
-                    $("#taskDuration").text(hours + " hr " + minutes + " min");
-                }
-                return;
-            }
+    function handleFollowUpClick(event) {
+        const button = event.currentTarget;
+        const serviceInfo = {
+            port: button.dataset.port,
+            protocol: button.dataset.protocol,
+            service: button.dataset.service,
+            version: button.dataset.version
+        };
+        const actionId = button.dataset.actionId;
+        const originalNmapTarget = "{{ task.original_target or '' }}"; // Get from Jinja
+
+        if (!originalNmapTarget && (actionId.includes('nmap') || actionId.includes('target_host'))) {
+             alert('Original Nmap target not found for this task. Cannot run host-specific follow-up.');
+             return;
         }
-        
-        // If we couldn't calculate, show "Unknown"
-        $("#taskDuration").text("Unknown");
+
+        const originalButtonHtml = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Starting...';
+
+        fetch('/task/run_follow_up', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                // Add CSRF token header if you implement CSRF protection globally
+            },
+            body: JSON.stringify({
+                action_id: actionId,
+                service_info: serviceInfo,
+                original_nmap_target: originalNmapTarget
+            })
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.status === 'success') {
+                alert(`Follow-up task started: ${result.message}\nTask ID: ${result.task_id}`);
+                // Optionally redirect or update UI further
+                // window.location.href = `/task/${result.task_id}`; // Example: redirect to new task
+            } else {
+                alert(`Error: ${result.message || 'Could not start follow-up task.'}`);
+            }
+        })
+        .catch(error => {
+            console.error('Error running follow-up action:', error);
+            alert('An unexpected error occurred. Check console.');
+        })
+        .finally(() => {
+            button.disabled = false;
+            button.innerHTML = originalButtonHtml;
+        });
     }
+    
+    // If analysis tab is present and should be shown, trigger load if it's the active one
+    // (though unlikely on initial load unless you change default active tab)
+    const activeTab = document.querySelector('.tabs-nav-item.active');
+    if (activeTab && activeTab.dataset.tab === 'analysisTab' && !activeTab.dataset.loaded) {
+        loadNmapAnalysis();
+        activeTab.dataset.loaded = true;
+    }
+
+});
 </script>
 {% endblock %}

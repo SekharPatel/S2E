@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Quick Run - Security Toolkit{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="home-feature-intro">
+    <p class="home-feature-headline">Scan networks for vulnerabilities, identify exploits with searchsploit and metasploit, and run simulated attacks to test security posture.</p>
+    <div class="home-feature-row">
+        <div class="home-feature-card">
+            <div class="home-feature-icon" style="color:#3fa7ff;"><i class="fas fa-globe fa-2x"></i></div>
+            <div class="home-feature-title">Network Scanning</div>
+            <div class="home-feature-desc">Scan entire networks for open ports and services</div>
+        </div>
+        <div class="home-feature-card">
+            <div class="home-feature-icon" style="color:#4ade80;"><i class="fas fa-exclamation-triangle fa-2x"></i></div>
+            <div class="home-feature-title">Vulnerability Detection</div>
+            <div class="home-feature-desc">Identify security vulnerabilities and weaknesses</div>
+        </div>
+        <div class="home-feature-card">
+            <div class="home-feature-icon" style="color:#a056f7;"><i class="fas fa-database fa-2x"></i></div>
+            <div class="home-feature-title">Exploit Database</div>
+            <div class="home-feature-desc">Access searchsploit and metasploit databases</div>
+        </div>
+        <div class="home-feature-card">
+            <div class="home-feature-icon" style="color:#22d3ee;"><i class="fas fa-check-circle fa-2x"></i></div>
+            <div class="home-feature-title">Automated Exploits</div>
+            <div class="home-feature-desc">Run exploits and verify their effectiveness</div>
+        </div>
+    </div>
+</div>
+<hr class="home-divider" />
+<div class="home-form-container">
+    <form class="home-run-form" method="post" action="{{ url_for('home_scan') }}">
+        <h2 class="home-title">Network Scanner</h2>
+        <div class="home-subtitle">Enter target IP address to scan for vulnerabilities</div>
+        <div class="home-form-group">
+            <label for="target" class="home-label">Target IP Address</label>
+            <div class="home-input-row">
+                <input type="text" id="target" name="target" class="home-input" placeholder="127.0.0.1" required>
+                <button type="button" class="home-localhost-btn" onclick="document.getElementById('target').value='127.0.0.1'">Localhost</button>
+            </div>
+        </div>
+        <div class="home-form-group">
+            <label class="home-label">Scan Intensity</label>
+            <div class="home-toggle-group" id="intensityToggle">
+                <input type="hidden" name="intensity" id="intensityInput" value="low">
+                <button type="button" class="home-toggle-btn active" data-value="low">Low</button>
+                <button type="button" class="home-toggle-btn" data-value="medium">Medium</button>
+                <button type="button" class="home-toggle-btn" data-value="high">High</button>
+            </div>
+        </div>
+        <button type="submit" class="home-run-btn">Start Scan</button>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Toggle group logic for scan intensity
+const toggleBtns = document.querySelectorAll('.home-toggle-btn');
+const intensityInput = document.getElementById('intensityInput');
+toggleBtns.forEach(btn => {
+    btn.addEventListener('click', function() {
+        toggleBtns.forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        intensityInput.value = this.getAttribute('data-value');
+    });
+});
+</script>
+{% endblock %} 

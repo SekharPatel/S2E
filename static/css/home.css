@@ -1,0 +1,284 @@
+body {
+    background: #0a0a0f;
+    min-height: 100vh;
+    
+}
+
+.home-form-container {
+    min-height: unset;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    margin-bottom: 3rem;
+}
+
+.home-run-form {
+    background: rgba(20, 20, 30, 0.97);
+    padding: 2.5rem 2.5rem 2rem 2.5rem;
+    border-radius: 18px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+    border: 1px solid rgba(255,255,255,0.07);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    min-width: 0;
+    max-width: 600px;
+    width: 100%;
+    margin: 0 auto;
+    animation: fadeInForm 1s ease-out;
+}
+
+@keyframes fadeInForm {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.home-title {
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 0.5rem;
+    letter-spacing: 1px;
+    text-align: left;
+}
+
+.home-subtitle {
+    color: #b0b0b0;
+    font-size: 1.01rem;
+    margin-bottom: 1.7rem;
+    font-weight: 400;
+}
+
+.home-form-group {
+    margin-bottom: 1.3rem;
+}
+
+.home-label {
+    color: #a5b4fc;
+    font-size: 0.97rem;
+    font-weight: 500;
+    margin-bottom: 0.4rem;
+    display: block;
+}
+
+.home-input-row {
+    display: flex;
+    gap: 0.7rem;
+    align-items: center;
+}
+
+.home-input {
+    flex: 1 1 0;
+    padding: 0.95rem 1.1rem;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.13);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 1.05rem;
+    transition: border 0.2s, background 0.2s;
+}
+
+.home-input:focus {
+    outline: none;
+    border-color: #8025db;
+    background: rgba(255,255,255,0.08);
+}
+
+.home-localhost-btn {
+    background: #23243a;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.95rem 1.1rem;
+    font-size: 1.01rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    box-shadow: none;
+    margin-left: 0.2rem;
+}
+
+.home-localhost-btn:hover {
+    background: #8025db;
+    color: #fff;
+}
+
+.home-form-row {
+    display: flex;
+    gap: 1.2rem;
+    margin-bottom: 1.7rem;
+}
+
+.home-select {
+    width: 100%;
+    padding: 0.95rem 1.1rem;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.13);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 1.05rem;
+    margin-top: 0.2rem;
+    transition: border 0.2s, background 0.2s;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+.home-select:focus {
+    outline: none;
+    border-color: #8025db;
+    background: rgba(255,255,255,0.08);
+}
+
+.home-run-btn {
+    width: 100%;
+    padding: 1rem 0;
+    font-size: 1.1rem;
+    border-radius: 30px;
+    background: linear-gradient(90deg, #3fa7ff 0%, #8025db 100%);
+    color: #fff;
+    font-weight: 700;
+    border: none;
+    box-shadow: none;
+    transition: background 0.2s, transform 0.2s;
+    letter-spacing: 1px;
+    cursor: pointer;
+    margin-top: 0.5rem;
+}
+
+.home-run-btn:hover {
+    background: linear-gradient(90deg, #8025db 0%, #3fa7ff 100%);
+    transform: translateY(-2px) scale(1.03);
+}
+
+.home-feature-intro {
+    margin: 0 auto 2.5rem auto;
+    max-width: 1200px;
+    text-align: center;
+}
+
+.home-feature-headline {
+    color: #e5dee7;
+    font-size: 1.15rem;
+    margin-bottom: 2.2rem;
+    font-weight: 400;
+    letter-spacing: 0.2px;
+}
+
+.home-feature-row {
+    display: flex;
+    justify-content: center;
+    gap: 2.2rem;
+    flex-wrap: wrap;
+    margin-bottom: 2.5rem;
+}
+
+.home-feature-card {
+    background: rgba(20, 20, 30, 0.97);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.13);
+    padding: 1.5rem 2.2rem 1.2rem 2.2rem;
+    min-width: 220px;
+    max-width: 260px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.home-feature-card:hover {
+    box-shadow: 0 8px 32px rgba(160, 86, 247, 0.18);
+    transform: translateY(-4px) scale(1.03);
+}
+
+.home-feature-icon {
+    margin-bottom: 0.7rem;
+}
+
+.home-feature-title {
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+}
+
+.home-feature-desc {
+    color: #b0b0b0;
+    font-size: 0.97rem;
+    font-weight: 400;
+    text-align: center;
+}
+
+.home-divider {
+    border: none;
+    border-top: 1.5px solid rgba(255,255,255,0.08);
+    margin: 2.5rem auto 2.5rem auto;
+    max-width: 900px;
+}
+
+.home-toggle-group {
+    display: flex;
+    gap: 1rem;
+    margin: 0.7rem 0 1.5rem 0;
+    justify-content: flex-start;
+}
+.home-toggle-btn {
+    background: rgba(40, 40, 60, 0.85);
+    color: #b0b0b0;
+    border: 1.5px solid rgba(128,37,219,0.13);
+    border-radius: 30px;
+    padding: 0.7rem 1.7rem;
+    font-size: 1.01rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, border 0.2s, box-shadow 0.2s;
+    outline: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    letter-spacing: 0.5px;
+}
+.home-toggle-btn.active, .home-toggle-btn:focus {
+    background: linear-gradient(90deg, #8025db 0%, #3fa7ff 100%);
+    color: #fff;
+    border: 1.5px solid #8025db;
+    box-shadow: 0 4px 16px rgba(128,37,219,0.13);
+}
+.home-toggle-btn:hover:not(.active) {
+    background: rgba(128,37,219,0.13);
+    color: #fff;
+}
+
+@media (max-width: 1100px) {
+    .home-feature-row {
+        gap: 1.2rem;
+    }
+    .home-feature-card {
+        min-width: 180px;
+        padding: 1.2rem 1.2rem 1rem 1.2rem;
+    }
+    .home-run-form {
+        min-width: 0;
+    }
+}
+
+@media (max-width: 700px) {
+    .home-feature-row {
+        flex-direction: column;
+        align-items: center;
+    }
+    .home-form-row {
+        flex-direction: column;
+        gap: 0.7rem;
+    }
+    .home-run-form {
+        padding: 1.2rem 0.5rem 1rem 0.5rem;
+        max-width: 98vw;
+    }
+    .home-toggle-group {
+        gap: 0.5rem;
+    }
+    .home-toggle-btn {
+        padding: 0.7rem 1rem;
+        font-size: 0.97rem;
+    }
+} 
