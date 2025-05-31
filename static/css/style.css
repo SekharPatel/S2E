@@ -1,5 +1,9 @@
 /* style.css - page-specific and component styles only (no global/layout/nav resets) */
-
+.container{
+    max-width: 1400px;
+    margin: .5rem auto;
+    padding: 0 20px;
+}
 /* Hero Section */
 .hero-section {
     display: flex;

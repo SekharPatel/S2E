@@ -1,6 +1,5 @@
 body {
     background: #0a0a0f;
-    min-height: 100vh;
     
 }
 
@@ -157,13 +156,13 @@ body {
     text-align: center;
 }
 
-.home-feature-headline {
+/* .home-feature-headline {
     color: #e5dee7;
     font-size: 1.15rem;
     margin-bottom: 2.2rem;
     font-weight: 400;
     letter-spacing: 0.2px;
-}
+} */
 
 .home-feature-row {
     display: flex;

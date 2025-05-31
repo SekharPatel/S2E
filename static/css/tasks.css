@@ -3,7 +3,8 @@
 /* Inherit body styles from style.css */
 
 .tasks-container {
-    background: rgba(15, 15, 15, 0.85); /* Dark, semi-transparent */
+    background: rgba(15, 15, 15, 0.85);
+    /* Dark, semi-transparent */
     padding: 2rem;
     border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -19,7 +20,8 @@
 }
 
 .tasks-main-title {
-    font-size: 2.25rem; /* Adjust as needed */
+    font-size: 2.25rem;
+    /* Adjust as needed */
     font-weight: 700;
     background: linear-gradient(135deg, #ffffff, #a5b4fc);
     -webkit-background-clip: text;
@@ -31,19 +33,23 @@
 
 .tasks-main-title .fas {
     margin-right: 0.75rem;
-    color: #a5b4fc; /* Fallback if gradient doesn't apply to icon */
-    -webkit-text-fill-color: initial; /* For FontAwesome icons inside gradient text */
+    color: #a5b4fc;
+    /* Fallback if gradient doesn't apply to icon */
+    -webkit-text-fill-color: initial;
+    /* For FontAwesome icons inside gradient text */
 }
 
 
 .tasks-table-responsive {
-    overflow-x: auto; /* For smaller screens */
+    overflow-x: auto;
+    /* For smaller screens */
 }
 
 .tasks-table {
     width: 100%;
     border-collapse: collapse;
-    color: #e0e0e0; /* Light gray for text */
+    color: #e0e0e0;
+    /* Light gray for text */
 }
 
 .tasks-table th,
@@ -56,7 +62,8 @@
 
 .tasks-table th {
     font-weight: 600;
-    color: #a5b4fc; /* Accent color for headers */
+    color: #a5b4fc;
+    /* Accent color for headers */
     font-size: 0.9rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -72,7 +79,8 @@
     border-radius: 4px;
     font-family: 'Courier New', Courier, monospace;
     font-size: 0.9em;
-    color: #c7d2fe; /* Light purple/blue */
+    color: #c7d2fe;
+    /* Light purple/blue */
 }
 
 /* Task Status Badges */
@@ -80,7 +88,8 @@
     display: inline-flex;
     align-items: center;
     padding: 0.4em 0.8em;
-    border-radius: 20px; /* Pill shape */
+    border-radius: 20px;
+    /* Pill shape */
     font-size: 0.8rem;
     font-weight: 500;
     border: 1px solid transparent;
@@ -91,42 +100,65 @@
 }
 
 .status-running {
-    background-color: rgba(59, 130, 246, 0.2); /* Blueish */
+    background-color: rgba(59, 130, 246, 0.2);
+    /* Blueish */
     color: #93c5fd;
     border-color: rgba(59, 130, 246, 0.4);
 }
-.status-running .fas { color: #93c5fd; }
+
+.status-running .fas {
+    color: #93c5fd;
+}
 
 .status-completed {
-    background-color: rgba(34, 197, 94, 0.2); /* Greenish */
+    background-color: rgba(34, 197, 94, 0.2);
+    /* Greenish */
     color: #86efac;
     border-color: rgba(34, 197, 94, 0.4);
 }
-.status-completed .fas { color: #86efac; }
+
+.status-completed .fas {
+    color: #86efac;
+}
 
 .status-failed,
 .status-error {
-    background-color: rgba(239, 68, 68, 0.2); /* Reddish */
+    background-color: rgba(239, 68, 68, 0.2);
+    /* Reddish */
     color: #fca5a5;
     border-color: rgba(239, 68, 68, 0.4);
 }
-.status-failed .fas, .status-error .fas { color: #fca5a5; }
+
+.status-failed .fas,
+.status-error .fas {
+    color: #fca5a5;
+}
 
 
 .status-stopped {
-    background-color: rgba(107, 114, 128, 0.2); /* Grayish */
+    background-color: rgba(107, 114, 128, 0.2);
+    /* Grayish */
     color: #d1d5db;
     border-color: rgba(107, 114, 128, 0.4);
 }
-.status-stopped .fas { color: #d1d5db; }
 
-.status-pending, /* Example for other statuses */
+.status-stopped .fas {
+    color: #d1d5db;
+}
+
+.status-pending,
+/* Example for other statuses */
 .status-queued {
-    background-color: rgba(249, 115, 22, 0.2); /* Orangish for pending */
+    background-color: rgba(249, 115, 22, 0.2);
+    /* Orangish for pending */
     color: #fcd34d;
     border-color: rgba(249, 115, 22, 0.4);
 }
-.status-pending .fas, .status-queued .fas { color: #fcd34d; }
+
+.status-pending .fas,
+.status-queued .fas {
+    color: #fcd34d;
+}
 
 
 .task-actions .btn-primary,
@@ -139,23 +171,95 @@
     margin-right: 0;
 }
 
+/* Spinner CSS - Adapted for your site */
+.custom-loader {
+    width: 20px;
+    /* Smaller for table cell */
+    height: 20px;
+    border-radius: 50%;
+    position: relative;
+    animation: rotate 1s linear infinite;
+    display: inline-block;
+    /* To sit next to text if needed */
+    vertical-align: middle;
+    margin-right: 8px;
+    /* Space between spinner and text */
+}
+
+.custom-loader::before,
+.custom-loader::after {
+    content: "";
+    box-sizing: border-box;
+    position: absolute;
+    inset: 0px;
+    border-radius: 50%;
+    /* Adapted border: site uses #a5b4fc for accents, and #93c5fd for running status text */
+    border: 3px solid #93c5fd;
+    /* Base color for spinner to match running status */
+    animation: prixClipFix 2s linear infinite;
+}
+
+.custom-loader::after {
+    /* Accent color, e.g., the purple from your labels */
+    border-color: #a5b4fc;
+    animation: prixClipFix 2s linear infinite, rotate 0.5s linear infinite reverse;
+    inset: 4px;
+    /* Adjusted for smaller size */
+}
+
+@keyframes rotate {
+    0% {
+        transform: rotate(0deg)
+    }
+
+    100% {
+        transform: rotate(360deg)
+    }
+}
+
+@keyframes prixClipFix {
+    0% {
+        clip-path: polygon(50% 50%, 0 0, 0 0, 0 0, 0 0, 0 0)
+    }
+
+    25% {
+        clip-path: polygon(50% 50%, 0 0, 100% 0, 100% 0, 100% 0, 100% 0)
+    }
+
+    50% {
+        clip-path: polygon(50% 50%, 0 0, 100% 0, 100% 100%, 100% 100%, 100% 100%)
+    }
+
+    75% {
+        clip-path: polygon(50% 50%, 0 0, 100% 0, 100% 100%, 0 100%, 0 100%)
+    }
+
+    100% {
+        clip-path: polygon(50% 50%, 0 0, 100% 0, 100% 100%, 0 100%, 0 0)
+    }
+}
+
+
 /* Use btn-primary and btn-secondary from your main style.css */
 /* Add specific small button style if needed, or adjust padding directly */
 .btn-small {
-    padding: 0.6rem 1.2rem; /* Adjust as needed */
+    padding: 0.6rem 1.2rem;
+    /* Adjust as needed */
     font-size: 0.875rem;
 }
 
 /* Custom danger-themed button (if not already in style.css) */
 .btn-danger-themed {
-    background: linear-gradient(135deg, #ef4444, #dc2626); /* Red gradient */
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    /* Red gradient */
     color: white;
     /* padding, border-radius, text-decoration, font-weight, transition, box-shadow from .btn-primary */
 }
 
 .btn-danger-themed:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(239, 68, 68, 0.5); /* Red shadow */
+    box-shadow: 0 8px 25px rgba(239, 68, 68, 0.5);
+    /* Red shadow */
     color: white;
 }
 
@@ -176,7 +280,9 @@
     align-items: center;
     gap: 0.5rem;
 }
-.task-actions .btn-danger-themed:hover, .task-actions .btn-danger-themed:focus {
+
+.task-actions .btn-danger-themed:hover,
+.task-actions .btn-danger-themed:focus {
     background: linear-gradient(135deg, #dc2626, #ef4444);
     color: #fff;
     box-shadow: 0 4px 16px rgba(239, 68, 68, 0.18);
@@ -187,11 +293,13 @@
 .no-tasks-placeholder {
     text-align: center;
     padding: 3rem 1rem;
-    color: #9ca3af; /* Muted text color */
+    color: #9ca3af;
+    /* Muted text color */
 }
 
 .no-tasks-placeholder .icon-muted {
-    color: rgba(156, 163, 175, 0.5); /* More muted for icon */
+    color: rgba(156, 163, 175, 0.5);
+    /* More muted for icon */
     margin-bottom: 1rem;
 }
 
@@ -215,7 +323,8 @@
 }
 
 .stat-card {
-    background: rgba(25, 25, 30, 0.8); /* Slightly different dark shade */
+    background: rgba(25, 25, 30, 0.8);
+    /* Slightly different dark shade */
     padding: 1.5rem;
     border-radius: 10px;
     border: 1px solid rgba(255, 255, 255, 0.08);
@@ -235,7 +344,8 @@
 
 .stat-card-title {
     font-size: 0.9rem;
-    color: #9ca3af; /* Muted */
+    color: #9ca3af;
+    /* Muted */
     margin-bottom: 0.5rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -251,31 +361,47 @@
 .stat-icon {
     opacity: 0.6;
 }
-.stat-icon.running { color: #60a5fa; } /* Light Blue */
-.stat-icon.completed { color: #4ade80; } /* Light Green */
-.stat-icon.failed { color: #f87171; } /* Light Red */
 
+.stat-icon.running {
+    color: #60a5fa;
+}
+
+/* Light Blue */
+.stat-icon.completed {
+    color: #4ade80;
+}
+
+/* Light Green */
+.stat-icon.failed {
+    color: #f87171;
+}
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .tasks-main-title {
         font-size: 1.8rem;
     }
+
     .tasks-table th,
     .tasks-table td {
         padding: 0.7rem 0.5rem;
-        font-size: 0.9rem; /* Slightly smaller text on mobile */
+        font-size: 0.9rem;
+        /* Slightly smaller text on mobile */
     }
+
     .task-actions {
         display: flex;
-        flex-direction: column; /* Stack buttons on small screens */
+        flex-direction: column;
+        /* Stack buttons on small screens */
         gap: 0.5rem;
     }
+
     .task-actions .btn-primary,
     .task-actions .btn-secondary {
         width: 100%;
         margin-right: 0;
     }
+
     .btn-small {
         padding: 0.5rem 1rem;
     }

@@ -3,73 +3,7 @@
 {% block title %}Tasks - Security Toolkit{% endblock %}
 
 {% block extra_css %}
-    <!-- You might want to put these styles in style.css or a new dashboard.css linked in base.html -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/tasks.css') }}">
-    <style>
-    .scan-card {
-        background: #070711;
-        border: 1.5px solid #b0b0b0;
-        border-radius: 12px;
-        margin: 2.5rem 0 1.5rem 0;
-        padding: 2rem 2rem 1.5rem 2rem;
-        box-shadow: 0 2px 16px rgba(0,0,0,0.10);
-        color: #fff;
-        max-width: 900px;
-        margin-left: auto;
-        margin-right: auto;
-    }
-    .scan-card-title {
-        font-size: 1.25rem;
-        font-weight: 700;
-        margin-bottom: 0.7rem;
-        display: flex;
-        align-items: center;
-        gap: 0.7rem;
-    }
-    .scan-status-badge {
-        background: #1a237e;
-        color: #fff;
-        border-radius: 8px;
-        font-size: 0.85rem;
-        padding: 0.2rem 0.8rem;
-        margin-left: 0.7rem;
-        font-weight: 600;
-    }
-    .scan-progress-bar {
-        width: 100%;
-        height: 10px;
-        background: #18181b;
-        border-radius: 6px;
-        margin: 1.2rem 0 1.2rem 0;
-        overflow: hidden;
-    }
-    .scan-progress-bar-inner {
-        height: 100%;
-        background: #0a2a6b;
-        border-radius: 6px;
-        transition: width 0.3s;
-    }
-    .scan-log-title {
-        font-size: 1.1rem;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-        color: #fff;
-    }
-    .scan-log {
-        background: #000;
-        color: #00ff99;
-        font-family: 'Fira Mono', 'Consolas', 'Menlo', monospace;
-        font-size: 0.98rem;
-        border-radius: 8px;
-        padding: 1.2rem 1rem;
-        min-height: 80px;
-        margin-bottom: 0.2rem;
-        border: 1px solid rgba(255,255,255,0.06);
-        overflow-x: auto;
-        white-space: pre-wrap;
-        word-break: break-all;
-    }
-    </style>
 {% endblock %}
 
 {% block content %}
@@ -95,7 +29,7 @@
                     </thead>
                     <tbody>
                         {% for task in tasks %}
-                        <tr class="task-row" data-status="{{ task.status }}">
+                        <tr class="task-row" data-task-id="{{ task.task_id }}" data-status="{{ task.status|lower }}">
                             <td><code class="task-id-code">{{ task.task_id }}</code></td>
                             <td>{{ task.tool_name }}</td>
                             <td>
@@ -105,25 +39,28 @@
                             </td>
                             <td>
                                 <span class="task-status-badge status-{{ task.status|lower }}">
-                                    {% if task.status == 'running' %}
-                                        <i class="fas fa-spinner fa-spin me-1"></i>
-                                    {% elif task.status == 'completed' %}
-                                        <i class="fas fa-check me-1"></i>
-                                    {% elif task.status == 'failed' or task.status == 'error' %}
-                                        <i class="fas fa-times me-1"></i>
-                                    {% elif task.status == 'stopped' %}
-                                        <i class="fas fa-stop me-1"></i>
+                                    {% if task.status|lower == 'running' or task.status|lower == 'starting' %}
+                                        <span class="custom-loader"></span> <!-- Custom loader here -->
+                                        <span class="status-text">{{ task.status|capitalize }}</span>
                                     {% else %}
-                                        <i class="fas fa-clock me-1"></i> <!-- For pending or unknown -->
+                                        {% if task.status == 'completed' %}
+                                            <i class="fas fa-check me-1"></i>
+                                        {% elif task.status == 'failed' or task.status == 'error' %}
+                                            <i class="fas fa-times me-1"></i>
+                                        {% elif task.status == 'stopped' %}
+                                            <i class="fas fa-stop me-1"></i>
+                                        {% else %}
+                                            <i class="fas fa-clock me-1"></i>
+                                        {% endif %}
+                                        <span class="status-text">{{ task.status|capitalize }}</span>
                                     {% endif %}
-                                    {{ task.status|capitalize }}
                                 </span>
                             </td>
                             <td class="task-actions">
                                 <a href="{{ url_for('task_details', task_id=task.task_id) }}" class="signin-button btn-small">
                                     <i class="fas fa-eye me-1"></i>View
                                 </a>
-                                {% if task.status == 'running' %}
+                                {% if task.status|lower == 'running' %}
                                 <button class="btn-secondary btn-small btn-danger-themed stop-task" data-task-id="{{ task.task_id }}">
                                     <i class="fas fa-stop me-1"></i>Stop
                                 </button>
@@ -146,24 +83,6 @@
         {% endif %}
     </div>
 
-    {% if tasks %}
-    <div id="scan-results-section">
-        {% for task in tasks if task.status == 'running' %}
-        <div class="scan-card" id="scan-card-{{ task.task_id }}">
-            <div class="scan-card-title">
-                Scan Results
-                <span class="scan-status-badge">Scanning</span>
-            </div>
-            <div>Scanning in progress...</div>
-            <div class="scan-progress-bar">
-                <div class="scan-progress-bar-inner" id="progress-bar-{{ task.task_id }}" style="width: 10%"></div>
-            </div>
-            <div class="scan-log-title">Scan Log</div>
-            <div class="scan-log" id="scan-log-{{ task.task_id }}">Loading...</div>
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
 </div>
 
 <!-- Task Statistics -->
@@ -172,8 +91,8 @@
         <div class="stat-card-content">
             <div>
                 <h6 class="stat-card-title">Running Tasks</h6>
-                <h2 class="stat-card-value">
-                    {{ tasks|selectattr('status', 'equalto', 'running')|list|length }}
+                <h2 class="stat-card-value running-count">
+                    {{ tasks|selectattr('status', 'in', '(?i)^(running|starting)$')|list|length }}
                 </h2>
             </div>
             <i class="fas fa-play-circle fa-3x stat-icon running"></i>
@@ -183,7 +102,7 @@
         <div class="stat-card-content">
             <div>
                 <h6 class="stat-card-title">Completed Tasks</h6>
-                <h2 class="stat-card-value">
+                <h2 class="stat-card-value completed-count">
                     {{ tasks|selectattr('status', 'equalto', 'completed')|list|length }}
                 </h2>
             </div>
@@ -194,7 +113,7 @@
         <div class="stat-card-content">
             <div>
                 <h6 class="stat-card-title">Failed/Errored</h6>
-                <h2 class="stat-card-value">
+                <h2 class="stat-card-value failed-count">
                     {{ tasks|selectattr('status', 'in', ['failed', 'error'])|list|length }}
                 </h2>
             </div>

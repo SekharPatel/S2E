@@ -13,8 +13,8 @@ body {
 .task-details-card {
     background: rgba(20, 20, 30, 0.97);
     border-radius: 18px;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.18);
-    border: 1px solid rgba(255,255,255,0.07);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.07);
     padding: 2.5rem 2.5rem 2rem 2.5rem;
     min-width: 340px;
     max-width: 1100px;
@@ -42,20 +42,24 @@ body {
     margin-bottom: 1.2rem;
     flex-wrap: nowrap;
 }
+
 .task-details-col {
     flex: 1 1 0;
     min-width: 220px;
 }
+
 .task-details-col dl {
     margin: 0;
     color: #cac0c0;
     font-size: 1.01rem;
 }
+
 .task-details-col dt {
     font-weight: 600;
     color: #a5b4fc;
     margin-top: 0.7rem;
 }
+
 .task-details-col dd {
     margin-left: 0;
     margin-bottom: 0.5rem;
@@ -65,6 +69,7 @@ body {
 .task-details-section {
     margin-top: 1.5rem;
 }
+
 .task-details-subtitle {
     font-size: 1.15rem;
     font-weight: 600;
@@ -74,6 +79,7 @@ body {
     align-items: center;
     gap: 0.5rem;
 }
+
 .task-details-terminal {
     background: #18181b;
     color: #e5dee7;
@@ -83,7 +89,7 @@ body {
     padding: 1.2rem 1rem;
     min-height: 120px;
     margin-bottom: 1.2rem;
-    border: 1px solid rgba(255,255,255,0.06);
+    border: 1px solid rgba(255, 255, 255, 0.06);
     overflow-x: auto;
     white-space: pre-wrap;
     word-break: break-all;
@@ -101,17 +107,126 @@ body {
     transition: background 0.2s;
     margin-right: 0.5rem;
 }
+
 .signin-button.btn-small:hover {
     background: #8025db;
     color: #fff;
 }
+
 .btn-danger-themed {
     background: linear-gradient(135deg, #ef4444, #dc2626);
     color: white;
 }
+
 .btn-danger-themed:hover {
     background: linear-gradient(135deg, #dc2626, #ef4444);
     color: white;
+}
+
+/* Basic Tab Styles */
+.tabs-nav {
+    display: flex;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    margin-bottom: 1.5rem;
+}
+
+.tabs-nav-item {
+    padding: 0.75rem 1.25rem;
+    cursor: pointer;
+    border: 1px solid transparent;
+    border-bottom: none;
+    margin-bottom: -1px;
+    /* Overlap with container border */
+    font-size: 1rem;
+    font-weight: 500;
+    color: #a5b4fc;
+    transition: color 0.2s, border-color 0.2s;
+}
+
+.tabs-nav-item:hover {
+    color: #fff;
+}
+
+.tabs-nav-item.active {
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.2) rgba(255, 255, 255, 0.2) #0a0a0f;
+    /* Left, Top, Right, Bottom (transparent like background) */
+    border-radius: 6px 6px 0 0;
+    background-color: rgba(20, 20, 30, 0.97);
+    /* Match card background */
+    position: relative;
+    bottom: -1px;
+    /* Sits on top of the line */
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Analysis Table Styles */
+.analysis-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    color: #e0e0e0;
+}
+
+.analysis-table th,
+.analysis-table td {
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 0.6rem 0.8rem;
+    text-align: left;
+    font-size: 0.95rem;
+}
+
+.analysis-table th {
+    background-color: rgba(255, 255, 255, 0.05);
+    font-weight: 600;
+    color: #a5b4fc;
+}
+
+.analysis-table td code {
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 0.2em 0.4em;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+.analysis-actions button {
+    font-size: 0.85rem;
+    padding: 0.3rem 0.7rem;
+    margin-right: 0.5rem;
+    margin-top: 0.3rem;
+    border-radius: 20px;
+    /* Pill shape */
+    background: #23243a;
+    color: #fff;
+    border: 1px solid #8025db;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+
+.analysis-actions button:hover {
+    background: #8025db;
+}
+
+.analysis-host-block {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background-color: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+}
+
+.analysis-host-title {
+    font-size: 1.2rem;
+    color: #fff;
+    margin-bottom: 0.8rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 0.5rem;
 }
 
 @media (max-width: 1200px) {
@@ -119,14 +234,16 @@ body {
         max-width: 98vw;
         padding: 1.2rem 0.7rem 1rem 0.7rem;
     }
+
     .task-details-row {
         gap: 1.2rem;
     }
 }
+
 @media (max-width: 900px) {
     .task-details-row {
         flex-direction: column;
         gap: 1.2rem;
         flex-wrap: wrap;
     }
-} 
+}

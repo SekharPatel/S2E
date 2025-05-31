@@ -53,14 +53,14 @@ TOOLS = {
 
 INTENSITY_TOOL_CONFIG = {
     'low': {
-        'nmap': '-p- -T5', # Consider if -sV should be default here too for analysis
+        'nmap': '-A -p 135,445 -T5', # Consider if -sV should be default here too for analysis
         # 'curl': 'google.com',
     },
     'medium': {
-        'nmap': '-p 22,80,443 -T4 -sV', # Added -sV
+        'nmap': '-p 4,5,6 -T4 -sV', # Added -sV
     },
     'high': {
-        'nmap': '-A -T5', # -A includes -sV
+        'nmap': '7,8,9', # -A includes -sV
         # 'ping': 'facebook.com',
     }
 }
