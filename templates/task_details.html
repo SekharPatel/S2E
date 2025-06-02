@@ -80,5 +80,11 @@
 {% endblock %}
 
 {% block extra_js %}
+<script>
+    // Pass data from Flask/Jinja to JavaScript
+    const TASK_ID_FROM_HTML = "{{ task_id }}";
+    const ORIGINAL_NMAP_TARGET_FROM_HTML = "{{ task.original_target or '' }}";
+    const FOLLOW_UP_ACTIONS_FROM_HTML = JSON.parse('{{ follow_up_actions | tojson | safe }}');
+</script>
 <script src="{{ url_for('static', filename='js/task_details.js') }}"></script>
 {% endblock %}

@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const analysisContentDiv = document.getElementById('analysisContent');
         if (!analysisContentDiv) return;
 
-        const taskId = "{{ task_id }}"; // Get task_id from Jinja context
+        const taskId = TASK_ID_FROM_HTML; // Use the global variable
         fetch(`/task/${taskId}/analyze_nmap`)
             .then(response => response.json())
             .then(result => {
@@ -65,8 +65,8 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         let html = '';
-        const followUpActions = JSON.parse('{{ follow_up_actions | tojson | safe }}');
-        const originalNmapTarget = "{{ task.original_target or '' }}";
+        const followUpActions = FOLLOW_UP_ACTIONS_FROM_HTML; // Use the global variable
+        const originalNmapTarget = ORIGINAL_NMAP_TARGET_FROM_HTML; // Use the global variable
 
 
         data.hosts.forEach(hostInfo => {
@@ -137,7 +137,7 @@ document.addEventListener('DOMContentLoaded', function () {
             version: button.dataset.version
         };
         const actionId = button.dataset.actionId;
-        const originalNmapTarget = "{{ task.original_target or '' }}"; // Get from Jinja
+        const originalNmapTarget = ORIGINAL_NMAP_TARGET_FROM_HTML; // Use the global variable
 
         if (!originalNmapTarget && (actionId.includes('nmap') || actionId.includes('target_host'))) {
             alert('Original Nmap target not found for this task. Cannot run host-specific follow-up.');

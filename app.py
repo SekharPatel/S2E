@@ -77,7 +77,7 @@ FOLLOW_UP_ACTIONS = {
         'name': 'SearchSploit Version',
         'tool_id': 'searchsploit',
         'query_format': '{service} {version}',
-        'default_options': '--nmap' # Useful for SearchSploit when parsing Nmap XML, but we are using text
+        'default_options': '' # Useful for SearchSploit when parsing Nmap XML, but we are using text
     },
     'searchsploit_service': {
         'name': 'SearchSploit Service',
