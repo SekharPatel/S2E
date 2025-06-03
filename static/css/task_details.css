@@ -229,6 +229,112 @@ body {
     padding-bottom: 0.5rem;
 }
 
+.analysis-warning {
+    background-color: rgba(255, 193, 7, 0.1);
+    /* Light yellow background */
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    color: #ffc107;
+    /* Yellow text */
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    font-size: 0.9em;
+}
+
+.analysis-info {
+    background-color: rgba(0, 123, 255, 0.1);
+    /* Light blue background */
+    border: 1px solid rgba(0, 123, 255, 0.3);
+    color: #6cb2eb;
+    /* Lighter blue text */
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    font-size: 0.85em;
+    text-align: right;
+}
+
+.os-info-block {
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    background-color: rgba(255, 255, 255, 0.03);
+    border-radius: 6px;
+    font-size: 0.95em;
+}
+
+.os-info-block h5 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    color: #a5b4fc;
+    /* Accent color */
+    font-size: 1.05em;
+}
+
+.os-info-block ul {
+    list-style-type: none;
+    padding-left: 0;
+    margin-bottom: 0;
+}
+
+.os-info-block li {
+    margin-bottom: 0.3rem;
+    color: #cac0c0;
+}
+
+.os-info-block code {
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 0.2em 0.4em;
+    border-radius: 4px;
+    font-size: 0.9em;
+    color: #c7d2fe;
+}
+
+.host-status {
+    font-size: 0.8em;
+    padding: 0.2em 0.5em;
+    border-radius: 10px;
+    margin-left: 0.5em;
+    vertical-align: middle;
+}
+
+.status-up {
+    background-color: #28a745;
+    color: white;
+}
+
+.status-down {
+    background-color: #dc3545;
+    color: white;
+}
+
+.status-unknown {
+    background-color: #6c757d;
+    color: white;
+}
+
+.no-open-ports {
+    color: #9ca3af;
+    /* Muted text */
+    font-style: italic;
+    margin-top: 0.5rem;
+}
+
+.analysis-actions button {
+    /* ... existing styles ... */
+    white-space: nowrap;
+    /* Prevent button text from wrapping too soon */
+}
+
+.btn-danger-themed {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+}
+
+.btn-danger-themed:hover {
+    background: linear-gradient(135deg, #dc2626, #ef4444);
+    color: white;
+}
+
 @media (max-width: 1200px) {
     .task-details-card {
         max-width: 98vw;

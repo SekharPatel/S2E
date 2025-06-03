@@ -1,4 +1,18 @@
 document.addEventListener('DOMContentLoaded', function () {
+    const taskId = TASK_ID_FROM_HTML;
+    const initialTaskStatus = INITIAL_TASK_STATUS;
+    const isNmapTask = IS_NMAP_TASK;
+    let pollIntervalId = null;
+
+    const rawOutputTerminal = document.getElementById('rawOutputTerminal');
+    const stopButtonContainer = document.getElementById('stopButtonContainer');
+    const stopBtn = document.getElementById('stopBtn'); // Might be null initially
+    const taskStatusBadge = document.getElementById('taskStatusBadge');
+    const taskStatusText = document.getElementById('taskStatusText');
+    const analysisContentDiv = document.getElementById('analysisContent');
+    const analysisTabItem = document.querySelector('.tabs-nav-item[data-tab="analysisTab"]');
+
+
     // Tab switching logic
     const tabItems = document.querySelectorAll('.tabs-nav-item');
     const tabContents = document.querySelectorAll('.tab-content');
@@ -13,7 +27,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (this.dataset.tab === 'analysisTab' && !this.dataset.loaded) {
                 loadNmapAnalysis();
-                this.dataset.loaded = true; // Mark as loaded to prevent multiple fetches
             }
         });
     });
@@ -22,7 +35,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const copyBtn = document.getElementById('copyOutputBtn');
     if (copyBtn) {
         copyBtn.onclick = function () {
-            const outputText = document.querySelector('.task-details-terminal').innerText;
+            // Use innerText to get text content without HTML entities for copying
+            const outputText = rawOutputTerminal ? rawOutputTerminal.innerText : '';
             navigator.clipboard.writeText(outputText)
                 .then(() => {
                     copyBtn.innerHTML = '<i class="fas fa-check me-1"></i>Copied!';
@@ -36,19 +50,169 @@ document.addEventListener('DOMContentLoaded', function () {
         };
     }
 
+    function updateStatusDisplay(newStatus) {
+        if (!taskStatusBadge || !taskStatusText) return;
+
+        const statusLower = newStatus.toLowerCase();
+        taskStatusBadge.className = 'task-status-badge status-' + statusLower;
+        taskStatusText.textContent = newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
+
+        let iconClass = 'fas fa-clock me-1'; // Default
+        if (statusLower === 'running') iconClass = 'fas fa-spinner fa-spin me-1';
+        else if (statusLower === 'completed') iconClass = 'fas fa-check me-1';
+        else if (statusLower === 'failed' || statusLower === 'error') iconClass = 'fas fa-times me-1';
+        else if (statusLower === 'stopped') iconClass = 'fas fa-stop me-1';
+        
+        const iconElement = taskStatusBadge.querySelector('i.fas');
+        if (iconElement) {
+            iconElement.className = iconClass;
+        } else {
+            const newIcon = document.createElement('i');
+            newIcon.className = iconClass;
+            taskStatusBadge.insertBefore(newIcon, taskStatusText);
+        }
+    }
+
+
+    function pollTaskStatus() {
+        fetch(`/task/${taskId}/status`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                const currentStatusOnPage = taskStatusText.textContent.toLowerCase();
+                const newStatusLower = data.status.toLowerCase();
+
+                if (newStatusLower !== currentStatusOnPage) {
+                     updateStatusDisplay(data.status);
+                }
+
+                if (newStatusLower === 'running' || newStatusLower === 'starting') {
+                    if (rawOutputTerminal && data.recent_output) {
+                        // Append recent output. For full live output, a different strategy (websockets or SSE)
+                        // or fetching the whole file periodically would be needed.
+                        // For now, let's assume recent_output is what we display or we refresh the whole content.
+                        // To prevent excessive growth, we will replace content rather than append for simplicity here.
+                        // Or, more simply, prompt user to refresh if task is still running for full live.
+                        // For this iteration, let's just show that it's running.
+                        // A better solution is to fetch the full raw output if it has changed.
+                    }
+                    if (stopButtonContainer && !document.getElementById('stopBtn')) {
+                         // Add stop button if not present and task is running
+                        const button = document.createElement('button');
+                        button.id = 'stopBtn';
+                        button.className = 'signin-button btn-danger-themed';
+                        button.style.padding = '0.7rem 1.5rem';
+                        button.innerHTML = '<i class="fas fa-stop me-1"></i>Stop Task';
+                        button.addEventListener('click', handleStopTask);
+                        stopButtonContainer.innerHTML = ''; // Clear previous
+                        stopButtonContainer.appendChild(button);
+                    }
+                } else { // Task is not running (completed, failed, stopped, error)
+                    if (pollIntervalId) {
+                        clearInterval(pollIntervalId);
+                        pollIntervalId = null;
+                    }
+                    if (stopButtonContainer) {
+                        stopButtonContainer.innerHTML = ''; // Remove stop button
+                    }
+                    // Fetch the final full output one last time if status just changed to non-running
+                    if (currentStatusOnPage === 'running' || currentStatusOnPage === 'starting') {
+                        fetchTaskOutput(); // Fetch full output
+                         if (isNmapTask && newStatusLower === 'completed' && analysisTabItem && analysisTabItem.classList.contains('active')) {
+                            loadNmapAnalysis(); // Reload analysis if Nmap completed and tab is active
+                        }
+                    }
+                }
+            })
+            .catch(error => {
+                console.error(`Error polling task ${taskId}:`, error);
+                if (pollIntervalId) clearInterval(pollIntervalId); // Stop polling on error
+            });
+    }
+
+    function fetchTaskOutput() {
+        // Fetches the complete raw output - useful when a task finishes
+        fetch(`/task/${taskId}`) // Assuming this endpoint returns the rendered task_details page or just output
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newOutputTerminal = doc.getElementById('rawOutputTerminal');
+                if (newOutputTerminal && rawOutputTerminal) {
+                    rawOutputTerminal.innerHTML = newOutputTerminal.innerHTML;
+                }
+            })
+            .catch(error => console.error('Error fetching full task output:', error));
+    }
+
+
+    if (stopBtn) { // If stop button exists on initial load
+        stopBtn.addEventListener('click', handleStopTask);
+    }
+
+    function handleStopTask() {
+        const currentStopBtn = document.getElementById('stopBtn'); // Get current button
+        if (!currentStopBtn) return;
+
+        const originalButtonHtml = currentStopBtn.innerHTML;
+        currentStopBtn.disabled = true;
+        currentStopBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Stopping...';
+
+        fetch(`/task/${taskId}/stop`, { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    updateStatusDisplay('Stopped'); // Update status text
+                    if (stopButtonContainer) stopButtonContainer.innerHTML = ''; // Remove button
+                    if (pollIntervalId) clearInterval(pollIntervalId); // Stop polling
+                } else {
+                    alert(`Error stopping task: ${data.message || 'Unknown error'}`);
+                    currentStopBtn.disabled = false;
+                    currentStopBtn.innerHTML = originalButtonHtml;
+                }
+            })
+            .catch(error => {
+                console.error('Error stopping task:', error);
+                alert('An unexpected error occurred while trying to stop the task.');
+                currentStopBtn.disabled = false;
+                currentStopBtn.innerHTML = originalButtonHtml;
+            });
+    }
+
+    // Initial setup based on status
+    if (initialTaskStatus === 'running' || initialTaskStatus === 'starting') {
+        pollIntervalId = setInterval(pollTaskStatus, 3000); // Poll every 3 seconds
+    } else {
+        if (stopButtonContainer) stopButtonContainer.innerHTML = ''; // Ensure stop button is not shown if not running
+    }
+
+
     // Load Nmap Analysis Data
     function loadNmapAnalysis() {
-        const analysisContentDiv = document.getElementById('analysisContent');
-        if (!analysisContentDiv) return;
+        if (!analysisContentDiv || !isNmapTask) return;
+        
+        const isLoaded = analysisTabItem && analysisTabItem.dataset.loaded === 'true';
+        // Only load if not already loaded OR if the status has just completed (handled by poll)
+        // The initial click on the tab will also trigger this.
+        
+        analysisContentDiv.innerHTML = '<p>Loading analysis...</p>';
+        if(analysisTabItem) analysisTabItem.dataset.loaded = 'true'; // Mark as loading/loaded
 
-        const taskId = TASK_ID_FROM_HTML; // Use the global variable
         fetch(`/task/${taskId}/analyze_nmap`)
             .then(response => response.json())
             .then(result => {
                 if (result.status === 'success' && result.data) {
-                    renderAnalysis(result.data, analysisContentDiv);
+                    renderAnalysis(result.data, analysisContentDiv, result.source, result.data.warning);
                 } else {
-                    analysisContentDiv.innerHTML = `<p style="color: #ef4444;">Error loading analysis: ${result.message || 'Unknown error'}</p>`;
+                    let errorMsg = `<p style="color: #ef4444;">Error loading analysis: ${result.message || 'Unknown error'}</p>`;
+                    if (result.data && result.data.warning) {
+                        errorMsg += `<p style="color: #ffc107; font-size:0.9em;">Note: ${result.data.warning}</p>`;
+                    }
+                    analysisContentDiv.innerHTML = errorMsg;
                 }
             })
             .catch(error => {
@@ -57,51 +221,84 @@ document.addEventListener('DOMContentLoaded', function () {
             });
     }
 
-    // Render Parsed Nmap Data
-    function renderAnalysis(data, container) {
+    // Render Parsed Nmap Data (function definition from previous step - unchanged)
+    function renderAnalysis(data, container, source, topLevelWarning) {
+        let html = '';
+
+        if (topLevelWarning) {
+            html += `<div class="analysis-warning"><strong>Notice:</strong> ${topLevelWarning} (Parsed from: ${source || 'unknown'})</div>`;
+        } else if (source) {
+            html += `<div class="analysis-info">Parsed from: ${source === 'xml' ? 'XML Output' : 'Text Output'}</div>`;
+        }
+
+
         if (!data.hosts || data.hosts.length === 0) {
-            container.innerHTML = '<p>No open ports or host information found in the Nmap scan.</p>';
+            html += '<p>No host information found in the Nmap scan results.</p>';
+            container.innerHTML = html;
             return;
         }
 
-        let html = '';
-        const followUpActions = FOLLOW_UP_ACTIONS_FROM_HTML; // Use the global variable
-        const originalNmapTarget = ORIGINAL_NMAP_TARGET_FROM_HTML; // Use the global variable
+        const followUpActions = FOLLOW_UP_ACTIONS_FROM_HTML;
+        const originalNmapTarget = ORIGINAL_NMAP_TARGET_FROM_HTML;
 
 
         data.hosts.forEach(hostInfo => {
             html += `<div class="analysis-host-block">`;
-            html += `<h4 class="analysis-host-title">Host: ${hostInfo.host} ${hostInfo.ip && hostInfo.ip !== hostInfo.host ? '(' + hostInfo.ip + ')' : ''}</h4>`;
+            html += `<h4 class="analysis-host-title">Host: ${hostInfo.host || hostInfo.ip} ${hostInfo.ip && hostInfo.host && hostInfo.ip !== hostInfo.host ? '(' + hostInfo.ip + ')' : ''} <span class="host-status status-${hostInfo.status || 'unknown'}">${hostInfo.status || ''}</span></h4>`;
+            
+            if (hostInfo.osmatch && hostInfo.osmatch.length > 0) {
+                html += `<div class="os-info-block"><h5>Operating System Matches:</h5><ul>`;
+                hostInfo.osmatch.forEach(os => {
+                    html += `<li><strong>${os.name}</strong> (Accuracy: ${os.accuracy}%)`;
+                    if (os.cpe && os.cpe.length > 0) {
+                        html += `<br/>CPEs: ${os.cpe.map(c => `<code>${c}</code>`).join(', ')}`;
+                    }
+                    html += `</li>`;
+                });
+                html += `</ul></div>`;
+            } else if (hostInfo.host_cpes && hostInfo.host_cpes.length > 0) {
+                 html += `<div class="os-info-block"><h5>Host CPEs:</h5><ul>`;
+                 html += `<li>${hostInfo.host_cpes.map(c => `<code>${c}</code>`).join(', ')}</li>`;
+                 html += `</ul></div>`;
+            }
+
 
             if (!hostInfo.ports || hostInfo.ports.length === 0) {
-                html += '<p>No open ports found for this host.</p>';
+                html += '<p class="no-open-ports">No open ports found for this host.</p>';
             } else {
                 html += '<table class="analysis-table">';
                 html += `<thead><tr>
                             <th>Port/Proto</th>
                             <th>Service</th>
-                            <th>Version</th>
+                            <th>Product/Version</th>
+                            <th>CPE</th>
                             <th>Actions</th>
                          </tr></thead><tbody>`;
                 hostInfo.ports.forEach(p => {
+                    let productVersion = p.product || '';
+                    if (p.version) {
+                        productVersion += (productVersion ? ' ' : '') + `(v${p.version})`;
+                    }
+                    if (p.extrainfo) {
+                         productVersion += (productVersion ? ' ' : '') + `(${p.extrainfo})`;
+                    }
+
                     html += `<tr>
                                 <td><code>${p.port}/${p.protocol}</code></td>
                                 <td>${p.service || 'N/A'}</td>
-                                <td>${p.version || 'N/A'}</td>
+                                <td>${productVersion || 'N/A'}</td>
+                                <td>${p.cpe ? `<code>${p.cpe}</code>` : 'N/A'}</td>
                                 <td class="analysis-actions">`;
 
                     Object.keys(followUpActions).forEach(actionId => {
                         const actionConfig = followUpActions[actionId];
-                        // Check if all required placeholders for this action can be filled
                         let canRun = true;
-                        if (actionConfig.query_format.includes("{version}") && !p.version) {
-                            canRun = false;
-                        }
-                        if (actionConfig.query_format.includes("{service}") && !p.service) {
-                            canRun = false;
-                        }
-                        // Add more checks if needed for other placeholders
+                        const queryFormat = actionConfig.query_format.toLowerCase();
 
+                        if (queryFormat.includes("{version}") && !p.version && !p.product) canRun = false;
+                        if (queryFormat.includes("{service}") && !p.service) canRun = false;
+                        if (queryFormat.includes("{cpe}") && !p.cpe) canRun = false;
+                        
                         if (canRun) {
                             html += `<button class="run-follow-up" 
                                         data-action-id="${actionId}" 
@@ -109,8 +306,11 @@ document.addEventListener('DOMContentLoaded', function () {
                                         data-protocol="${p.protocol}" 
                                         data-service="${p.service || ''}" 
                                         data-version="${p.version || ''}"
-                                        title="Run ${actionConfig.name} for ${p.service} ${p.version || ''}">
-                                     <i class="fas fa-play-circle me-1"></i> ${actionConfig.name}
+                                        data-product="${p.product || ''}"
+                                        data-cpe="${p.cpe || ''}"
+                                        data-host-ip="${hostInfo.ip || ''}" 
+                                        title="Run ${actionConfig.name}">
+                                     <i class="fas fa-play-circle me-1"></i> ${actionConfig.name.replace('SearchSploit ', 'SS ')}
                                      </button>`;
                         }
                     });
@@ -118,30 +318,36 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
                 html += '</tbody></table>';
             }
-            html += `</div>`; // end analysis-host-block
+            html += `</div>`; 
         });
         container.innerHTML = html;
 
-        // Add event listeners to newly created follow-up buttons
         document.querySelectorAll('.run-follow-up').forEach(button => {
             button.addEventListener('click', handleFollowUpClick);
         });
     }
 
+    // handleFollowUpClick (function definition from previous step - unchanged)
     function handleFollowUpClick(event) {
         const button = event.currentTarget;
         const serviceInfo = {
             port: button.dataset.port,
             protocol: button.dataset.protocol,
             service: button.dataset.service,
-            version: button.dataset.version
+            version: button.dataset.version,
+            cpe: button.dataset.cpe,
+            host_ip: button.dataset.hostIp 
         };
-        const actionId = button.dataset.actionId;
-        const originalNmapTarget = ORIGINAL_NMAP_TARGET_FROM_HTML; // Use the global variable
+        if (!serviceInfo.version && button.dataset.product) {
+            serviceInfo.version = button.dataset.product;
+        }
 
-        if (!originalNmapTarget && (actionId.includes('nmap') || actionId.includes('target_host'))) {
-            alert('Original Nmap target not found for this task. Cannot run host-specific follow-up.');
-            return;
+        const actionId = button.dataset.actionId;
+        const originalNmapTarget = ORIGINAL_NMAP_TARGET_FROM_HTML;
+
+        if (!originalNmapTarget) {
+             alert('Original Nmap target (overall scan target) not found. Cannot run follow-up.');
+             return;
         }
 
         const originalButtonHtml = button.innerHTML;
@@ -150,42 +356,37 @@ document.addEventListener('DOMContentLoaded', function () {
 
         fetch('/task/run_follow_up', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                // Add CSRF token header if you implement CSRF protection globally
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 action_id: actionId,
-                service_info: serviceInfo,
+                service_info: serviceInfo, 
                 original_nmap_target: originalNmapTarget
             })
         })
-            .then(response => response.json())
-            .then(result => {
-                if (result.status === 'success') {
-                    alert(`Follow-up task started: ${result.message}\nTask ID: ${result.task_id}`);
-                    // Optionally redirect or update UI further
-                    // window.location.href = `/task/${result.task_id}`; // Example: redirect to new task
-                } else {
-                    alert(`Error: ${result.message || 'Could not start follow-up task.'}`);
-                }
-            })
-            .catch(error => {
-                console.error('Error running follow-up action:', error);
-                alert('An unexpected error occurred. Check console.');
-            })
-            .finally(() => {
-                button.disabled = false;
-                button.innerHTML = originalButtonHtml;
-            });
+        .then(response => response.json())
+        .then(result => {
+            if (result.status === 'success') {
+                alert(`Follow-up task started: ${result.message}\nTask ID: ${result.task_id}. You can view it in the Tasks list.`);
+            } else {
+                alert(`Error: ${result.message || 'Could not start follow-up task.'}`);
+            }
+        })
+        .catch(error => {
+            console.error('Error running follow-up action:', error);
+            alert('An unexpected error occurred. Check console.');
+        })
+        .finally(() => {
+            button.disabled = false;
+            button.innerHTML = originalButtonHtml;
+        });
     }
-
-    // If analysis tab is present and should be shown, trigger load if it's the active one
-    // (though unlikely on initial load unless you change default active tab)
+    
+    // Auto-load analysis if Nmap and tab is active on initial page load
+    // (if task is already completed)
     const activeTab = document.querySelector('.tabs-nav-item.active');
-    if (activeTab && activeTab.dataset.tab === 'analysisTab' && !activeTab.dataset.loaded) {
-        loadNmapAnalysis();
-        activeTab.dataset.loaded = true;
+    if (activeTab && activeTab.dataset.tab === 'analysisTab' && isNmapTask) {
+        if (!analysisTabItem.dataset.loaded) { // Check if not already loaded by some other means
+             loadNmapAnalysis();
+        }
     }
-
 });

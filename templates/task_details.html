@@ -24,7 +24,7 @@
             <div class="task-details-col">
                 <dl>
                     <dt>Status</dt>
-                    <dd><span class="task-status-badge status-{{ task.status|lower }}">
+                    <dd><span id="taskStatusBadge" class="task-status-badge status-{{ task.status|lower }}">
                         {% if task.status == 'running' %}
                             <i class="fas fa-spinner fa-spin me-1"></i>
                         {% elif task.status == 'completed' %}
@@ -36,7 +36,7 @@
                         {% else %}
                             <i class="fas fa-clock me-1"></i>
                         {% endif %}
-                        {{ task.status|capitalize }}
+                        <span id="taskStatusText">{{ task.status|capitalize }}</span>
                     </span></dd>
                     <dt>Start Time</dt>
                     <dd>{{ task.start_time.split('T')[0] }} {{ task.start_time.split('T')[1].split('.')[0] }}</dd>
@@ -56,7 +56,7 @@
         <div id="rawOutputTab" class="tab-content active">
             <div class="task-details-section">
                 <h3 class="task-details-subtitle"><i class="fas fa-terminal me-2"></i>Output</h3>
-                <div class="task-details-terminal">{{ output|safe }}</div>
+                <div class="task-details-terminal" id="rawOutputTerminal">{{ output|safe }}</div>
                 <button id="copyOutputBtn" class="signin-button btn-small" style="margin-top:1rem;"><i class="fas fa-copy me-1"></i>Copy Output</button>
             </div>
         </div>
@@ -71,10 +71,12 @@
             </div>
         </div>
         {% endif %}
-
+        
+        <div id="stopButtonContainer" style="margin-top:2rem;">
         {% if task.status == 'running' %}
-        <button id="stopBtn" class="btn-secondary btn-danger-themed" style="margin-top:2rem;"><i class="fas fa-stop me-1"></i>Stop Task</button>
+            <button id="stopBtn" class="signin-button btn-danger-themed" style="padding: 0.7rem 1.5rem;"><i class="fas fa-stop me-1"></i>Stop Task</button>
         {% endif %}
+        </div>
     </div>
 </div>
 {% endblock %}
@@ -85,6 +87,8 @@
     const TASK_ID_FROM_HTML = "{{ task_id }}";
     const ORIGINAL_NMAP_TARGET_FROM_HTML = "{{ task.original_target or '' }}";
     const FOLLOW_UP_ACTIONS_FROM_HTML = JSON.parse('{{ follow_up_actions | tojson | safe }}');
+    const INITIAL_TASK_STATUS = "{{ task.status|lower }}"; // Pass initial status
+    const IS_NMAP_TASK = "{{ show_analysis_tab }}".toLowerCase() === "true"; // Pass if it's an Nmap task
 </script>
 <script src="{{ url_for('static', filename='js/task_details.js') }}"></script>
 {% endblock %}
