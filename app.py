@@ -7,87 +7,50 @@ import time
 import secrets
 from datetime import datetime
 from functools import wraps
-import re # For Nmap parsing
-import nmap # For Nmap XML parsing (pip install python-nmap)
+import re
+import nmap
 
 app = Flask(__name__, static_url_path='/static', static_folder='static')
 app.secret_key = secrets.token_hex(16)
 
-# --- Application Configuration ---
-TOOLS = {
-    'nmap': {
-        'name': 'Nmap',
-        'description': 'Network scanner for discovering hosts and services',
-        'command': 'nmap {target} {options}',
-        'default_options': '-v -sV', # -sV for version detection. XML gives more if -A is used.
-        'help_text': 'Target can be IP address, hostname, or subnet (e.g., 192.168.1.1, example.com, 192.168.1.0/24). Use -A for OS detection and more script output for richer XML.'
-    },
-    'searchsploit': {
-        'name': 'SearchSploit',
-        'description': 'Exploit-DB search tool',
-        'command': 'searchsploit {query} {options}',
-        'default_options': '',
-        'help_text': 'Search for exploits by keyword or software version'
-    },
-    'sqlmap': {
-        'name': 'SQLMap',
-        'description': 'Automated SQL injection tool',
-        'command': 'sqlmap -u {target} {options}',
-        'default_options': '--batch',
-        'help_text': 'Target should be a URL with a parameter (e.g., http://example.com/page.php?id=1)'
-    },
-    'dirb': {
-        'name': 'Dirb',
-        'description': 'Web content scanner',
-        'command': 'dirb {target} {options}',
-        'default_options': '',
-        'help_text': 'Target should be the base URL (e.g., http://example.com/)'
-    },
-    'curl': {
-        'name': 'curl',
-        'description': 'curl tool',
-        'command': 'curl {target} {options}',
-        'default_options': '',
-        'help_text': 'Target should be the IP address or hostname to curl'
-    }
-}
+# --- Load Application Configuration from JSON ---
+BASE_DIR = os.path.abspath(os.path.dirname(__file__)) # Gets the directory where app.py is located
+CONFIG_FILE_PATH = os.path.join(BASE_DIR, 'config.json')
 
-INTENSITY_TOOL_CONFIG = {
-    'low': {
-        'nmap': '-A -p 135,445 -T4', # Changed to -T4 from -T5, -A implies -sV and OS detection
-    },
-    'medium': {
-        'nmap': '-sV -p- -T4 --min-rate=1000', # Common fast full port TCP scan with version
-    },
-    'high': {
-        'nmap': '-A -p- -T4 --min-rate=1000', # -A for comprehensive, all TCP ports
-    }
-}
+def load_config(file_path):
+    app.logger.info(f"Attempting to load configuration from: {file_path}") # Add this log
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            config_data = json.load(f)
+        app.logger.info(f"Configuration loaded successfully from {file_path}")
+        return config_data
+    except FileNotFoundError:
+        app.logger.error(f"CRITICAL: Configuration file {file_path} not found. Application may not work correctly.")
+        return {} # Return empty dict or raise an error
+    except json.JSONDecodeError as e:
+        app.logger.error(f"CRITICAL: Error decoding JSON from {file_path}: {e}. Application may not work correctly.")
+        return {} # Return empty dict or raise an error
+    except Exception as e:
+        app.logger.error(f"CRITICAL: An unexpected error occurred while loading config from {file_path}: {e}")
+        return {}
 
-FOLLOW_UP_ACTIONS = {
-    'searchsploit_version': {
-        'name': 'SearchSploit Version',
-        'tool_id': 'searchsploit',
-        'query_format': '{service} {version}',
-        'default_options': '--nmap'
-    },
-    'searchsploit_service': {
-        'name': 'SearchSploit Service',
-        'tool_id': 'searchsploit',
-        'query_format': '{service}',
-        'default_options': ''
-    },
-    'searchsploit_cpe': { # New follow-up for CPE
-        'name': 'SearchSploit CPE',
-        'tool_id': 'searchsploit',
-        'query_format': '{cpe}', # Assumes CPE string can be directly searched
-        'default_options': ''
-    }
-}
+config = load_config(CONFIG_FILE_PATH)
+
+# Assign to global variables (or access via config dictionary throughout the app)
+TOOLS = config.get('TOOLS', {})
+INTENSITY_TOOL_CONFIG = config.get('INTENSITY_TOOL_CONFIG', {})
+FOLLOW_UP_ACTIONS = config.get('FOLLOW_UP_ACTIONS', {})
+USERS = config.get('USERS', {'admin': 'defaultfallbackpassword'}) # Provide a fallback or ensure it's always in config
+
+if not TOOLS or not USERS: # Basic check if essential config is missing
+    app.logger.warning("Essential configuration (TOOLS or USERS) might be missing or failed to load from config.json.")
+    # You might want to exit here if config is absolutely critical:
+    # import sys
+    # sys.exit("Failed to load critical configuration. Exiting.")
 
 
+# --- Session Management ---
 TASKS = {}
-USERS = {'admin': 'securepassword123'}
 
 # --- Authentication ---
 def login_required(f):
@@ -243,49 +206,13 @@ def _create_and_start_task(tool_id, target_or_query, options_str):
     return task_id_str, None
 
 
-# --- Main Application Routes (index, tool_page, run, list_tasks, task_details_output_part) are similar ---
+# --- Main Application Routes (index, run, list_tasks, task_details_output_part) are similar ---
 @app.route('/')
 def index():
     if 'username' in session:
         return redirect(url_for('home'))
     # Pass tools to index.html if it needs them, or remove if not used by index.html directly
     return render_template('index.html', tools=TOOLS if 'username' not in session else None)
-
-
-@app.route('/tool/<tool_id>')
-@login_required
-def tool_page(tool_id):
-    if tool_id not in TOOLS:
-        return redirect(url_for('index'))
-    tool = TOOLS[tool_id].copy()
-    if 'default_options' not in tool:
-        tool['default_options'] = ''
-    return render_template('tool.html', tool=tool, tool_id=tool_id)
-
-@app.route('/run', methods=['POST'])
-@login_required
-def run():
-    tool_id = request.form.get('tool_id')
-    target_or_query = request.form.get('target', '')
-    if not target_or_query:
-        target_or_query = request.form.get('query', '')
-
-    options_from_form = request.form.get('options', '')
-    tool_options_str = options_from_form if options_from_form else TOOLS.get(tool_id, {}).get('default_options', '')
-
-    created_task_id, error_message = _create_and_start_task(tool_id, target_or_query, tool_options_str)
-
-    if error_message:
-        return jsonify({'status': 'error', 'message': error_message}), 400
-    if not created_task_id:
-        return jsonify({'status': 'error', 'message': 'Task creation failed'}), 500
-
-    tool_config = TOOLS[tool_id]
-    return jsonify({
-        'status': 'success',
-        'message': f'Started {tool_config["name"]}',
-        'task_id': created_task_id
-    })
 
 @app.route('/tasks')
 @login_required
@@ -454,9 +381,8 @@ def parse_nmap_output_simple(output_content):
 
 
 def parse_nmap_xml_python_nmap(xml_file_path):
-    """
-    Parses Nmap XML output using the python-nmap library.
-    """
+    # Parses Nmap XML output using the python-nmap library.
+
     nm = nmap.PortScanner()
     parsed_data = {"hosts": []}
     try:
@@ -674,6 +600,10 @@ def run_follow_up_action():
 
 # --- Main Entry Point ---
 if __name__ == '__main__':
-    # Ensure output directory exists on startup, though individual functions also check
     os.makedirs('output', exist_ok=True)
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # Ensure config is loaded before running
+    if not config:
+        print("ERROR: Configuration could not be loaded. Please check config.json and logs.")
+        print("Application will exit.")
+    else:
+        app.run(debug=True, host='0.0.0.0', port=5000)

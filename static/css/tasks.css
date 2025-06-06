@@ -2,16 +2,180 @@
 
 /* Inherit body styles from style.css */
 
-.tasks-container {
+.tasks-page-wrapper {
+    display: flex;
+    gap: 1.5rem; 
+    align-items: flex-start;
+    width: 100%;
+    margin-bottom: 2rem; 
+    position: relative; /* For positioning children if needed, and managing overflow */
+    overflow: hidden; /* Prevents horizontal scroll during transition if widths temporarily exceed 100% */
+}
+
+.tasks-list-container {
     background: rgba(15, 15, 15, 0.85);
-    /* Dark, semi-transparent */
     padding: 2rem;
     border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3), 0 0 20px rgba(99, 102, 241, 0.1);
-    margin-bottom: 2rem;
     backdrop-filter: blur(10px);
+    
+    flex: 1 1 100%; /* Default: takes all available space if preview is closed */
+    min-width: 0; 
+    transition: flex-grow 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), 
+                flex-shrink 0.4s cubic-bezier(0.25, 0.8, 0.25, 1),
+                min-width 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
+
+.tasks-list-container.preview-open {
+    /* --- MODIFIED SECTION START --- */
+    flex-basis: 40%; /* Takes 40% when preview is open */
+    flex-grow: 1;    /* Allow it to grow if preview is smaller than its basis */
+    flex-shrink: 1;  /* Allow it to shrink if needed */
+    min-width: 250px; /* A reasonable minimum width for the shrunk list */
+    /* --- MODIFIED SECTION END --- */
+}
+
+.tasks-list-container.preview-open .tasks-table .col-tool,
+.tasks-list-container.preview-open .tasks-table .col-start-time,
+.tasks-list-container.preview-open .tasks-table .col-status {
+    display: none;
+}
+
+
+.task-preview-pane {
+    background: rgba(25, 25, 35, 0.92);
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    
+    /* --- MODIFIED SECTION START --- */
+    flex-basis: 0; /* Initially wants no space */
+    flex-grow: 0;  /* Does not grow initially */
+    width: 0;      /* Explicitly no width */
+    min-width: 0;  /* Allow it to have no min-width when hidden */
+    /* --- MODIFIED SECTION END --- */
+
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(30px);
+    transition: flex-basis 0.4s cubic-bezier(0.25, 0.8, 0.25, 1),
+                flex-grow 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), /* Keep grow transition */
+                /* width 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), /* Can remove width transition if flex-basis handles it */
+                min-width 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), /* Transition min-width */
+                opacity 0.3s 0.1s cubic-bezier(0.25, 0.8, 0.25, 1), 
+                visibility 0s 0.4s,
+                transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    
+    display: flex;
+    flex-direction: column;
+    height: auto; 
+    max-height: calc(80vh - 100px);
+    /* min-height: 300px; /* Keep a min-height for when it's open */
+}
+
+.task-preview-pane.open {
+    /* --- MODIFIED SECTION START --- */
+    flex-basis: 60%; /* Target size when open (adjust percentage as needed) */
+    flex-grow: 1;    /* Allow it to grow to its basis, or more if space available */
+    min-width: 300px; /* Ensure it's at least somewhat visible even if basis is small */
+                     /* Width will be determined by flex-basis and available space */
+    /* --- MODIFIED SECTION END --- */
+    
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(0);
+    transition-delay: 0s; /* Apply all transitions immediately when .open is added */
+}
+
+.preview-pane-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 1rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    flex-shrink: 0; /* Header should not shrink */
+}
+
+.preview-pane-header h3 {
+    margin: 0;
+    font-size: 1.4rem;
+    color: #a5b4fc;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; /* Handle long task IDs in title */
+}
+
+.close-preview-btn {
+    background: transparent;
+    border: none;
+    color: #9ca3af;
+    font-size: 1.8rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0.2rem 0.5rem;
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+.close-preview-btn:hover {
+    color: #fff;
+    transform: scale(1.1);
+}
+
+.preview-pane-content {
+    flex-grow: 1;
+    overflow-y: auto;
+    font-size: 0.9rem;
+    color: #e0e0e0;
+    line-height: 1.6;
+    white-space: pre-wrap; 
+    word-break: break-all;
+    background: rgba(0,0,0,0.25);
+    padding: 1rem;
+    border-radius: 6px;
+    min-height: 150px;
+    border: 1px solid rgba(255,255,255,0.05);
+    /* Custom scrollbar for webkit browsers */
+}
+.preview-pane-content::-webkit-scrollbar {
+    width: 8px;
+}
+.preview-pane-content::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.1);
+    border-radius: 4px;
+}
+.preview-pane-content::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.2);
+    border-radius: 4px;
+}
+.preview-pane-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+
+.preview-pane-content .text-muted {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    min-height: 150px; /* Ensure text-muted also has height */
+    color: #6c757d;
+}
+
+.preview-pane-footer {
+    padding-top: 1rem;
+    margin-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: right;
+    flex-shrink: 0; /* Footer should not shrink */
+}
+
+.task-stats-grid {
+    width: 100%; /* Ensure it takes full width if outside the flex wrapper */
+    margin-top: 2rem; /* Add some space above it */
+} 
+
 
 .tasks-header {
     margin-bottom: 1.5rem;

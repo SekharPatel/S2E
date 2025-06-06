@@ -1,0 +1,73 @@
+{
+    "TOOLS": {
+        "nmap": {
+            "name": "Nmap",
+            "description": "Network scanner for discovering hosts and services",
+            "command": "nmap {target} {options}",
+            "default_options": "-v -sV",
+            "help_text": "Target can be IP address, hostname, or subnet. Use -A for OS detection and richer XML."
+        },
+        "searchsploit": {
+            "name": "SearchSploit",
+            "description": "Exploit-DB search tool",
+            "command": "searchsploit {query} {options}",
+            "default_options": "",
+            "help_text": "Search for exploits by keyword or software version"
+        },
+        "sqlmap": {
+            "name": "SQLMap",
+            "description": "Automated SQL injection tool",
+            "command": "sqlmap -u {target} {options}",
+            "default_options": "--batch",
+            "help_text": "Target should be a URL with a parameter (e.g., http://example.com/page.php?id=1)"
+        },
+        "dirb": {
+            "name": "Dirb",
+            "description": "Web content scanner",
+            "command": "dirb {target} {options}",
+            "default_options": "",
+            "help_text": "Target should be the base URL (e.g., http://example.com/)"
+        },
+        "curl": {
+            "name": "curl",
+            "description": "curl tool",
+            "command": "curl {target} {options}",
+            "default_options": "",
+            "help_text": "Target should be the IP address or hostname to curl"
+        }
+    },
+    "INTENSITY_TOOL_CONFIG": {
+        "low": {
+            "nmap": "-A -p 135,445 -T4"
+        },
+        "medium": {
+            "nmap": "-sV -p- -T4 --min-rate=1000"
+        },
+        "high": {
+            "nmap": "-A -p- -T4 --min-rate=1000"
+        }
+    },
+    "FOLLOW_UP_ACTIONS": {
+        "searchsploit_version": {
+            "name": "SearchSploit Version",
+            "tool_id": "searchsploit",
+            "query_format": "{service} {version}",
+            "default_options": "--nmap"
+        },
+        "searchsploit_service": {
+            "name": "SearchSploit Service",
+            "tool_id": "searchsploit",
+            "query_format": "{service}",
+            "default_options": ""
+        },
+        "searchsploit_cpe": {
+            "name": "SearchSploit CPE",
+            "tool_id": "searchsploit",
+            "query_format": "{cpe}",
+            "default_options": ""
+        }
+    },
+    "USERS": {
+        "admin": "securepassword123"
+    }
+}

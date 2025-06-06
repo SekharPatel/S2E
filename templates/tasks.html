@@ -7,85 +7,102 @@
 {% endblock %}
 
 {% block content %}
-<div class="tasks-container">
-    <div class="tasks-header">
-        <h1 class="tasks-main-title">
-            <i class="fas fa-tasks me-2"></i>Task Manager
-        </h1>
-    </div>
+<div class="tasks-page-wrapper">
+    <div class="tasks-list-container" id="tasksListContainer">
+        <div class="tasks-header">
+            <h1 class="tasks-main-title">
+                <i class="fas fa-tasks me-2"></i>Task Manager
+            </h1>
+        </div>
 
-    <div class="tasks-content-wrapper">
-        {% if tasks %}
-            <div class="tasks-table-responsive">
-                <table class="tasks-table">
-                    <thead>
-                        <tr>
-                            <th>Task ID</th>
-                            <th>Tool</th>
-                            <th>Start Time</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for task in tasks %}
-                        <tr class="task-row" data-task-id="{{ task.task_id }}" data-status="{{ task.status|lower }}">
-                            <td><code class="task-id-code">{{ task.task_id }}</code></td>
-                            <td>{{ task.tool_name }}</td>
-                            <td>
-                                <span title="{{ task.start_time }}">
-                                    {{ task.start_time.split('T')[0] }} {{ task.start_time.split('T')[1].split('.')[0] }}
-                                </span>
-                            </td>
-                            <td>
-                                <span class="task-status-badge status-{{ task.status|lower }}">
-                                    {% if task.status|lower == 'running' or task.status|lower == 'starting' %}
-                                        <span class="custom-loader"></span> <!-- Custom loader here -->
-                                        <span class="status-text">{{ task.status|capitalize }}</span>
-                                    {% else %}
-                                        {% if task.status == 'completed' %}
-                                            <i class="fas fa-check me-1"></i>
-                                        {% elif task.status == 'failed' or task.status == 'error' %}
-                                            <i class="fas fa-times me-1"></i>
-                                        {% elif task.status == 'stopped' %}
-                                            <i class="fas fa-stop me-1"></i>
+        <div class="tasks-content-wrapper">
+            {% if tasks %}
+                <div class="tasks-table-responsive">
+                    <table class="tasks-table" id="tasksTable">
+                        <thead>
+                            <tr>
+                                <th class="col-task-id">Task ID</th>
+                                <th class="col-tool">Tool</th>
+                                <th class="col-start-time">Start Time</th>
+                                <th class="col-status">Status</th>
+                                <th class="col-actions">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for task in tasks %}
+                            <tr class="task-row" data-task-id="{{ task.task_id }}" data-status="{{ task.status|lower }}">
+                                <td class="col-task-id"><code class="task-id-code">{{ task.task_id }}</code></td>
+                                <td class="col-tool">{{ task.tool_name }}</td>
+                                <td class="col-start-time">
+                                    <span title="{{ task.start_time }}">
+                                        {{ task.start_time.split('T')[0] }} {{ task.start_time.split('T')[1].split('.')[0] }}
+                                    </span>
+                                </td>
+                                <td class="col-status">
+                                    <span class="task-status-badge status-{{ task.status|lower }}">
+                                        {% if task.status|lower == 'running' or task.status|lower == 'starting' %}
+                                            <span class="custom-loader"></span>
+                                            <span class="status-text">{{ task.status|capitalize }}</span>
                                         {% else %}
-                                            <i class="fas fa-clock me-1"></i>
+                                            {% if task.status == 'completed' %}
+                                                <i class="fas fa-check me-1"></i>
+                                            {% elif task.status == 'failed' or task.status == 'error' %}
+                                                <i class="fas fa-times me-1"></i>
+                                            {% elif task.status == 'stopped' %}
+                                                <i class="fas fa-stop me-1"></i>
+                                            {% else %}
+                                                <i class="fas fa-clock me-1"></i>
+                                            {% endif %}
+                                            <span class="status-text">{{ task.status|capitalize }}</span>
                                         {% endif %}
-                                        <span class="status-text">{{ task.status|capitalize }}</span>
+                                    </span>
+                                </td>
+                                <td class="task-actions col-actions">
+                                    <button class="signin-button btn-small view-task-preview" data-task-id="{{ task.task_id }}">
+                                        <i class="fas fa-eye me-1"></i>View
+                                    </button>
+                                    {% if task.status|lower == 'running' %}
+                                    <button class="btn-secondary btn-small btn-danger-themed stop-task" data-task-id="{{ task.task_id }}">
+                                        <i class="fas fa-stop me-1"></i>Stop
+                                    </button>
                                     {% endif %}
-                                </span>
-                            </td>
-                            <td class="task-actions">
-                                <a href="{{ url_for('task_details', task_id=task.task_id) }}" class="signin-button btn-small">
-                                    <i class="fas fa-eye me-1"></i>View
-                                </a>
-                                {% if task.status|lower == 'running' %}
-                                <button class="btn-secondary btn-small btn-danger-themed stop-task" data-task-id="{{ task.task_id }}">
-                                    <i class="fas fa-stop me-1"></i>Stop
-                                </button>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        {% else %}
-            <div class="no-tasks-placeholder">
-                <i class="fas fa-clipboard-list fa-3x icon-muted"></i>
-                <h5 class="no-tasks-title">No Tasks Found</h5>
-                <p class="no-tasks-text">There are no tasks to display. Start a new task.</p>
-                <a href="{{ url_for('index') }}" class="signin-button">
-                    <i class="fas fa-home me-1"></i>Go to Home
-                </a>
-            </div>
-        {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="no-tasks-placeholder">
+                    <i class="fas fa-clipboard-list fa-3x icon-muted"></i>
+                    <h5 class="no-tasks-title">No Tasks Found</h5>
+                    <p class="no-tasks-text">There are no tasks to display. Start a new task.</p>
+                    <a href="{{ url_for('index') }}" class="signin-button">
+                        <i class="fas fa-home me-1"></i>Go to Home
+                    </a>
+                </div>
+            {% endif %}
+        </div>
     </div>
 
+    <div class="task-preview-pane" id="taskPreviewPane">
+        <div class="preview-pane-header">
+            <h3 id="previewPaneTitle">Task Preview</h3>
+            <button class="close-preview-btn" id="closePreviewBtn" title="Close Preview">&times;</button>
+        </div>
+        <div class="preview-pane-content" id="previewPaneContent">
+            <p class="text-muted">Select a task to view its preview.</p>
+        </div>
+        <div class="preview-pane-footer">
+            <a href="#" id="moreDetailsLink" class="signin-button btn-small d-none">
+                <i class="fas fa-external-link-alt me-1"></i>Full Details
+            </a>
+        </div>
+    </div>
 </div>
 
-<!-- Task Statistics -->
+
+<!-- Task Statistics (moved outside the main wrapper for layout flexibility) -->
 <div class="task-stats-grid">
     <div class="stat-card">
         <div class="stat-card-content">
