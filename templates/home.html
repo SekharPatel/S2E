@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Quick Run - Security Toolkit{% endblock %}
+{% block title %}Quick Run - Scan 2 Exploit{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
@@ -59,16 +59,5 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
-// Toggle group logic for scan intensity
-const toggleBtns = document.querySelectorAll('.home-toggle-btn');
-const intensityInput = document.getElementById('intensityInput');
-toggleBtns.forEach(btn => {
-    btn.addEventListener('click', function() {
-        toggleBtns.forEach(b => b.classList.remove('active'));
-        this.classList.add('active');
-        intensityInput.value = this.getAttribute('data-value');
-    });
-});
-</script>
+<script src="{{ url_for('static', filename='js/home.js') }}"></script>
 {% endblock %} 
