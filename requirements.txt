@@ -6,4 +6,5 @@ Flask-Migrate==4.0.5
 itsdangerous==2.2.0
 Jinja2==3.1.6
 MarkupSafe==3.0.2
+python-nmap==0.7.1
 Werkzeug==3.1.3
