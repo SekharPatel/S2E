@@ -134,18 +134,18 @@ if (robotWrapper || pupils.length > 0 || frontText || endText) {
     animateElements();
 }
 
-// --- Cursor Trail Effect ---
-document.addEventListener('mousemove', function(e) {
-    let trail = document.createElement('div');
-    trail.className = 'cursor-trail';
-    document.body.appendChild(trail);
+// // --- Cursor Trail Effect ---
+// document.addEventListener('mousemove', function(e) {
+//     let trail = document.createElement('div');
+//     trail.className = 'cursor-trail';
+//     document.body.appendChild(trail);
     
-    trail.style.left = (e.clientX + window.scrollX) + 'px';
-    trail.style.top = (e.clientY + window.scrollY) + 'px';
+//     trail.style.left = (e.clientX + window.scrollX) + 'px';
+//     trail.style.top = (e.clientY + window.scrollY) + 'px';
     
-    setTimeout(function() {
-        if (trail.parentElement) {
-            trail.remove();
-        }
-    }, 300); 
-});
+//     setTimeout(function() {
+//         if (trail.parentElement) {
+//             trail.remove();
+//         }
+//     }, 300); 
+// });
