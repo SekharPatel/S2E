@@ -2,44 +2,39 @@
     "TOOLS": {
         "nmap": {
             "name": "Nmap",
-            "description": "Network scanner for discovering hosts and services",
             "command": "nmap {target} {options}",
             "default_options": "-v -sV"
         },
         "searchsploit": {
             "name": "SearchSploit",
-            "description": "Exploit-DB search tool",
             "command": "searchsploit {query} {options}",
             "default_options": ""
         },
         "sqlmap": {
             "name": "SQLMap",
-            "description": "Automated SQL injection tool",
             "command": "sqlmap -u {target} {options}",
             "default_options": "--batch"
         },
         "dirb": {
             "name": "Dirb",
-            "description": "Web content scanner",
             "command": "dirb {target} {options}",
             "default_options": ""
         },
         "curl": {
             "name": "curl",
-            "description": "curl tool",
             "command": "curl {target} {options}",
             "default_options": ""
         }
     },
     "INTENSITY_TOOL_CONFIG": {
         "low": {
-            "nmap": "-A -p 135,445 -T4"
+            "nmap": "-p 135,445 -T4"
         },
         "medium": {
-            "nmap": "-sV -p- -T4 --min-rate=1000"
+            "nmap": "-p 22,5000 -T4"
         },
         "high": {
-            "nmap": "-A -p- -T4 --min-rate=1000"
+            "nmap": "-p 5000 -T4"
         }
     },
     "FOLLOW_UP_ACTIONS": {

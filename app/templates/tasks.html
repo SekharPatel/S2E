@@ -77,7 +77,7 @@
                     <i class="fas fa-clipboard-list fa-3x icon-muted"></i>
                     <h5 class="no-tasks-title">No Tasks Found</h5>
                     <p class="no-tasks-text">There are no tasks to display. Start a new task.</p>
-                    <a href="{{ url_for('index') }}" class="signin-button">
+                    <a href="{{ url_for('main.index') }}" class="signin-button">
                         <i class="fas fa-home me-1"></i>Go to Home
                     </a>
                 </div>
@@ -109,7 +109,7 @@
             <div>
                 <h6 class="stat-card-title">Running Tasks</h6>
                 <h2 class="stat-card-value running-count">
-                    {{ tasks|selectattr('status', 'in', '(?i)^(running|starting)$')|list|length }}
+                    {{ tasks|selectattr('status', 'in', ['running', 'starting'])|list|length }}
                 </h2>
             </div>
             <i class="fas fa-play-circle fa-3x stat-icon running"></i>

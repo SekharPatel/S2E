@@ -16,12 +16,12 @@
     <div class="bg-animated"></div>
     <nav>
         <div class="nav-container">
-            <a href="{{ url_for('index') }}" class="logo">S2E</a>
+            <a href="{{ url_for('main.index') }}" class="logo">S2E</a>
             <ul class="nav-links">
                 {% if session.username %}
-                <li><a href="{{ url_for('list_tasks') }}">TASKS</a></li>
+                <li><a href="{{ url_for('main.list_tasks') }}">TASKS</a></li>
                 {% else %}
-                <li><a href="{{ url_for('login') }}">TASKS</a></li>
+                <li><a href="{{ url_for('auth.login') }}">TASKS</a></li>
                 {% endif %}
             </ul>
             {% if session.username %}
@@ -33,11 +33,11 @@
                     </svg>
                 </button>
                 <div class="user-dropdown-menu" id="userDropdownMenu">
-                    <a href="{{ url_for('logout') }}">Logout</a>
+                    <a href="{{ url_for('auth.logout') }}">Logout</a>
                 </div>
             </div>
             {% else %}
-            <a href="{{ url_for('login') }}" class="signin-button">Sign In</a>
+            <a href="{{ url_for('auth.login') }}" class="signin-button">Sign In</a>
             {% endif %}
         </div>
     </nav>

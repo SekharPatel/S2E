@@ -14,7 +14,7 @@
         {% if error %}
         <div class="alert alert-danger" style="margin-bottom:1rem; color:#ef4444; background:rgba(0,0,0,0.2); border-radius:6px; padding:0.75rem 1rem;">{{ error }}</div>
         {% endif %}
-        <form action="{{ url_for('login') }}" method="POST">
+        <form action="{{ url_for('auth.login') }}" method="POST">
             <div class="form-group">
                 <label for="username">Username</label>
                 <input type="text" id="username" name="username" placeholder="Username" required>
