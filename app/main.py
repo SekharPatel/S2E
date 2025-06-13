@@ -55,8 +55,14 @@ def task_details(task_id):
         try:
             with open(output_file, 'r', encoding='utf-8') as f:
                 output_content = f.read()
-            # Basic escaping for display in HTML
-            output_content = output_content.replace('<', '<').replace('>', '>')
+            # Properly escape HTML entities while preserving formatting
+            output_content = (output_content
+                .replace('&', '&amp;')
+                .replace('<', '&lt;')
+                .replace('>', '&gt;')
+                .replace('\n', '<br>')
+                .replace(' ', '&nbsp;')
+            )
         except Exception as e:
             output_content = f"Error reading output: {str(e)}"
     

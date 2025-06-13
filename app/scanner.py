@@ -82,17 +82,20 @@ def _create_and_start_task(tool_id, target_or_query, options_str):
     task_id_str = f"{tool_id}_{int(time.time())}"
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
+    final_options = options_str
+
+    default_opts = tool_config.get('default_options', '')
+    if default_opts and default_opts not in final_options:
+        final_options = f"{default_opts} {final_options}"
+
     xml_output_file_path = None
-    final_options_str = options_str
-
     if tool_id == 'nmap':
-        # Use os.path.join for cross-platform compatibility
         xml_output_file_path = os.path.join(OUTPUT_DIR, f"{task_id_str}.xml")
-        if '-oX' not in final_options_str and '-oA' not in final_options_str:
-            final_options_str = f"-oX \"{xml_output_file_path}\" {final_options_str}"
-
-    # Use a dictionary for .format() to avoid errors if one key is missing
-    command_params = {'target': target_or_query, 'query': target_or_query, 'options': final_options_str}
+        # Ensure -oX is not already there (e.g., in default_options)
+        if '-oX' not in final_options and '-oA' not in final_options:
+            final_options = f"-oX \"{xml_output_file_path}\" {final_options}"
+    
+    command_params = {'target': target_or_query, 'query': target_or_query, 'options': final_options}
     command = tool_config['command'].format(**command_params)
 
     TASKS[task_id_str] = {
@@ -106,7 +109,6 @@ def _create_and_start_task(tool_id, target_or_query, options_str):
         'xml_output_file': xml_output_file_path if tool_id == 'nmap' else None
     }
 
-    # MODIFICATION 2: Get the real app object and pass it to the thread
     app = current_app._get_current_object()
     thread = threading.Thread(target=run_tool, args=(task_id_str, command, OUTPUT_DIR, app))
     thread.daemon = True

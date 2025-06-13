@@ -1,5 +1,3 @@
-/* static/css/dashboard-tasks.css */
-
 /* Inherit body styles from style.css */
 
 .tasks-page-wrapper {
@@ -8,8 +6,8 @@
     align-items: flex-start;
     width: 100%;
     margin-bottom: 2rem; 
-    position: relative; /* For positioning children if needed, and managing overflow */
-    overflow: hidden; /* Prevents horizontal scroll during transition if widths temporarily exceed 100% */
+    position: relative;
+    overflow: hidden;
 }
 
 .tasks-list-container {
@@ -19,28 +17,27 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3), 0 0 20px rgba(99, 102, 241, 0.1);
     backdrop-filter: blur(10px);
-    
-    flex: 1 1 100%; /* Default: takes all available space if preview is closed */
+    flex: 1 1 100%;
     min-width: 0; 
-    transition: flex-grow 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), 
-                flex-shrink 0.4s cubic-bezier(0.25, 0.8, 0.25, 1),
+    transition: flex-basis 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), 
                 min-width 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
-.tasks-list-container.preview-open {
-    /* --- MODIFIED SECTION START --- */
-    flex-basis: 40%; /* Takes 40% when preview is open */
-    flex-grow: 1;    /* Allow it to grow if preview is smaller than its basis */
-    flex-shrink: 1;  /* Allow it to shrink if needed */
-    min-width: 250px; /* A reasonable minimum width for the shrunk list */
-    /* --- MODIFIED SECTION END --- */
+/* --- MODIFIED SECTION START --- */
+/* Update selectors to use the new class on the wrapper */
+.tasks-page-wrapper.preview-active .tasks-list-container {
+    flex-basis: 40%;
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 250px;
 }
 
-.tasks-list-container.preview-open .tasks-table .col-tool,
-.tasks-list-container.preview-open .tasks-table .col-start-time,
-.tasks-list-container.preview-open .tasks-table .col-status {
+.tasks-page-wrapper.preview-active .tasks-table .col-tool,
+.tasks-page-wrapper.preview-active .tasks-table .col-start-time,
+.tasks-page-wrapper.preview-active .tasks-table .col-status {
     display: none;
 }
+/* --- MODIFIED SECTION END --- */
 
 
 .task-preview-pane {
@@ -49,46 +46,38 @@
     border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.12);
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-    
-    /* --- MODIFIED SECTION START --- */
-    flex-basis: 0; /* Initially wants no space */
-    flex-grow: 0;  /* Does not grow initially */
-    width: 0;      /* Explicitly no width */
-    min-width: 0;  /* Allow it to have no min-width when hidden */
-    /* --- MODIFIED SECTION END --- */
-
+    flex-basis: 0;
+    flex-grow: 0;
+    width: 0;
+    min-width: 0;
     opacity: 0;
     visibility: hidden;
     transform: translateX(30px);
     transition: flex-basis 0.4s cubic-bezier(0.25, 0.8, 0.25, 1),
-                flex-grow 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), /* Keep grow transition */
-                /* width 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), /* Can remove width transition if flex-basis handles it */
-                min-width 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), /* Transition min-width */
+                flex-grow 0.4s cubic-bezier(0.25, 0.8, 0.25, 1),
+                min-width 0.4s cubic-bezier(0.25, 0.8, 0.25, 1),
                 opacity 0.3s 0.1s cubic-bezier(0.25, 0.8, 0.25, 1), 
                 visibility 0s 0.4s,
                 transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-    
     display: flex;
     flex-direction: column;
     height: auto; 
     max-height: calc(80vh - 100px);
-    /* min-height: 300px; /* Keep a min-height for when it's open */
 }
 
 .task-preview-pane.open {
-    /* --- MODIFIED SECTION START --- */
-    flex-basis: 60%; /* Target size when open (adjust percentage as needed) */
-    flex-grow: 1;    /* Allow it to grow to its basis, or more if space available */
-    min-width: 300px; /* Ensure it's at least somewhat visible even if basis is small */
-                     /* Width will be determined by flex-basis and available space */
-    /* --- MODIFIED SECTION END --- */
-    
+    flex-basis: 60%;
+    flex-grow: 1;
+    min-width: 300px;
     opacity: 1;
     visibility: visible;
     transform: translateX(0);
-    transition-delay: 0s; /* Apply all transitions immediately when .open is added */
+    transition-delay: 0s;
+    max-height: calc(100vh - 80px);
 }
 
+/* (The rest of .task-preview-pane styles remain the same) */
+/* ... */
 .preview-pane-header {
     display: flex;
     justify-content: space-between;
@@ -136,7 +125,6 @@
     border-radius: 6px;
     min-height: 150px;
     border: 1px solid rgba(255,255,255,0.05);
-    /* Custom scrollbar for webkit browsers */
 }
 .preview-pane-content::-webkit-scrollbar {
     width: 8px;
@@ -159,7 +147,7 @@
     justify-content: center;
     align-items: center;
     height: 100%;
-    min-height: 150px; /* Ensure text-muted also has height */
+    min-height: 150px;
     color: #6c757d;
 }
 
@@ -168,14 +156,27 @@
     margin-top: 1rem;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     text-align: right;
-    flex-shrink: 0; /* Footer should not shrink */
+    flex-shrink: 0;
 }
 
-.task-stats-grid {
-    width: 100%; /* Ensure it takes full width if outside the flex wrapper */
-    margin-top: 2rem; /* Add some space above it */
-} 
 
+/* --- NEW RULE TO HIDE STATS CARDS --- */
+.tasks-page-wrapper.preview-active + .task-stats-grid {
+    display: none;
+}
+/* --- END NEW RULE --- */
+
+
+.task-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    width: 100%;
+    margin-top: 2rem;
+}
+
+/* (The rest of the CSS file remains unchanged) */
+/* ... */
 
 .tasks-header {
     margin-bottom: 1.5rem;
@@ -185,7 +186,6 @@
 
 .tasks-main-title {
     font-size: 2.25rem;
-    /* Adjust as needed */
     font-weight: 700;
     background: linear-gradient(135deg, #ffffff, #a5b4fc);
     -webkit-background-clip: text;
@@ -198,22 +198,18 @@
 .tasks-main-title .fas {
     margin-right: 0.75rem;
     color: #a5b4fc;
-    /* Fallback if gradient doesn't apply to icon */
     -webkit-text-fill-color: initial;
-    /* For FontAwesome icons inside gradient text */
 }
 
 
 .tasks-table-responsive {
     overflow-x: auto;
-    /* For smaller screens */
 }
 
 .tasks-table {
     width: 100%;
     border-collapse: collapse;
     color: #e0e0e0;
-    /* Light gray for text */
 }
 
 .tasks-table th,
@@ -227,7 +223,6 @@
 .tasks-table th {
     font-weight: 600;
     color: #a5b4fc;
-    /* Accent color for headers */
     font-size: 0.9rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -244,112 +239,82 @@
     font-family: 'Courier New', Courier, monospace;
     font-size: 0.9em;
     color: #c7d2fe;
-    /* Light purple/blue */
 }
 
-/* Task Status Badges */
 .task-status-badge {
     display: inline-flex;
     align-items: center;
     padding: 0.4em 0.8em;
     border-radius: 20px;
-    /* Pill shape */
     font-size: 0.8rem;
     font-weight: 500;
     border: 1px solid transparent;
 }
-
 .task-status-badge .fas {
     margin-right: 0.4em;
 }
-
 .status-running {
     background-color: rgba(59, 130, 246, 0.2);
-    /* Blueish */
     color: #93c5fd;
     border-color: rgba(59, 130, 246, 0.4);
 }
-
 .status-running .fas {
     color: #93c5fd;
 }
-
 .status-completed {
     background-color: rgba(34, 197, 94, 0.2);
-    /* Greenish */
     color: #86efac;
     border-color: rgba(34, 197, 94, 0.4);
 }
-
 .status-completed .fas {
     color: #86efac;
 }
-
 .status-failed,
 .status-error {
     background-color: rgba(239, 68, 68, 0.2);
-    /* Reddish */
     color: #fca5a5;
     border-color: rgba(239, 68, 68, 0.4);
 }
-
 .status-failed .fas,
 .status-error .fas {
     color: #fca5a5;
 }
-
-
 .status-stopped {
     background-color: rgba(107, 114, 128, 0.2);
-    /* Grayish */
     color: #d1d5db;
     border-color: rgba(107, 114, 128, 0.4);
 }
-
 .status-stopped .fas {
     color: #d1d5db;
 }
-
 .status-pending,
-/* Example for other statuses */
 .status-queued {
     background-color: rgba(249, 115, 22, 0.2);
-    /* Orangish for pending */
     color: #fcd34d;
     border-color: rgba(249, 115, 22, 0.4);
 }
-
 .status-pending .fas,
 .status-queued .fas {
     color: #fcd34d;
 }
-
-
 .task-actions .btn-primary,
 .task-actions .btn-secondary {
     margin-right: 0.5rem;
 }
-
 .task-actions .btn-primary:last-child,
 .task-actions .btn-secondary:last-child {
     margin-right: 0;
 }
-
-/* Spinner CSS - Adapted for your site */
 .custom-loader {
     width: 20px;
-    /* Smaller for table cell */
     height: 20px;
     border-radius: 50%;
     position: relative;
     animation: rotate 1s linear infinite;
     display: inline-block;
-    /* To sit next to text if needed */
     vertical-align: middle;
     margin-right: 8px;
-    /* Space between spinner and text */
 }
-
 .custom-loader::before,
 .custom-loader::after {
     content: "";
@@ -357,76 +322,28 @@
     position: absolute;
     inset: 0px;
     border-radius: 50%;
-    /* Adapted border: site uses #a5b4fc for accents, and #93c5fd for running status text */
     border: 3px solid #93c5fd;
-    /* Base color for spinner to match running status */
     animation: prixClipFix 2s linear infinite;
 }
-
 .custom-loader::after {
-    /* Accent color, e.g., the purple from your labels */
     border-color: #a5b4fc;
     animation: prixClipFix 2s linear infinite, rotate 0.5s linear infinite reverse;
     inset: 4px;
-    /* Adjusted for smaller size */
 }
-
 @keyframes rotate {
-    0% {
-        transform: rotate(0deg)
-    }
-
-    100% {
-        transform: rotate(360deg)
-    }
+    0% { transform: rotate(0deg) }
+    100% { transform: rotate(360deg) }
 }
-
 @keyframes prixClipFix {
-    0% {
-        clip-path: polygon(50% 50%, 0 0, 0 0, 0 0, 0 0, 0 0)
-    }
-
-    25% {
-        clip-path: polygon(50% 50%, 0 0, 100% 0, 100% 0, 100% 0, 100% 0)
-    }
-
-    50% {
-        clip-path: polygon(50% 50%, 0 0, 100% 0, 100% 100%, 100% 100%, 100% 100%)
-    }
-
-    75% {
-        clip-path: polygon(50% 50%, 0 0, 100% 0, 100% 100%, 0 100%, 0 100%)
-    }
-
-    100% {
-        clip-path: polygon(50% 50%, 0 0, 100% 0, 100% 100%, 0 100%, 0 0)
-    }
+    0% { clip-path: polygon(50% 50%, 0 0, 0 0, 0 0, 0 0, 0 0) }
+    25% { clip-path: polygon(50% 50%, 0 0, 100% 0, 100% 0, 100% 0, 100% 0) }
+    50% { clip-path: polygon(50% 50%, 0 0, 100% 0, 100% 100%, 100% 100%, 100% 100%) }
+    75% { clip-path: polygon(50% 50%, 0 0, 100% 0, 100% 100%, 0 100%, 0 100%) }
+    100% { clip-path: polygon(50% 50%, 0 0, 100% 0, 100% 100%, 0 100%, 0 0) }
 }
-
-
-/* Use btn-primary and btn-secondary from your main style.css */
-/* Add specific small button style if needed, or adjust padding directly */
-.btn-small {
-    padding: 0.6rem 1.2rem;
-    /* Adjust as needed */
-    font-size: 0.875rem;
-}
-
-/* Custom danger-themed button (if not already in style.css) */
-.btn-danger-themed {
-    background: linear-gradient(135deg, #ef4444, #dc2626);
-    /* Red gradient */
-    color: white;
-    /* padding, border-radius, text-decoration, font-weight, transition, box-shadow from .btn-primary */
-}
-
-.btn-danger-themed:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(239, 68, 68, 0.5);
-    /* Red shadow */
-    color: white;
-}
-
+.btn-small { padding: 0.6rem 1.2rem; font-size: 0.875rem; }
+.btn-danger-themed { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
+.btn-danger-themed:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(239, 68, 68, 0.5); color: white; }
 .task-actions .btn-danger-themed {
     background: linear-gradient(135deg, #ef4444, #dc2626);
     color: #fff;
@@ -444,7 +361,6 @@
     align-items: center;
     gap: 0.5rem;
 }
-
 .task-actions .btn-danger-themed:hover,
 .task-actions .btn-danger-themed:focus {
     background: linear-gradient(135deg, #dc2626, #ef4444);
@@ -452,121 +368,29 @@
     box-shadow: 0 4px 16px rgba(239, 68, 68, 0.18);
     transform: translateY(-2px) scale(1.04);
 }
-
-/* No Tasks Placeholder */
-.no-tasks-placeholder {
-    text-align: center;
-    padding: 3rem 1rem;
-    color: #9ca3af;
-    /* Muted text color */
-}
-
-.no-tasks-placeholder .icon-muted {
-    color: rgba(156, 163, 175, 0.5);
-    /* More muted for icon */
-    margin-bottom: 1rem;
-}
-
-.no-tasks-placeholder .no-tasks-title {
-    font-size: 1.5rem;
-    color: #e0e0e0;
-    margin-bottom: 0.5rem;
-}
-
-.no-tasks-placeholder .no-tasks-text {
-    margin-bottom: 1.5rem;
-    font-size: 1rem;
-}
-
-
-/* Task Statistics Grid */
-.task-stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1.5rem;
-}
-
+.no-tasks-placeholder { text-align: center; padding: 3rem 1rem; color: #9ca3af; }
+.no-tasks-placeholder .icon-muted { color: rgba(156, 163, 175, 0.5); margin-bottom: 1rem; }
+.no-tasks-placeholder .no-tasks-title { font-size: 1.5rem; color: #e0e0e0; margin-bottom: 0.5rem; }
+.no-tasks-placeholder .no-tasks-text { margin-bottom: 1.5rem; font-size: 1rem; }
 .stat-card {
     background: rgba(25, 25, 30, 0.8);
-    /* Slightly different dark shade */
     padding: 1.5rem;
     border-radius: 10px;
     border: 1px solid rgba(255, 255, 255, 0.08);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
-
-.stat-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-}
-
-.stat-card-content {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.stat-card-title {
-    font-size: 0.9rem;
-    color: #9ca3af;
-    /* Muted */
-    margin-bottom: 0.5rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.stat-card-value {
-    font-size: 2.25rem;
-    font-weight: 700;
-    color: #ffffff;
-    line-height: 1;
-}
-
-.stat-icon {
-    opacity: 0.6;
-}
-
-.stat-icon.running {
-    color: #60a5fa;
-}
-
-/* Light Blue */
-.stat-icon.completed {
-    color: #4ade80;
-}
-
-/* Light Green */
-.stat-icon.failed {
-    color: #f87171;
-}
-
-/* Responsive adjustments */
+.stat-card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3); }
+.stat-card-content { display: flex; justify-content: space-between; align-items: center; }
+.stat-card-title { font-size: 0.9rem; color: #9ca3af; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px; }
+.stat-card-value { font-size: 2.25rem; font-weight: 700; color: #ffffff; line-height: 1; }
+.stat-icon { opacity: 0.6; }
+.stat-icon.running { color: #60a5fa; }
+.stat-icon.completed { color: #4ade80; }
+.stat-icon.failed { color: #f87171; }
 @media (max-width: 768px) {
-    .tasks-main-title {
-        font-size: 1.8rem;
-    }
-
-    .tasks-table th,
-    .tasks-table td {
-        padding: 0.7rem 0.5rem;
-        font-size: 0.9rem;
-        /* Slightly smaller text on mobile */
-    }
-
-    .task-actions {
-        display: flex;
-        flex-direction: column;
-        /* Stack buttons on small screens */
-        gap: 0.5rem;
-    }
-
-    .task-actions .btn-primary,
-    .task-actions .btn-secondary {
-        width: 100%;
-        margin-right: 0;
-    }
-
-    .btn-small {
-        padding: 0.5rem 1rem;
-    }
+    .tasks-main-title { font-size: 1.8rem; }
+    .tasks-table th, .tasks-table td { padding: 0.7rem 0.5rem; font-size: 0.9rem; }
+    .task-actions { display: flex; flex-direction: column; gap: 0.5rem; }
+    .task-actions .btn-primary, .task-actions .btn-secondary { width: 100%; margin-right: 0; }
+    .btn-small { padding: 0.5rem 1rem; }
 }
