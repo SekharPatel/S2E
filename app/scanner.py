@@ -1,31 +1,28 @@
-# /S2E/app/scanner.py
-
 from flask import Blueprint, request, jsonify, redirect, url_for, flash, current_app
+from markupsafe import escape
 import os
 import subprocess
 import threading
 import time
 from datetime import datetime
+import psutil
 
 from .auth import login_required
-from . import TASKS # Import the shared TASKS dictionary
-from .utils import parse_nmap_xml_python_nmap, parse_nmap_output_simple # Import parsers from utils
+from . import TASKS 
+from .utils import parse_nmap_xml_python_nmap, parse_nmap_output_simple
 
 scanner_bp = Blueprint('scanner', __name__)
 
-
 # --- Tool Execution Logic ---
 
-# MODIFICATION 1: Add 'app' as an argument and wrap the function in app.app_context()
-def run_tool(task_id, command, output_dir, app):
-    """The target function for the scanning thread."""
-    # This 'with' block creates the necessary application context for the thread
+def run_tool(task_id, command, raw_output_file, app):
+    """The target function for the scanning thread. Writes to a specific file."""
     with app.app_context():
         try:
-            os.makedirs(output_dir, exist_ok=True)
-            output_file = os.path.join(output_dir, f"{task_id}.txt")
-
-            with open(output_file, 'w', encoding='utf-8') as f:
+            # Ensure the parent directory for the output file exists
+            os.makedirs(os.path.dirname(raw_output_file), exist_ok=True)
+            
+            with open(raw_output_file, 'w', encoding='utf-8') as f:
                 f.write(f"Command: {command}\n")
                 f.write(f"Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
                 f.write("-" * 50 + "\n")
@@ -37,7 +34,7 @@ def run_tool(task_id, command, output_dir, app):
             TASKS[task_id]['process'] = process
             TASKS[task_id]['status'] = 'running'
 
-            with open(output_file, 'a', encoding='utf-8') as f:
+            with open(raw_output_file, 'a', encoding='utf-8') as f:
                 for line_str in process.stdout:
                     TASKS[task_id]['recent_output'].append(line_str.strip())
                     if len(TASKS[task_id]['recent_output']) > 100:
@@ -48,15 +45,13 @@ def run_tool(task_id, command, output_dir, app):
             TASKS[task_id]['status'] = 'completed' if return_code == 0 else 'failed'
 
             if TASKS[task_id]['status'] == 'failed':
-                if TASKS[task_id]['tool_id'] == 'nmap' and TASKS[task_id].get('xml_output_file'):
-                    xml_path = TASKS[task_id]['xml_output_file']
-                    if not os.path.exists(xml_path) or os.path.getsize(xml_path) == 0:
-                        msg = f"[Warning: Nmap failed and XML output '{xml_path}' may be missing or incomplete.]"
-                        TASKS[task_id]['recent_output'].append(msg)
-                        # Now this logger call will work correctly
-                        current_app.logger.warning(f"Nmap task {task_id} failed: {msg}")
+                xml_path = TASKS[task_id].get('xml_output_file')
+                if xml_path and (not os.path.exists(xml_path) or os.path.getsize(xml_path) == 0):
+                    msg = f"[Warning: Nmap failed and XML output may be missing or incomplete.]"
+                    TASKS[task_id]['recent_output'].append(msg)
+                    current_app.logger.warning(f"Nmap task {task_id} failed: {msg}")
 
-            with open(output_file, 'a', encoding='utf-8') as f:
+            with open(raw_output_file, 'a', encoding='utf-8') as f:
                 f.write("\n" + "-" * 50 + "\n")
                 f.write(f"Finished: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
                 f.write(f"Status: {TASKS[task_id]['status']}\n")
@@ -64,12 +59,11 @@ def run_tool(task_id, command, output_dir, app):
         except Exception as e:
             TASKS[task_id]['status'] = 'error'
             TASKS[task_id]['recent_output'].append(f"ERROR IN run_tool: {str(e)}")
-            # This logger call will also work correctly now
-            current_app.logger.error(f"Error in run_tool for task {task_id}: {e}")
+            current_app.logger.error(f"Error in run_tool for task {task_id}: {e}", exc_info=True)
 
 
 def _create_and_start_task(tool_id, target_or_query, options_str):
-    """Helper to create task dictionary, command, and start the thread."""
+    """Helper to create task dictionary, command, and start the thread with new directory structure."""
     TOOLS = current_app.config.get('TOOLS', {})
     OUTPUT_DIR = current_app.config['OUTPUT_DIR']
     
@@ -80,24 +74,45 @@ def _create_and_start_task(tool_id, target_or_query, options_str):
 
     tool_config = TOOLS[tool_id]
     task_id_str = f"{tool_id}_{int(time.time())}"
-    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    
+    # --- NEW: Path generation based on config ---
+    formats = [f.strip() for f in tool_config.get('output_formats', 'raw').split(',')]
+    tool_output_dir = os.path.join(OUTPUT_DIR, tool_id)
+    
+    raw_output_file_path = None
+    xml_output_file_path = None
 
+    if len(formats) > 1:
+        # Multiple formats, use subdirectories
+        if 'raw' in formats:
+            raw_output_file_path = os.path.join(tool_output_dir, 'raw', f'{task_id_str}.txt')
+        if 'xml' in formats:
+            xml_output_file_path = os.path.join(tool_output_dir, 'xml', f'{task_id_str}.xml')
+    else:
+        # Single format, save directly in the tool's directory
+        if 'raw' in formats:
+            raw_output_file_path = os.path.join(tool_output_dir, f'{task_id_str}.txt')
+    
+    if not raw_output_file_path:
+        # Fallback if config is weird, though it shouldn't happen
+        return None, "Tool has no 'raw' output format defined in config."
+
+    # Build the options string
     final_options = options_str
-
     default_opts = tool_config.get('default_options', '')
     if default_opts and default_opts not in final_options:
         final_options = f"{default_opts} {final_options}"
-
-    xml_output_file_path = None
-    if tool_id == 'nmap':
-        xml_output_file_path = os.path.join(OUTPUT_DIR, f"{task_id_str}.xml")
-        # Ensure -oX is not already there (e.g., in default_options)
+    
+    # Add XML output flag for Nmap, ensuring it has a path
+    if tool_id == 'nmap' and xml_output_file_path:
+        os.makedirs(os.path.dirname(xml_output_file_path), exist_ok=True)
         if '-oX' not in final_options and '-oA' not in final_options:
             final_options = f"-oX \"{xml_output_file_path}\" {final_options}"
-    
+
     command_params = {'target': target_or_query, 'query': target_or_query, 'options': final_options}
     command = tool_config['command'].format(**command_params)
 
+    # Store the precise file paths in the task dictionary
     TASKS[task_id_str] = {
         'tool_id': tool_id,
         'command': command,
@@ -106,11 +121,12 @@ def _create_and_start_task(tool_id, target_or_query, options_str):
         'recent_output': [],
         'process': None,
         'original_target': target_or_query if tool_id == 'nmap' else None,
-        'xml_output_file': xml_output_file_path if tool_id == 'nmap' else None
+        'raw_output_file': raw_output_file_path,
+        'xml_output_file': xml_output_file_path
     }
 
     app = current_app._get_current_object()
-    thread = threading.Thread(target=run_tool, args=(task_id_str, command, OUTPUT_DIR, app))
+    thread = threading.Thread(target=run_tool, args=(task_id_str, command, raw_output_file_path, app))
     thread.daemon = True
     thread.start()
     return task_id_str, None
@@ -158,8 +174,7 @@ def task_status(task_id):
     task_info = TASKS[task_id]
     
     # Simple sanitization for display
-    cleaned_output = [line.replace('<', '<').replace('>', '>') for line in task_info.get('recent_output', [])]
-    
+    cleaned_output = [escape(line) for line in task_info.get('recent_output', [])]
     return jsonify({'status': task_info['status'], 'recent_output': cleaned_output})
 
 
@@ -171,13 +186,43 @@ def stop_task(task_id):
     
     task_info = TASKS[task_id]
     if task_info['status'] == 'running' and task_info.get('process'):
+        
+        # --- MODIFICATION START: Use psutil for robust process termination ---
         try:
-            task_info['process'].terminate()
+            # Get the parent process using its PID
+            parent = psutil.Process(task_info['process'].pid)
+            
+            # Kill all child processes (e.g., nmap.exe spawned by cmd.exe)
+            # The list() is important to avoid iteration issues while killing
+            for child in parent.children(recursive=True):
+                child.kill()
+            
+            # Kill the parent shell process itself
+            parent.kill()
+            
             task_info['status'] = 'stopped'
-            return jsonify({'status': 'success', 'message': 'Task stopped'})
+            TASKS[task_id]['recent_output'].append("[INFO] Task manually stopped by user.")
+            
+            # Optional: Write final status to file immediately
+            output_file = task_info.get('raw_output_file')
+            if output_file and os.path.exists(output_file):
+                 with open(output_file, 'a', encoding='utf-8') as f:
+                    f.write("\n--- Task manually stopped by user ---\n")
+                    f.write(f"Status: {task_info['status']}\n")
+
+            return jsonify({'status': 'success', 'message': 'Task and all related processes stopped.'})
+
+        except psutil.NoSuchProcess:
+            # The process may have finished just before the stop button was clicked
+            task_info['status'] = 'stopped' # Update status to prevent inconsistencies
+            return jsonify({'status': 'success', 'message': 'Process already finished.'})
         except Exception as e:
-            return jsonify({'status': 'error', 'message': str(e)}), 500
-    return jsonify({'status': 'error', 'message': 'Task is not running'}), 400
+            current_app.logger.error(f"Error stopping task {task_id} with psutil: {e}")
+            return jsonify({'status': 'error', 'message': f'Error stopping task: {str(e)}'}), 500
+        # --- END MODIFICATION ---
+
+    return jsonify({'status': 'error', 'message': 'Task is not running or process not found'}), 400
+
 
 
 @scanner_bp.route('/task/<task_id>/analyze_nmap', methods=['GET'])
@@ -187,10 +232,13 @@ def analyze_nmap_task(task_id):
         return jsonify({'status': 'error', 'message': 'Task not found'}), 404
 
     task_info = TASKS[task_id]
-    if task_info['tool_id'] != 'nmap':
+    if task_info.get('tool_id') != 'nmap':
         return jsonify({'status': 'error', 'message': 'Analysis only for Nmap tasks'}), 400
 
+    # Get file paths directly from the task dictionary
     xml_file = task_info.get('xml_output_file')
+    raw_file = task_info.get('raw_output_file')
+
     if xml_file and os.path.exists(xml_file) and os.path.getsize(xml_file) > 0:
         try:
             parsed_data = parse_nmap_xml_python_nmap(xml_file)
@@ -201,12 +249,11 @@ def analyze_nmap_task(task_id):
             current_app.logger.error(f"Error parsing Nmap XML for {task_id}: {e}")
             return jsonify({'status': 'error', 'message': f'XML parsing failed: {e}'}), 500
     
-    # Fallback to text parsing
-    output_file = os.path.join(current_app.config['OUTPUT_DIR'], f"{task_id}.txt")
-    if not os.path.exists(output_file):
+    # Fallback to text parsing if XML is missing or failed
+    if not raw_file or not os.path.exists(raw_file):
         return jsonify({'status': 'error', 'message': 'Nmap output files not found'}), 404
     
-    with open(output_file, 'r', encoding='utf-8') as f:
+    with open(raw_file, 'r', encoding='utf-8') as f:
         content = f.read()
     parsed_data = parse_nmap_output_simple(content)
     parsed_data["warning"] = "Could not find or parse XML file. Results are from raw text and may be incomplete."

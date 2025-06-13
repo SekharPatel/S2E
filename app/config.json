@@ -3,38 +3,43 @@
         "nmap": {
             "name": "Nmap",
             "command": "nmap {target} {options}",
-            "default_options": "-v -sV"
+            "default_options": "",
+            "output_formats": "raw, xml"
         },
         "searchsploit": {
             "name": "SearchSploit",
             "command": "searchsploit {query} {options}",
-            "default_options": ""
+            "default_options": "",
+            "output_formats": "raw"
         },
         "sqlmap": {
             "name": "SQLMap",
             "command": "sqlmap -u {target} {options}",
-            "default_options": "--batch"
+            "default_options": "--batch",
+            "output_formats": "raw"
         },
         "dirb": {
             "name": "Dirb",
             "command": "dirb {target} {options}",
-            "default_options": ""
+            "default_options": "",
+            "output_formats": "raw"
         },
         "curl": {
             "name": "curl",
             "command": "curl {target} {options}",
-            "default_options": ""
+            "default_options": "",
+            "output_formats": "raw"
         }
     },
     "INTENSITY_TOOL_CONFIG": {
         "low": {
-            "nmap": "-p 135,445 -T4"
+            "nmap": "-sV -T4"
         },
         "medium": {
-            "nmap": "-p 22,5000 -T4"
+            "nmap": "-sV -p- -T4 --min-rate=1000"
         },
         "high": {
-            "nmap": "-p 5000 -T4"
+            "nmap": "-A -p- -T4 --min-rate=1000"
         }
     },
     "FOLLOW_UP_ACTIONS": {

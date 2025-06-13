@@ -42,16 +42,14 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!isPreviewOpen || !previewPaneContent) return;
 
         if (data.recent_output && data.recent_output.length > 0) {
-            const sanitizedOutput = data.recent_output
-                .map(line => line.replace(/</g, "<").replace(/>/g, ">"))
-                .join('\n');
             
-            // Preserve scroll position logic
+            const formattedOutput = data.recent_output.join('\n');
             const shouldPreserveScroll = previewPaneContent.innerHTML !== '<p class="text-muted">Loading preview...</p>';
             const oldScrollTop = shouldPreserveScroll ? previewPaneContent.scrollTop : 0;
             const oldScrollHeight = shouldPreserveScroll ? previewPaneContent.scrollHeight : 0;
-
-            previewPaneContent.innerHTML = `<pre>${sanitizedOutput}</pre>`;
+            
+            previewPaneContent.innerHTML = `<pre></pre>`; // Create the container
+            previewPaneContent.querySelector('pre').textContent = formattedOutput; // Safely insert text
 
             if (shouldPreserveScroll) {
                 if (oldScrollTop >= oldScrollHeight - previewPaneContent.clientHeight - 30) {
@@ -62,7 +60,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 previewPaneContent.scrollTop = previewPaneContent.scrollHeight;
             }
-        } 
+        }
     }
 
     function fetchAndDisplayPreview(taskId) {
