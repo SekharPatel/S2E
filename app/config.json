@@ -33,7 +33,7 @@
     },
     "INTENSITY_TOOL_CONFIG": {
         "low": {
-            "nmap": "-sV -T4"
+            "nmap": "-p- -T4"
         },
         "medium": {
             "nmap": "-sV -p- -T4 --min-rate=1000"

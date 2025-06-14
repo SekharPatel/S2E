@@ -9,10 +9,11 @@ from markupsafe import escape # Use the recommended escape function
 main_bp = Blueprint('main', __name__)
 
 @main_bp.route('/')
+@login_required
 def index():
-    if 'username' in session:
-        return redirect(url_for('main.home'))
-    return render_template('index.html')
+    # if 'username' in session:
+    #     return redirect(url_for('main.home'))
+    return render_template('home.html')
 
 @main_bp.route('/home')
 @login_required
