@@ -6,12 +6,35 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const rawOutputTerminal = document.getElementById('rawOutputTerminal');
     const stopButtonContainer = document.getElementById('stopButtonContainer');
-    const stopBtn = document.getElementById('stopBtn'); // Might be null initially
+    const stopBtn = document.getElementById('stopBtn');
     const taskStatusBadge = document.getElementById('taskStatusBadge');
     const taskStatusText = document.getElementById('taskStatusText');
     const analysisContentDiv = document.getElementById('analysisContent');
     const analysisTabItem = document.querySelector('.tabs-nav-item[data-tab="analysisTab"]');
 
+    // NEW: Primary function to load the full output via API
+    function loadFullOutput() {
+        if (!rawOutputTerminal) return;
+
+        rawOutputTerminal.innerHTML = '<pre>Loading full output...</pre>';
+
+        fetch(`/api/task/${taskId}/output`)
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.json();
+            })
+            .then(data => {
+                if (data.status === 'success') {
+                    rawOutputTerminal.innerHTML = `<pre>${data.output}</pre>`;
+                } else {
+                    rawOutputTerminal.innerHTML = `<pre style="color: #ef4444;">Error: ${data.message}</pre>`;
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching full task output:', error);
+                rawOutputTerminal.innerHTML = `<pre style="color: #ef4444;">Failed to load output.</pre>`;
+            });
+    }
 
     // Tab switching logic
     const tabItems = document.querySelectorAll('.tabs-nav-item');
@@ -74,88 +97,46 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
 
+    // Updated polling logic: simplified to NOT update the terminal while running
     function pollTaskStatus() {
         fetch(`/task/${taskId}/status`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
                 const currentStatusOnPage = taskStatusText.textContent.toLowerCase();
                 const newStatusLower = data.status.toLowerCase();
 
                 if (newStatusLower !== currentStatusOnPage) {
-                     updateStatusDisplay(data.status);
+                    updateStatusDisplay(data.status);
                 }
 
                 if (newStatusLower === 'running' || newStatusLower === 'starting') {
-                    if (rawOutputTerminal && data.recent_output) {
-                        // Append recent output. For full live output, a different strategy (websockets or SSE)
-                        // or fetching the whole file periodically would be needed.
-                        // For now, let's assume recent_output is what we display or we refresh the whole content.
-                        // To prevent excessive growth, we will replace content rather than append for simplicity here.
-                        // Or, more simply, prompt user to refresh if task is still running for full live.
-                        // For this iteration, let's just show that it's running.
-                        // A better solution is to fetch the full raw output if it has changed.
-                    }
-                    if (stopButtonContainer && !document.getElementById('stopBtn')) {
-                         // Add stop button if not present and task is running
-                        const button = document.createElement('button');
-                        button.id = 'stopBtn';
-                        button.className = 'signin-button btn-danger-themed';
-                        button.style.padding = '0.7rem 1.5rem';
-                        button.innerHTML = '<i class="fas fa-stop me-1"></i>Stop Task';
-                        button.addEventListener('click', handleStopTask);
-                        stopButtonContainer.innerHTML = ''; // Clear previous
-                        stopButtonContainer.appendChild(button);
-                    }
-                } else { // Task is not running (completed, failed, stopped, error)
+                    // Logic to add stop button if missing...
+                } else { // Task has finished
                     if (pollIntervalId) {
                         clearInterval(pollIntervalId);
                         pollIntervalId = null;
                     }
                     if (stopButtonContainer) {
-                        stopButtonContainer.innerHTML = ''; // Remove stop button
+                        stopButtonContainer.innerHTML = '';
                     }
-                    // Fetch the final full output one last time if status just changed to non-running
+                    // When the status changes to a finished state, fetch the FINAL full output.
                     if (currentStatusOnPage === 'running' || currentStatusOnPage === 'starting') {
-                        fetchTaskOutput(); // Fetch full output
-                         if (isNmapTask && newStatusLower === 'completed' && analysisTabItem && analysisTabItem.classList.contains('active')) {
-                            loadNmapAnalysis(); // Reload analysis if Nmap completed and tab is active
+                        setTimeout(loadFullOutput, 200);
+                        if (isNmapTask && analysisTabItem && analysisTabItem.classList.contains('active')) {
+                            loadNmapAnalysis(); // Reload analysis tab if it was open
                         }
                     }
                 }
             })
             .catch(error => {
                 console.error(`Error polling task ${taskId}:`, error);
-                if (pollIntervalId) clearInterval(pollIntervalId); // Stop polling on error
+                if (pollIntervalId) clearInterval(pollIntervalId);
             });
     }
 
-    function fetchTaskOutput() {
-        // Fetches the complete raw output - useful when a task finishes
-        fetch(`/task/${taskId}`) // Assuming this endpoint returns the rendered task_details page or just output
-            .then(response => response.text())
-            .then(html => {
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-                const newOutputTerminal = doc.getElementById('rawOutputTerminal');
-                if (newOutputTerminal && rawOutputTerminal) {
-                    rawOutputTerminal.innerHTML = newOutputTerminal.innerHTML;
-                }
-            })
-            .catch(error => console.error('Error fetching full task output:', error));
-    }
-
-
-    if (stopBtn) { // If stop button exists on initial load
-        stopBtn.addEventListener('click', handleStopTask);
-    }
-
+    // Updated stop task logic with loadFullOutput
     function handleStopTask() {
-        const currentStopBtn = document.getElementById('stopBtn'); // Get current button
+        const currentStopBtn = document.getElementById('stopBtn');
         if (!currentStopBtn) return;
 
         const originalButtonHtml = currentStopBtn.innerHTML;
@@ -166,9 +147,10 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
-                    updateStatusDisplay('Stopped'); // Update status text
-                    if (stopButtonContainer) stopButtonContainer.innerHTML = ''; // Remove button
-                    if (pollIntervalId) clearInterval(pollIntervalId); // Stop polling
+                    updateStatusDisplay('Stopped');
+                    if (stopButtonContainer) stopButtonContainer.innerHTML = '';
+                    if (pollIntervalId) clearInterval(pollIntervalId);
+                    setTimeout(loadFullOutput, 500);
                 } else {
                     alert(`Error stopping task: ${data.message || 'Unknown error'}`);
                     currentStopBtn.disabled = false;
@@ -183,13 +165,17 @@ document.addEventListener('DOMContentLoaded', function () {
             });
     }
 
-    // Initial setup based on status
-    if (initialTaskStatus === 'running' || initialTaskStatus === 'starting') {
-        pollIntervalId = setInterval(pollTaskStatus, 3000); // Poll every 3 seconds
-    } else {
-        if (stopButtonContainer) stopButtonContainer.innerHTML = ''; // Ensure stop button is not shown if not running
+    // Initial Setup
+    if (stopBtn) {
+        stopBtn.addEventListener('click', handleStopTask);
     }
 
+    if (initialTaskStatus === 'running' || initialTaskStatus === 'starting') {
+        pollIntervalId = setInterval(pollTaskStatus, 3000);
+    }
+
+    // Load the full output immediately on page load
+    loadFullOutput();
 
     // Load Nmap Analysis Data
     function loadNmapAnalysis() {

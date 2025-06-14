@@ -1,6 +1,6 @@
 # /S2E/app/main.py
 
-from flask import Blueprint, render_template, redirect, url_for, session, current_app
+from flask import Blueprint, render_template, jsonify, redirect, url_for, session, current_app
 from .auth import login_required
 from . import TASKS
 import os
@@ -49,22 +49,7 @@ def task_details(task_id):
     FOLLOW_UP_ACTIONS = current_app.config.get('FOLLOW_UP_ACTIONS', {})
     
     tool_name = TOOLS.get(task_info['tool_id'], {}).get('name', 'Unknown Tool')
-    output_content = ""
     
-    output_file = task_info.get('raw_output_file')
-    
-    if output_file and os.path.exists(output_file):
-        try:
-            with open(output_file, 'r', encoding='utf-8') as f:
-                raw_text = f.read()
-
-            output_content = escape(raw_text)
-
-        except Exception as e:
-            output_content = f"Error reading output: {str(e)}"
-    else:
-        output_content = "Output file not found or not yet created."
-
     show_analysis_tab = task_info.get('tool_id') == 'nmap'
 
     return render_template(
@@ -72,7 +57,34 @@ def task_details(task_id):
         task_id=task_id,
         task=task_info,
         tool_name=tool_name,
-        output=output_content, # Pass the escaped content
         show_analysis_tab=show_analysis_tab,
         follow_up_actions=FOLLOW_UP_ACTIONS
     )
+
+@main_bp.route('/api/task/<task_id>/output')
+@login_required
+def get_task_output(task_id):
+    """API endpoint to get the full, raw output of a completed or running task."""
+    if task_id not in TASKS:
+        return jsonify({'status': 'error', 'message': 'Task not found'}), 404
+    
+    task_info = TASKS[task_id]
+    output_file = task_info.get('raw_output_file')
+
+    if not output_file or not os.path.exists(output_file):
+        return jsonify({
+            'status': 'success', 
+            'output': 'Output file not found or not yet created.'
+        })
+
+    try:
+        with open(output_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Escape the content on the server to ensure it's always HTML-safe
+        escaped_content = escape(content)
+        
+        return jsonify({'status': 'success', 'output': escaped_content})
+    except Exception as e:
+        current_app.logger.error(f"Error reading output file for task {task_id}: {e}")
+        return jsonify({'status': 'error', 'message': f'Could not read output file: {str(e)}'}), 500
