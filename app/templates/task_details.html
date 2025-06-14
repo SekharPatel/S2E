@@ -57,7 +57,14 @@
             <div class="task-details-section">
                 <h3 class="task-details-subtitle"><i class="fas fa-terminal me-2"></i>Output</h3>
                 <pre class="task-details-terminal" id="rawOutputTerminal">{{ output }}</pre>
-                <button id="copyOutputBtn" class="signin-button btn-small" style="margin-top:1rem;"><i class="fas fa-copy me-1"></i>Copy Output</button>
+                <div style="display: flex; gap: 10px; margin-top: 1rem;">
+                    <button id="copyOutputBtn" class="copy-button btn-small"><i class="fas fa-copy me-1"></i>Copy Output</button>
+                    <div id="stopButtonContainer" style="margin: 0;">
+                    {% if task.status == 'running' %}
+                        <button id="stopBtn" class="copy-button btn-danger-themed" style="padding: 0.7rem 1.5rem;"><i class="fas fa-stop me-1"></i>Stop Task</button>
+                    {% endif %}
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -71,12 +78,6 @@
             </div>
         </div>
         {% endif %}
-        
-        <div id="stopButtonContainer" style="margin-top:2rem;">
-        {% if task.status == 'running' %}
-            <button id="stopBtn" class="signin-button btn-danger-themed" style="padding: 0.7rem 1.5rem;"><i class="fas fa-stop me-1"></i>Stop Task</button>
-        {% endif %}
-        </div>
     </div>
 </div>
 {% endblock %}

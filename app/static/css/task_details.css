@@ -92,9 +92,69 @@ body {
     white-space: pre-wrap;
     word-break: break-all;
 }
+.terminal-placeholder {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+    color: #9ca3af; /* Muted text color */
+    font-size: 1.2rem;
+    font-weight: 500;
+}
+
+.terminal-placeholder .fas {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    opacity: 0.7;
+}
+
+.terminal-placeholder.error-state .fas {
+    color: #ef4444; /* Red for errors */
+}
+
+.terminal-placeholder.stopped-state .fas {
+    color: #6b7280; /* Gray for stopped */
+}
+
+.loader {
+  display: block;
+  --height-of-loader: 4px;
+  --loader-color: #0071e2;
+  width: 130px;
+  height: var(--height-of-loader);
+  border-radius: 30px;
+  background-color: rgba(0,0,0,0.2);
+  position: relative;
+}
+
+.loader::before {
+  content: "";
+  position: absolute;
+  background: var(--loader-color);
+  top: 0;
+  left: 0;
+  width: 0%;
+  height: 100%;
+  border-radius: 30px;
+  animation: moving 1s ease-in-out infinite;
+  ;
+}
+
+@keyframes moving {
+  50% {
+    width: 100%;
+  }
+
+  100% {
+    width: 0;
+    right: 0;
+    left: unset;
+  }
+}
 
 /* Buttons (reuse your theme) */
-.signin-button.btn-small {
+.copy-button.btn-small {
     padding: 0.6rem 1.2rem;
     font-size: 0.95rem;
     border-radius: 30px;
@@ -106,7 +166,7 @@ body {
     margin-right: 0.5rem;
 }
 
-.signin-button.btn-small:hover {
+.copy-button.btn-small:hover {
     background: #8025db;
     color: #fff;
 }
@@ -114,6 +174,7 @@ body {
 .btn-danger-themed {
     background: linear-gradient(135deg, #ef4444, #dc2626);
     color: white;
+    border-radius: 30px;
 }
 
 .btn-danger-themed:hover {

@@ -12,27 +12,46 @@ document.addEventListener('DOMContentLoaded', function () {
     const analysisContentDiv = document.getElementById('analysisContent');
     const analysisTabItem = document.querySelector('.tabs-nav-item[data-tab="analysisTab"]');
 
-    // NEW: Primary function to load the full output via API
+    // --- NEW: Helper functions to render different terminal states ---
+
+        function renderLoadingState() {
+        rawOutputTerminal.innerHTML = `
+            <div class="terminal-placeholder">
+                <span class="loader"></span>
+            </div>`;
+    }
+
+    function renderErrorState(status) {
+        rawOutputTerminal.innerHTML = `
+            <div class="terminal-placeholder error-state">
+                <i class="fas fa-exclamation-circle"></i>
+                <p>Task ${status}. Please check logs or try again.</p>
+            </div>`;
+    }
+    
+    function renderStoppedState() {
+        rawOutputTerminal.innerHTML = `
+            <div class="terminal-placeholder stopped-state">
+                <i class="fas fa-stop-circle"></i>
+                <p>Task was stopped by the user.</p>
+            </div>`;
+    }
+
     function loadFullOutput() {
         if (!rawOutputTerminal) return;
-
-        rawOutputTerminal.innerHTML = '<pre>Loading full output...</pre>';
-
+        rawOutputTerminal.innerHTML = `<pre>Loading full output...</pre>`; // Temporary loading text
         fetch(`/api/task/${taskId}/output`)
-            .then(response => {
-                if (!response.ok) throw new Error('Network response was not ok');
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
                     rawOutputTerminal.innerHTML = `<pre>${data.output}</pre>`;
                 } else {
-                    rawOutputTerminal.innerHTML = `<pre style="color: #ef4444;">Error: ${data.message}</pre>`;
+                    renderErrorState(`failed with message: ${data.message}`);
                 }
             })
             .catch(error => {
                 console.error('Error fetching full task output:', error);
-                rawOutputTerminal.innerHTML = `<pre style="color: #ef4444;">Failed to load output.</pre>`;
+                renderErrorState('failed to load output');
             });
     }
 
@@ -98,6 +117,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
     // Updated polling logic: simplified to NOT update the terminal while running
+     // --- Polling logic: REWRITTEN ---
     function pollTaskStatus() {
         fetch(`/task/${taskId}/status`)
             .then(response => response.json())
@@ -106,25 +126,23 @@ document.addEventListener('DOMContentLoaded', function () {
                 const newStatusLower = data.status.toLowerCase();
 
                 if (newStatusLower !== currentStatusOnPage) {
-                    updateStatusDisplay(data.status);
-                }
+                    updateStatusDisplay(data.status); // Update the top status badge
 
-                if (newStatusLower === 'running' || newStatusLower === 'starting') {
-                    // Logic to add stop button if missing...
-                } else { // Task has finished
-                    if (pollIntervalId) {
+                    // If the task has just finished, stop polling and render the final state
+                    if (['running', 'starting'].includes(currentStatusOnPage)) {
                         clearInterval(pollIntervalId);
                         pollIntervalId = null;
-                    }
-                    if (stopButtonContainer) {
-                        stopButtonContainer.innerHTML = '';
-                    }
-                    // When the status changes to a finished state, fetch the FINAL full output.
-                    if (currentStatusOnPage === 'running' || currentStatusOnPage === 'starting') {
-                        setTimeout(loadFullOutput, 200);
-                        if (isNmapTask && analysisTabItem && analysisTabItem.classList.contains('active')) {
-                            loadNmapAnalysis(); // Reload analysis tab if it was open
+                        if (stopButtonContainer) stopButtonContainer.innerHTML = ''; // Remove stop button
+
+                        if (newStatusLower === 'completed') {
+                            loadFullOutput();
+                            if (isNmapTask && analysisTabItem.classList.contains('active')) {
+                                loadNmapAnalysis();
+                            }
+                        } else if (['failed', 'error'].includes(newStatusLower)) {
+                            renderErrorState(newStatusLower);
                         }
+                        // The 'stopped' case is handled by handleStopTask
                     }
                 }
             })
@@ -134,12 +152,10 @@ document.addEventListener('DOMContentLoaded', function () {
             });
     }
 
-    // Updated stop task logic with loadFullOutput
+    // --- Stop task logic: REWRITTEN ---
     function handleStopTask() {
         const currentStopBtn = document.getElementById('stopBtn');
         if (!currentStopBtn) return;
-
-        const originalButtonHtml = currentStopBtn.innerHTML;
         currentStopBtn.disabled = true;
         currentStopBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Stopping...';
 
@@ -150,32 +166,36 @@ document.addEventListener('DOMContentLoaded', function () {
                     updateStatusDisplay('Stopped');
                     if (stopButtonContainer) stopButtonContainer.innerHTML = '';
                     if (pollIntervalId) clearInterval(pollIntervalId);
-                    setTimeout(loadFullOutput, 500);
+                    renderStoppedState(); // Render the stopped message in the terminal
                 } else {
                     alert(`Error stopping task: ${data.message || 'Unknown error'}`);
                     currentStopBtn.disabled = false;
-                    currentStopBtn.innerHTML = originalButtonHtml;
+                    currentStopBtn.innerHTML = '<i class="fas fa-stop me-1"></i>Stop Task';
                 }
             })
             .catch(error => {
                 console.error('Error stopping task:', error);
                 alert('An unexpected error occurred while trying to stop the task.');
                 currentStopBtn.disabled = false;
-                currentStopBtn.innerHTML = originalButtonHtml;
+                currentStopBtn.innerHTML = '<i class="fas fa-stop me-1"></i>Stop Task';
             });
     }
-
     // Initial Setup
     if (stopBtn) {
         stopBtn.addEventListener('click', handleStopTask);
     }
 
+    // --- Initial Page Load Logic ---
     if (initialTaskStatus === 'running' || initialTaskStatus === 'starting') {
+        renderLoadingState();
         pollIntervalId = setInterval(pollTaskStatus, 3000);
+    } else if (initialTaskStatus === 'completed') {
+        loadFullOutput();
+    } else if (initialTaskStatus === 'failed' || initialTaskStatus === 'error') {
+        renderErrorState(initialTaskStatus);
+    } else if (initialTaskStatus === 'stopped') {
+        renderStoppedState();
     }
-
-    // Load the full output immediately on page load
-    loadFullOutput();
 
     // Load Nmap Analysis Data
     function loadNmapAnalysis() {
