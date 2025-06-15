@@ -188,7 +188,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // --- Initial Page Load Logic ---
     if (initialTaskStatus === 'running' || initialTaskStatus === 'starting') {
         renderLoadingState();
-        pollIntervalId = setInterval(pollTaskStatus, 3000);
+        pollIntervalId = setInterval(pollTaskStatus, 5000);
     } else if (initialTaskStatus === 'completed') {
         loadFullOutput();
     } else if (initialTaskStatus === 'failed' || initialTaskStatus === 'error') {
