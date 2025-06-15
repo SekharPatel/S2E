@@ -59,10 +59,12 @@ def create_app():
         from . import auth
         from . import main
         from . import scanner
+        from . import analysis
 
         app.register_blueprint(auth.auth_bp)
         app.register_blueprint(main.main_bp)
         app.register_blueprint(scanner.scanner_bp)
+        app.register_blueprint(analysis.analysis_bp)
 
         # Make all routes available from the root, e.g., /login instead of /auth/login
         app.add_url_rule('/', endpoint='index')
