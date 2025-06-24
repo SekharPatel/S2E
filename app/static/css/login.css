@@ -1,8 +1,8 @@
 /* login.css - login page specific styles (restored and improved) */
 
-body {
-    min-height: 100vh;
-}
+/* body {
+    background: #0a0a0f;
+} */
 
 .login-page-container {
     flex-grow: 1;
@@ -10,7 +10,9 @@ body {
     max-width: 100%;
     align-items: center;
     justify-content: center;
-    min-height: 94vb;
+    max-height: 100vh;
+    margin-top: 15vh;
+    margin-bottom: 15vh;
     animation: fadeInForm 1s ease-out;
 }
 
@@ -90,7 +92,7 @@ body {
     background: rgba(255,255,255,0.08);
 }
 
-.form-options {
+/* .form-options {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -111,7 +113,7 @@ body {
     width: 16px;
     height: 16px;
     cursor: pointer;
-}
+} */
 
 .login-submit-btn {
     width: 100%;

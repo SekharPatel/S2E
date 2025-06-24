@@ -17,8 +17,9 @@ body {
 
 .container {
     max-width: auto;
-    padding: 0 5rem;
-    margin-top: 70px;
+    padding: .5rem 5rem;
+    padding-top: 20px;
+    padding-bottom: 1.2rem;
 
 }
 
@@ -28,8 +29,12 @@ body {
     color: #e5dee7;
 }
 
+footer {
+    border-top: 1px solid rgba(255, 255, 255, 0.466);
+}
+
 /* Animated Background */
-.bg-animated {
+/* .bg-animated {
     position: fixed;
     top: 0;
     left: 0;
@@ -45,17 +50,17 @@ body {
 @keyframes backgroundShift {
     0%, 100% { transform: translateY(0px) rotate(0deg); }
     50% { transform: translateY(-20px) rotate(1deg); }
-}
+} */
 
 /* Navigation */
 nav {
-    position: fixed;
+    position: relative;
     top: 10px;
     left: 50%;
     transform: translateX(-50%);
     width: 95%;
     height: 50px;
-    background: rgba(255, 255, 255, 0.1);
+    background: #0a0a0f;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     z-index: 500;
@@ -66,14 +71,13 @@ nav {
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.1);
     transition: all 0.3s ease;
-    /* New properties for scroll behavior */
     transform: translateX(-50%) translateY(0);
 }
 
 /* Add new class for hiding navbar on scroll down */
-nav.nav-hidden {
+/* nav.nav-hidden {
     transform: translateX(-50%) translateY(-100px);
-}
+} */
 
 .nav-container {
     width: 100%;

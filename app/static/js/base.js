@@ -18,17 +18,17 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Navbar scroll behavior
-    const navbar = document.querySelector('nav');
-    let lastScrollY = window.scrollY;
+    // const navbar = document.querySelector('nav');
+    // let lastScrollY = window.scrollY;
     
-    window.addEventListener('scroll', function() {
-        if (window.scrollY > lastScrollY) {
-            // Scrolling down
-            navbar.classList.add('nav-hidden');
-        } else {
-            // Scrolling up
-            navbar.classList.remove('nav-hidden');
-        }
-        lastScrollY = window.scrollY;
-    });
+    // window.addEventListener('scroll', function() {
+    //     if (window.scrollY > lastScrollY) {
+    //         // Scrolling down
+    //         navbar.classList.add('nav-hidden');
+    //     } else {
+    //         // Scrolling up
+    //         navbar.classList.remove('nav-hidden');
+    //     }
+    //     lastScrollY = window.scrollY;
+    // });
 });
