@@ -9,31 +9,39 @@ import secrets
 # This dictionary will be shared across the application modules.
 TASKS = {}
 
-def load_config(app, file_path):
-    """Loads configuration from a JSON file and attaches it to the app."""
-    try:
-        with open(file_path, 'r', encoding='utf-8') as f:
-            config_data = json.load(f)
-        
-        # Attach config values to the app's config object
-        app.config.update(config_data)
-        
-        # Provide fallbacks for critical missing keys
-        if 'USERS' not in app.config:
-            app.config['USERS'] = {'admin': 'defaultfallbackpassword'}
-            app.logger.warning("USERS configuration not found, using fallback.")
-        if 'TOOLS' not in app.config:
-            app.config['TOOLS'] = {}
-            app.logger.error("CRITICAL: TOOLS configuration is missing.")
+def load_config(app, dir_path):
+    """Loads configuration from all JSON files in a directory."""
+    if not os.path.isdir(dir_path):
+        app.logger.error(f"CRITICAL: Configuration directory not found at {dir_path}")
+        return
 
-        app.logger.info(f"Configuration loaded successfully from {file_path}")
-        
-    except FileNotFoundError:
-        app.logger.error(f"CRITICAL: Configuration file {file_path} not found.")
-    except json.JSONDecodeError as e:
-        app.logger.error(f"CRITICAL: Error decoding JSON from {file_path}: {e}.")
-    except Exception as e:
-        app.logger.error(f"CRITICAL: An unexpected error occurred while loading config: {e}")
+    loaded_files = 0
+    for filename in os.listdir(dir_path):
+        if filename.endswith('.json'):
+            file_path = os.path.join(dir_path, filename)
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    config_data = json.load(f)
+                app.config.update(config_data)
+                app.logger.info(f"Loaded config from {filename}")
+                loaded_files += 1
+            except json.JSONDecodeError as e:
+                app.logger.error(f"CRITICAL: Error decoding JSON from {filename}: {e}.")
+            except Exception as e:
+                app.logger.error(f"CRITICAL: An unexpected error occurred while loading {filename}: {e}")
+
+    if loaded_files > 0:
+        app.logger.info(f"Configuration loaded successfully from {loaded_files} file(s).")
+    else:
+        app.logger.error("CRITICAL: No configuration files were loaded.")
+
+    # Provide fallbacks for critical missing keys after attempting to load all files
+    if 'USERS' not in app.config:
+        app.config['USERS'] = {'admin': 'defaultfallbackpassword'}
+        app.logger.warning("USERS configuration not found, using fallback.")
+    if 'TOOLS' not in app.config:
+        app.config['TOOLS'] = {}
+        app.logger.error("CRITICAL: TOOLS configuration is missing.")
 
 
 def create_app():
@@ -48,10 +56,10 @@ def create_app():
     
     # Define paths relative to the application's root directory
     app.config['BASE_DIR'] = os.path.abspath(os.path.dirname(__file__))
-    app.config['CONFIG_FILE'] = os.path.join(app.config['BASE_DIR'], 'config.json')
+    app.config['CONFIG_DIR'] = os.path.join(app.config['BASE_DIR'], 'config')
     app.config['OUTPUT_DIR'] = os.path.join(app.config['BASE_DIR'], 'output')
 
-    load_config(app, app.config['CONFIG_FILE'])
+    load_config(app, app.config['CONFIG_DIR'])
 
     with app.app_context():
         # --- Register Blueprints ---

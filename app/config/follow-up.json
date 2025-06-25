@@ -1,0 +1,22 @@
+{
+    "FOLLOW_UP_ACTIONS": {
+        "searchsploit_version": {
+            "name": "SearchSploit Version",
+            "tool_id": "searchsploit",
+            "query_format": "{service} {version}",
+            "default_options": "--nmap"
+        },
+        "searchsploit_service": {
+            "name": "SearchSploit Service",
+            "tool_id": "searchsploit",
+            "query_format": "{service}",
+            "default_options": ""
+        },
+        "searchsploit_cpe": {
+            "name": "SearchSploit CPE",
+            "tool_id": "searchsploit",
+            "query_format": "{cpe}",
+            "default_options": ""
+        }
+    }
+}

@@ -1,0 +1,13 @@
+{
+    "INTENSITY_TOOL_CONFIG": {
+        "low": {
+            "nmap": "-p- -T4"
+        },
+        "medium": {
+            "nmap": "-sV -p- -T4 --min-rate=1000"
+        },
+        "high": {
+            "nmap": "-A -p- -T4 --min-rate=1000"
+        }
+    }
+}

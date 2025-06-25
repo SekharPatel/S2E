@@ -1,0 +1,34 @@
+{
+    "TOOLS": {
+        "nmap": {
+            "name": "Nmap",
+            "command": "nmap {target} {options}",
+            "default_options": "",
+            "output_formats": "raw, xml"
+        },
+        "searchsploit": {
+            "name": "SearchSploit",
+            "command": "searchsploit {query} {options}",
+            "default_options": "",
+            "output_formats": "raw"
+        },
+        "sqlmap": {
+            "name": "SQLMap",
+            "command": "sqlmap -u {target} {options}",
+            "default_options": "--batch",
+            "output_formats": "raw"
+        },
+        "dirb": {
+            "name": "Dirb",
+            "command": "dirb {target} {options}",
+            "default_options": "",
+            "output_formats": "raw"
+        },
+        "curl": {
+            "name": "curl",
+            "command": "curl {target} {options}",
+            "default_options": "",
+            "output_formats": "raw"
+        }
+    }
+}
