@@ -11,13 +11,14 @@ home_bp = Blueprint('home', __name__, template_folder='../templates')
 
 
 @home_bp.route('/')
+@login_required
 def index():
     """Handles the main landing page."""
     # If the user is already logged in, send them to the home dashboard.
     if 'username' in session:
         return redirect(url_for('home.home'))
     # Otherwise, show the public landing page.
-    return render_template('index.html')
+    # return render_template('index.html')
 
 
 @home_bp.route('/home')
