@@ -1,3 +1,5 @@
+// /S2E/app/static/js/task_details.js
+
 document.addEventListener('DOMContentLoaded', function () {
     const taskId = TASK_ID_FROM_HTML;
     const initialTaskStatus = INITIAL_TASK_STATUS;
@@ -209,7 +211,7 @@ document.addEventListener('DOMContentLoaded', function () {
         analysisContentDiv.innerHTML = '<p>Loading analysis...</p>';
         if(analysisTabItem) analysisTabItem.dataset.loaded = 'true'; // Mark as loading/loaded
 
-        // UPDATED URL: Added /api prefix
+        // Use the correct API endpoint, now located in the scanner blueprint
         fetch(`/api/task/${taskId}/analyze_nmap`)
             .then(response => response.json())
             .then(result => {
@@ -229,7 +231,7 @@ document.addEventListener('DOMContentLoaded', function () {
             });
     }
 
-    // Render Parsed Nmap Data (function definition from previous step - unchanged)
+    // --- MODIFIED FUNCTION ---
     function renderAnalysis(data, container, source, topLevelWarning) {
         let html = '';
 
@@ -247,8 +249,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         const followUpActions = FOLLOW_UP_ACTIONS_FROM_HTML;
-        const originalNmapTarget = ORIGINAL_NMAP_TARGET_FROM_HTML;
-
 
         data.hosts.forEach(hostInfo => {
             html += `<div class="analysis-host-block">`;
@@ -270,7 +270,6 @@ document.addEventListener('DOMContentLoaded', function () {
                  html += `</ul></div>`;
             }
 
-
             if (!hostInfo.ports || hostInfo.ports.length === 0) {
                 html += '<p class="no-open-ports">No open ports found for this host.</p>';
             } else {
@@ -282,22 +281,14 @@ document.addEventListener('DOMContentLoaded', function () {
                             <th>CPE</th>
                             <th>Actions</th>
                          </tr></thead><tbody>`;
+                
                 hostInfo.ports.forEach(p => {
-                    let productVersion = p.product || '';
-                    if (p.version) {
-                        productVersion += (productVersion ? ' ' : '') + `(v${p.version})`;
-                    }
-                    if (p.extrainfo) {
-                         productVersion += (productVersion ? ' ' : '') + `(${p.extrainfo})`;
-                    }
+                    // START: NEW LOGIC
+                    // 1. Check if there's meaningful data (service, version, cpe)
+                    const hasMeaningfulData = p.service || p.product || p.version || p.cpe;
 
-                    html += `<tr>
-                                <td><code>${p.port}/${p.protocol}</code></td>
-                                <td>${p.service || 'N/A'}</td>
-                                <td>${productVersion || 'N/A'}</td>
-                                <td>${p.cpe ? `<code>${p.cpe}</code>` : 'N/A'}</td>
-                                <td class="analysis-actions">`;
-
+                    // 2. Check if there are any available actions for this port
+                    let hasActions = false;
                     Object.keys(followUpActions).forEach(actionId => {
                         const actionConfig = followUpActions[actionId];
                         let canRun = true;
@@ -308,21 +299,54 @@ document.addEventListener('DOMContentLoaded', function () {
                         if (queryFormat.includes("{cpe}") && !p.cpe) canRun = false;
                         
                         if (canRun) {
-                            html += `<button class="run-follow-up" 
-                                        data-action-id="${actionId}" 
-                                        data-port="${p.port}" 
-                                        data-protocol="${p.protocol}" 
-                                        data-service="${p.service || ''}" 
-                                        data-version="${p.version || ''}"
-                                        data-product="${p.product || ''}"
-                                        data-cpe="${p.cpe || ''}"
-                                        data-host-ip="${hostInfo.ip || ''}" 
-                                        title="Run ${actionConfig.name}">
-                                     <i class="fas fa-play-circle me-1"></i> ${actionConfig.name.replace('SearchSploit ', 'SS ')}
-                                     </button>`;
+                            hasActions = true;
                         }
                     });
-                    html += `</td></tr>`;
+
+                    // 3. Only render the row if it has data OR it has actions
+                    if (hasMeaningfulData || hasActions) {
+                        let productVersion = p.product || '';
+                        if (p.version) {
+                            productVersion += (productVersion ? ' ' : '') + `(v${p.version})`;
+                        }
+                        if (p.extrainfo) {
+                            productVersion += (productVersion ? ' ' : '') + `(${p.extrainfo})`;
+                        }
+
+                        html += `<tr>
+                                    <td><code>${p.port}/${p.protocol}</code></td>
+                                    <td>${p.service || 'N/A'}</td>
+                                    <td>${productVersion || 'N/A'}</td>
+                                    <td>${p.cpe ? `<code>${p.cpe}</code>` : 'N/A'}</td>
+                                    <td class="analysis-actions">`;
+
+                        Object.keys(followUpActions).forEach(actionId => {
+                            const actionConfig = followUpActions[actionId];
+                            let canRun = true;
+                            const queryFormat = actionConfig.query_format.toLowerCase();
+
+                            if (queryFormat.includes("{version}") && !p.version && !p.product) canRun = false;
+                            if (queryFormat.includes("{service}") && !p.service) canRun = false;
+                            if (queryFormat.includes("{cpe}") && !p.cpe) canRun = false;
+                            
+                            if (canRun) {
+                                html += `<button class="run-follow-up" 
+                                            data-action-id="${actionId}" 
+                                            data-port="${p.port}" 
+                                            data-protocol="${p.protocol}" 
+                                            data-service="${p.service || ''}" 
+                                            data-version="${p.version || ''}"
+                                            data-product="${p.product || ''}"
+                                            data-cpe="${p.cpe || ''}"
+                                            data-host-ip="${hostInfo.ip || ''}" 
+                                            title="Run ${actionConfig.name}">
+                                        <i class="fas fa-play-circle me-1"></i> ${actionConfig.name.replace('SearchSploit ', 'SS ')}
+                                        </button>`;
+                            }
+                        });
+                        html += `</td></tr>`;
+                    }
+                    // END: NEW LOGIC
                 });
                 html += '</tbody></table>';
             }
@@ -362,7 +386,7 @@ document.addEventListener('DOMContentLoaded', function () {
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Starting...';
 
-        // UPDATED URL: Added /api prefix
+        // Use the correct API endpoint, now located in the scanner blueprint
         fetch('/api/task/run_follow_up', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
