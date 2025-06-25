@@ -40,6 +40,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function loadFullOutput() {
         if (!rawOutputTerminal) return;
         rawOutputTerminal.innerHTML = `<pre>Loading full output...</pre>`; // Temporary loading text
+        // This URL was already correct, no change needed
         fetch(`/api/task/${taskId}/output`)
             .then(response => response.json())
             .then(data => {
@@ -119,7 +120,8 @@ document.addEventListener('DOMContentLoaded', function () {
     // Updated polling logic: simplified to NOT update the terminal while running
      // --- Polling logic: REWRITTEN ---
     function pollTaskStatus() {
-        fetch(`/task/${taskId}/status`)
+        // UPDATED URL: Added /api prefix
+        fetch(`/api/task/${taskId}/status`)
             .then(response => response.json())
             .then(data => {
                 const currentStatusOnPage = taskStatusText.textContent.toLowerCase();
@@ -159,7 +161,8 @@ document.addEventListener('DOMContentLoaded', function () {
         currentStopBtn.disabled = true;
         currentStopBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Stopping...';
 
-        fetch(`/task/${taskId}/stop`, { method: 'POST' })
+        // UPDATED URL: Added /api prefix
+        fetch(`/api/task/${taskId}/stop`, { method: 'POST' })
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
@@ -202,13 +205,12 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!analysisContentDiv || !isNmapTask) return;
         
         const isLoaded = analysisTabItem && analysisTabItem.dataset.loaded === 'true';
-        // Only load if not already loaded OR if the status has just completed (handled by poll)
-        // The initial click on the tab will also trigger this.
         
         analysisContentDiv.innerHTML = '<p>Loading analysis...</p>';
         if(analysisTabItem) analysisTabItem.dataset.loaded = 'true'; // Mark as loading/loaded
 
-        fetch(`/task/${taskId}/analyze_nmap`)
+        // UPDATED URL: Added /api prefix
+        fetch(`/api/task/${taskId}/analyze_nmap`)
             .then(response => response.json())
             .then(result => {
                 if (result.status === 'success' && result.data) {
@@ -360,7 +362,8 @@ document.addEventListener('DOMContentLoaded', function () {
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Starting...';
 
-        fetch('/task/run_follow_up', {
+        // UPDATED URL: Added /api prefix
+        fetch('/api/task/run_follow_up', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

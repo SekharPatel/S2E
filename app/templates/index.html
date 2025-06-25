@@ -15,7 +15,7 @@
             <div class="action-buttons">
                 {% if session.username %}
                 <a href="#" class="docs-link">Documentation ></a>
-                <a href="{{ url_for('main.home') }}" class="getstarted-button">Get Started ></a>
+                <a href="{{ url_for('home.home') }}" class="getstarted-button">Get Started ></a>
                 {% else %}
                 <a href="{{ url_for('auth.login') }}" class="docs-link">Documentation ></a>
                 <a href="{{ url_for('auth.login') }}" class="getstarted-button">Get Started ></a>

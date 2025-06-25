@@ -1,14 +1,12 @@
 # /S2E/app/__init__.py
+# UPDATED: Registers the new 'home_bp' and points the root URL to 'home.index'.
 
 from flask import Flask
 import os
 import json
 import secrets
 
-# --- In-memory Task Storage ---
-# This dictionary will be shared across the application modules.
-TASKS = {}
-
+# load_config function remains the same...
 def load_config(app, dir_path):
     """Loads configuration from all JSON files in a directory."""
     if not os.path.isdir(dir_path):
@@ -46,35 +44,33 @@ def load_config(app, dir_path):
 
 def create_app():
     """Create and configure an instance of the Flask application."""
-    
-    # When using a package, Flask automatically looks for 'static' and 'templates' folders
-    # within the package directory, so we don't need to specify paths.
-    app = Flask(__name__)
+    app = Flask(__name__, instance_relative_config=True)
 
-    # --- Load Configuration ---
-    app.config['SECRET_KEY'] = secrets.token_hex(16)
-    
-    # Define paths relative to the application's root directory
-    app.config['BASE_DIR'] = os.path.abspath(os.path.dirname(__file__))
-    app.config['CONFIG_DIR'] = os.path.join(app.config['BASE_DIR'], 'config')
-    app.config['OUTPUT_DIR'] = os.path.join(app.config['BASE_DIR'], 'output')
+    # --- Configuration ---
+    app.config.from_mapping(
+        SECRET_KEY=secrets.token_hex(16),
+        BASE_DIR=os.path.abspath(os.path.join(app.instance_path, os.pardir)),
+        CONFIG_DIR=os.path.join(os.path.abspath(os.path.join(app.instance_path, os.pardir)), 'config'),
+        OUTPUT_DIR=os.path.join(os.path.abspath(os.path.join(app.instance_path, os.pardir)), 'output'),
+    )
 
+    os.makedirs(app.config['OUTPUT_DIR'], exist_ok=True)
+    
     load_config(app, app.config['CONFIG_DIR'])
 
     with app.app_context():
-        # --- Register Blueprints ---
-        # Blueprints are imported here to avoid circular dependencies.
-        from . import auth
-        from . import main
-        from . import scanner
-        from . import analysis
+        # --- Register Blueprints from new feature modules ---
+        from .home.routes import home_bp # NEW
+        from .auth.routes import auth_bp
+        from .scanner.routes import scanner_bp
+        from .tasks.routes import tasks_bp
 
-        app.register_blueprint(auth.auth_bp)
-        app.register_blueprint(main.main_bp)
-        app.register_blueprint(scanner.scanner_bp)
-        app.register_blueprint(analysis.analysis_bp)
+        app.register_blueprint(home_bp) # NEW
+        app.register_blueprint(auth_bp)
+        app.register_blueprint(scanner_bp)
+        app.register_blueprint(tasks_bp)
 
-        # Make all routes available from the root, e.g., /login instead of /auth/login
-        app.add_url_rule('/', endpoint='index')
+        # Make the root URL (/) point to the main landing page in the new 'home' blueprint
+        app.add_url_rule('/', endpoint='home.index') # UPDATED
         
     return app

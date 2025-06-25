@@ -1,15 +1,58 @@
-from flask import Blueprint, request, jsonify, current_app
-import os
+# /S2E/app/scanner/routes.py
+# UPDATED: Removed the '/' and '/home' routes. They now live in app/home/routes.py.
 
-from .auth import login_required
-from . import TASKS
-from .utils import parse_nmap_xml_python_nmap, parse_nmap_output_simple
-from .scanner import _create_and_start_task
+from flask import Blueprint, redirect, url_for, current_app, request, flash, jsonify
+import os # Imported os for path operations
 
-analysis_bp = Blueprint('analysis', __name__)
+# Import from new locations
+from app.auth.routes import login_required
+from app.tasks.storage import TASKS
+from .services import _create_and_start_task
+from .parsers import parse_nmap_xml_python_nmap, parse_nmap_output_simple
 
+# Note: No template_folder needed if the blueprint doesn't render templates itself
+scanner_bp = Blueprint('scanner', __name__)
 
-@analysis_bp.route('/task/<task_id>/analyze_nmap', methods=['GET'])
+# --- Web Page Route for Starting a Scan ---
+
+@scanner_bp.route('/home/scan', methods=['POST'])
+@login_required
+def home_scan():
+    target = request.form.get('target')
+    intensity = request.form.get('intensity', 'low')
+    INTENSITY_TOOL_CONFIG = current_app.config.get('INTENSITY_TOOL_CONFIG', {})
+    TOOLS = current_app.config.get('TOOLS', {})
+
+    if not target:
+        flash('Target is required.', 'danger')
+        # UPDATED: Redirect to the new home blueprint's home page
+        return redirect(url_for('home.home'))
+
+    tool_config_map = INTENSITY_TOOL_CONFIG.get(intensity, {})
+    if not tool_config_map:
+        flash(f'No tools for intensity "{intensity}". Using default Nmap.', 'warning')
+        tool_config_map = {'nmap': TOOLS.get('nmap', {}).get('default_options', '-v -sV')}
+
+    task_ids = []
+    for tool_id, options in tool_config_map.items():
+        task_id, err = _create_and_start_task(tool_id, target, options)
+        if err:
+            flash(f"Error starting {tool_id}: {err}", 'danger')
+        if task_id:
+            task_ids.append(task_id)
+
+    if not task_ids:
+        flash('No tasks could be started.', 'danger')
+        # UPDATED: Redirect to the new home blueprint's home page
+        return redirect(url_for('home.home'))
+        
+    flash(f'Successfully started {len(task_ids)} scan(s).', 'success')
+    return redirect(url_for('tasks.list_tasks'))
+
+# --- API Endpoints ---
+# (The API endpoints analyze_nmap_task and run_follow_up_action remain here unchanged)
+
+@scanner_bp.route('/api/task/<task_id>/analyze_nmap', methods=['GET'])
 @login_required
 def analyze_nmap_task(task_id):
     if task_id not in TASKS:
@@ -19,7 +62,6 @@ def analyze_nmap_task(task_id):
     if task_info.get('tool_id') != 'nmap':
         return jsonify({'status': 'error', 'message': 'Analysis only for Nmap tasks'}), 400
 
-    # Get file paths directly from the task dictionary
     xml_file = task_info.get('xml_output_file')
     raw_file = task_info.get('raw_output_file')
 
@@ -33,7 +75,6 @@ def analyze_nmap_task(task_id):
             current_app.logger.error(f"Error parsing Nmap XML for {task_id}: {e}")
             return jsonify({'status': 'error', 'message': f'XML parsing failed: {e}'}), 500
     
-    # Fallback to text parsing if XML is missing or failed
     if not raw_file or not os.path.exists(raw_file):
         return jsonify({'status': 'error', 'message': 'Nmap output files not found'}), 404
     
@@ -44,7 +85,7 @@ def analyze_nmap_task(task_id):
     return jsonify({'status': 'success', 'data': parsed_data, 'source': 'text'})
 
 
-@analysis_bp.route('/task/run_follow_up', methods=['POST'])
+@scanner_bp.route('/api/task/run_follow_up', methods=['POST'])
 @login_required
 def run_follow_up_action():
     data = request.json

@@ -71,7 +71,8 @@ document.addEventListener('DOMContentLoaded', function() {
         moreDetailsLink.href = `/task/${taskId}`;
         moreDetailsLink.classList.remove('d-none');
 
-        fetch(`/task/${taskId}/status`)
+        // UPDATED URL: Added /api prefix
+        fetch(`/api/task/${taskId}/status`)
             .then(response => {
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 return response.json();
@@ -140,7 +141,8 @@ document.addEventListener('DOMContentLoaded', function() {
         let pollIntervalId = null;
 
         function poll() {
-            fetch(`/task/${taskId}/status`)
+            // UPDATED URL: Added /api prefix
+            fetch(`/api/task/${taskId}/status`)
                 .then(response => {
                     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                     return response.json();
@@ -220,7 +222,8 @@ document.addEventListener('DOMContentLoaded', function() {
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Stopping...';
 
-        fetch(`/task/${taskId}/stop`, {method: 'POST'})
+        // UPDATED URL: Added /api prefix
+        fetch(`/api/task/${taskId}/stop`, {method: 'POST'})
             .then(r => r.json())
             .then(data => {
                 if (data.status === 'success') {
