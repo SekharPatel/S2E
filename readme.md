@@ -1,108 +1,134 @@
-# Scan 2 Exploit Web Application
+# Scan 2 Exploit (S2E)
 
-A unified web interface for running multiple cybersecurity tools simultaneously, including Nmap, SearchSploit, SQLMap, Dirb, and Curl.
+A web-based interface for orchestrating and managing cybersecurity scanning tools. S2E provides a clean dashboard to streamline the initial phases of a penetration test, from network scanning to vulnerability analysis, by wrapping popular command-line tools in a persistent and user-friendly environment.
 
 ## Features
 
-- Run multiple security tools from a single web interface
-- Real-time monitoring of tool execution and output
-- Task management system with status tracking
-- Output capture and storage for later analysis
-- Nmap output parsing and analysis tab
-- Follow-up actions: run SearchSploit queries directly from Nmap scan results
-- User authentication system (simple, not production-grade)
-- Modern Bootstrap-based UI with custom CSS/JS
+-   **Secure User Authentication**: Protected by a database-backed login system with hashed passwords.
+-   **Persistent Task History**: All tasks are saved to a local SQLite database, so your scan history survives application restarts.
+-   **Dynamic Task Dashboard**: View all tasks in a central location with live status updates (`running`, `completed`, `failed`) without needing to refresh the page.
+-   **Configuration-Driven Toolset**: Easily add or modify tools like Nmap, SearchSploit, Dirb, etc., by editing simple JSON configuration files.
+-   **Safe Background Execution**: Scans run in background threads, are isolated from the web server process, and are executed safely without shell command injection risks.
+-   **Rich Nmap Parsing**: Automatically parses Nmap's XML output to provide a structured view of open ports, services, versions, and CPEs.
+-   **Follow-up Actions**: Chain commands together by launching new scans (e.g., SearchSploit) based on the results of a previous Nmap scan.
 
-## Supported Tools
+## Technology Stack
 
-- **Nmap**: Network scanner for discovering hosts and services
-- **SearchSploit**: Exploit-DB search tool
-- **SQLMap**: Automated SQL injection tool
-- **Dirb**: Web content scanner
-- **Curl**: HTTP/HTTPS requests (basic)
+-   **Backend**: Python 3, Flask
+-   **Database**: SQLite (via Flask-SQLAlchemy & Flask-Migrate)
+-   **Frontend**: HTML5, CSS3, Vanilla JavaScript
+-   **Key Python Libraries**: `psutil`, `python-nmap`
 
-> **Note:** Metasploit is *not* currently integrated, despite some references in the UI. Only the above tools are supported.
+## Project Structure
 
-## Prerequisites
-
-- Python 3.8+
-- Required security tools installed on your system and available in your PATH:
-  - nmap
-  - searchsploit
-  - sqlmap
-  - dirb
-  - curl
-
-## Installation
-
-1. Clone the repository
-```bash
-git clone <repository-url>
-cd Webapp
+```
+S2E/
+├── app/
+│   ├── auth/         # Authentication (login, logout)
+│   ├── home/         # Home and landing pages
+│   ├── scanner/      # Logic for running and parsing scans
+│   ├── tasks/        # Task management UI and API
+│   ├── static/       # CSS, JS, Images
+│   └── templates/    # HTML templates
+│
+├── config/           # JSON-based tool and app configuration
+├── migrations/       # Database migration scripts
+├── instance/         # Instance-specific config (auto-generated)
+├── output/           # Raw and XML output from tool scans
+│
+├── app.db            # SQLite database file (auto-generated)
+├── requirements.txt  # Python dependencies
+└── run.py            # Application entry point
 ```
 
-2. Create a virtual environment (recommended)
+## Getting Started: Local Setup
+
+Follow these instructions to get a copy of the project up and running on your local machine for development and testing purposes.
+
+### 1. Prerequisites
+
+First, ensure you have the necessary system-level dependencies installed.
+
+-   **Python 3.10+** and **pip**
+-   **Git** for cloning the repository.
+-   **The actual command-line tools** that S2E orchestrates. At a minimum, you need:
+    -   [**Nmap**](https://nmap.org/download.html)
+    -   [**SearchSploit**](https://www.exploit-db.com/searchsploit) (comes with Kali Linux or can be installed separately)
+
+### 2. Clone the Repository
+
 ```bash
-python -m venv venv
+git clone <your-repository-url>
+cd S2E
+```
+
+### 3. Set Up the Python Environment
+
+It is highly recommended to use a virtual environment.
+
+```bash
+# Create a virtual environment
+python -m venv .venv
+
+# Activate it
 # On Windows:
-venv\Scripts\activate
-# On Linux/macOS:
-source venv/bin/activate
+.venv\Scripts\activate
+# On macOS/Linux:
+source .venv/bin/activate
 ```
 
-3. Install dependencies
+### 4. Install Dependencies
+
+Install all the required Python packages.
+
 ```bash
 pip install -r requirements.txt
 ```
 
-## Configuration
+### 5. Set Up the Database
 
-- The application uses a simple user authentication system. Default credentials:
-  - Username: `admin`
-  - Password: `securepassword123`
+This project uses Flask-Migrate to manage the database schema. The following commands will create the `app.db` file and set up the necessary tables.
 
-  > **Change these credentials before using in any real environment!**
-
-- Tool configurations can be modified in `app.py` under the `TOOLS` dictionary.
-
-## Usage
-
-1. Start the application:
 ```bash
-python app.py
+# Set the Flask application entry point for the terminal
+# On Windows:
+set FLASK_APP=run.py
+# On macOS/Linux:
+export FLASK_APP=run.py
+
+# 1. Initialize the migration folder (only run this once ever for the project)
+flask db init
+
+# 2. Generate the first migration script based on the models
+flask db migrate -m "Initial migration with User and Task tables."
+
+# 3. Apply the migration to create the database and its tables
+flask db upgrade
+```
+After these commands, you will see a new `app.db` file in the root `S2E/` directory.
+
+### 6. Create Your First User
+
+Use the built-in CLI command to create your login credentials.
+
+```bash
+# Usage: flask create-user <username> <password>
+flask create-user admin yoursecurepassword123
 ```
 
-2. Access the web interface at [http://localhost:5000]
+### 7. Run the Application
 
-3. Log in with your credentials
+You are now ready to start the Flask development server.
 
-4. start a new scan with different Intensity
+```bash
+python run.py
+```
 
-5. Monitor task progress and view results in real-time
+Open your web browser and navigate to **http://127.0.0.1:5000**. You should see the login page. Log in with the credentials you created in the previous step.
 
-6. For Nmap scans, use the "Analysis" tab to view parsed results and run follow-up SearchSploit queries for discovered services/versions.
+## Configuration
 
-## Customization
-
-- UI is built with Bootstrap and custom CSS/JS in `static/css/` and `static/js/`.
-- HTML templates are in `templates/`.
-- You can add or modify tools in the `TOOLS` dictionary in `app.py`.
-
-## Security Considerations
-
-- This tool is for educational and lab use only.
-- Always ensure you have proper authorization before scanning any targets.
-- Use in controlled, authorized environments only.
-- Not recommended for production use without significant security hardening.
-
-## License
-
-MIT License - See LICENSE file for details
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
+You can easily customize the tools available in S2E by editing the JSON files in the `S2E/config/` directory:
+-   `tools.json`: Define the command structure for each tool.
+-   `intensity.json`: Define which tools and options run for `low`, `medium`, and `high` intensity scans.
+-   `follow-up.json`: Define the actions available in the Nmap analysis tab.

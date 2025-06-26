@@ -39,7 +39,7 @@
                         <span id="taskStatusText">{{ task.status|capitalize }}</span>
                     </span></dd>
                     <dt>Start Time</dt>
-                    <dd>{{ task.start_time.split('T')[0] }} {{ task.start_time.split('T')[1].split('.')[0] }}</dd>
+                    <dd>{{ task.start_time.strftime('%Y-%m-%d %H:%M:%S') if task.start_time else 'N/A' }} UTC</dd>
                 </dl>
             </div>
         </div>

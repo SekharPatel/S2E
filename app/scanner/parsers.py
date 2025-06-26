@@ -52,13 +52,14 @@ def parse_nmap_xml_python_nmap(xml_file_path):
         if not xml_content.strip():
             return {"hosts": [], "error": "Nmap XML file is empty."}
 
+        # Use analyse_nmap_xml_scan to parse from a string/file content
         scan_result = nm.analyse_nmap_xml_scan(xml_content)
         
         if not nm.all_hosts():
             if nm.scanstats().get('error', '').lower() == 'true':
                  errormsg = nm.scanstats().get('errormsg', 'Unknown Nmap error in XML.')
                  return {"hosts": [], "error": f"Nmap error from XML: {errormsg}"}
-            return parsed_data
+            return parsed_data # No hosts found, but no error
 
         for host_ip in nm.all_hosts():
             host_info = nm[host_ip]
@@ -68,9 +69,10 @@ def parse_nmap_xml_python_nmap(xml_file_path):
                 "status": host_info.state(),
                 "ports": [],
                 "osmatch": [],
-                "host_cpes": []
+                "host_cpes": [] # Aggregate CPEs for the host
             }
 
+            # Get OS Information
             if 'osmatch' in host_info and host_info['osmatch']:
                 for osmatch in host_info['osmatch']:
                     os_details = {"name": osmatch.get('name', 'N/A'), "accuracy": osmatch.get('accuracy', 'N/A'), "cpe": []}
@@ -79,9 +81,11 @@ def parse_nmap_xml_python_nmap(xml_file_path):
                             if isinstance(osclass, dict) and 'cpe' in osclass and osclass['cpe']:
                                 for cpe_item in osclass['cpe']:
                                     if cpe_item not in os_details["cpe"]: os_details["cpe"].append(cpe_item)
+                                    # Also add to the host-level CPE list
                                     if cpe_item not in current_host_data["host_cpes"]: current_host_data["host_cpes"].append(cpe_item)
                     current_host_data["osmatch"].append(os_details)
             
+            # Get Port/Service Information
             for proto in host_info.all_protocols():
                 ports_on_proto = host_info[proto].keys()
                 for port in ports_on_proto:

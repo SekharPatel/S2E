@@ -35,7 +35,7 @@
                                 <td class="col-tool">{{ task.tool_name }}</td>
                                 <td class="col-start-time">
                                     <span title="{{ task.start_time }}">
-                                        {{ task.start_time.split('T')[0] }} {{ task.start_time.split('T')[1].split('.')[0] }}
+                                        {{ task.start_time.strftime('%Y-%m-%d %H:%M:%S') if task.start_time else 'N/A' }}
                                     </span>
                                 </td>
                                 <td class="col-status">

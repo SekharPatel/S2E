@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // --- NEW: Helper functions to render different terminal states ---
 
-        function renderLoadingState() {
+    function renderLoadingState() {
         rawOutputTerminal.innerHTML = `
             <div class="terminal-placeholder">
                 <span class="loader"></span>
@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <p>Task ${status}. Please check logs or try again.</p>
             </div>`;
     }
-    
+
     function renderStoppedState() {
         rawOutputTerminal.innerHTML = `
             <div class="terminal-placeholder stopped-state">
@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', function () {
         else if (statusLower === 'completed') iconClass = 'fas fa-check me-1';
         else if (statusLower === 'failed' || statusLower === 'error') iconClass = 'fas fa-times me-1';
         else if (statusLower === 'stopped') iconClass = 'fas fa-stop me-1';
-        
+
         const iconElement = taskStatusBadge.querySelector('i.fas');
         if (iconElement) {
             iconElement.className = iconClass;
@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
     // Updated polling logic: simplified to NOT update the terminal while running
-     // --- Polling logic: REWRITTEN ---
+    // --- Polling logic: REWRITTEN ---
     function pollTaskStatus() {
         // UPDATED URL: Added /api prefix
         fetch(`/api/task/${taskId}/status`)
@@ -205,11 +205,11 @@ document.addEventListener('DOMContentLoaded', function () {
     // Load Nmap Analysis Data
     function loadNmapAnalysis() {
         if (!analysisContentDiv || !isNmapTask) return;
-        
+
         const isLoaded = analysisTabItem && analysisTabItem.dataset.loaded === 'true';
-        
+
         analysisContentDiv.innerHTML = '<p>Loading analysis...</p>';
-        if(analysisTabItem) analysisTabItem.dataset.loaded = 'true'; // Mark as loading/loaded
+        if (analysisTabItem) analysisTabItem.dataset.loaded = 'true'; // Mark as loading/loaded
 
         // Use the correct API endpoint, now located in the scanner blueprint
         fetch(`/api/task/${taskId}/analyze_nmap`)
@@ -235,6 +235,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function renderAnalysis(data, container, source, topLevelWarning) {
         let html = '';
 
+        // Display a warning if data is from text fallback or if the parser noted a problem
         if (topLevelWarning) {
             html += `<div class="analysis-warning"><strong>Notice:</strong> ${topLevelWarning} (Parsed from: ${source || 'unknown'})</div>`;
         } else if (source) {
@@ -253,7 +254,8 @@ document.addEventListener('DOMContentLoaded', function () {
         data.hosts.forEach(hostInfo => {
             html += `<div class="analysis-host-block">`;
             html += `<h4 class="analysis-host-title">Host: ${hostInfo.host || hostInfo.ip} ${hostInfo.ip && hostInfo.host && hostInfo.ip !== hostInfo.host ? '(' + hostInfo.ip + ')' : ''} <span class="host-status status-${hostInfo.status || 'unknown'}">${hostInfo.status || ''}</span></h4>`;
-            
+
+            // --- NEW: Display OS and Host CPE Information ---
             if (hostInfo.osmatch && hostInfo.osmatch.length > 0) {
                 html += `<div class="os-info-block"><h5>Operating System Matches:</h5><ul>`;
                 hostInfo.osmatch.forEach(os => {
@@ -265,9 +267,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
                 html += `</ul></div>`;
             } else if (hostInfo.host_cpes && hostInfo.host_cpes.length > 0) {
-                 html += `<div class="os-info-block"><h5>Host CPEs:</h5><ul>`;
-                 html += `<li>${hostInfo.host_cpes.map(c => `<code>${c}</code>`).join(', ')}</li>`;
-                 html += `</ul></div>`;
+                // Fallback for CPEs found elsewhere if no specific OS match
+                html += `<div class="os-info-block"><h5>Host CPEs:</h5><ul>`;
+                html += `<li>${hostInfo.host_cpes.map(c => `<code>${c}</code>`).join(', ')}</li>`;
+                html += `</ul></div>`;
             }
 
             if (!hostInfo.ports || hostInfo.ports.length === 0) {
@@ -275,35 +278,27 @@ document.addEventListener('DOMContentLoaded', function () {
             } else {
                 html += '<table class="analysis-table">';
                 html += `<thead><tr>
-                            <th>Port/Proto</th>
-                            <th>Service</th>
-                            <th>Product/Version</th>
-                            <th>CPE</th>
-                            <th>Actions</th>
-                         </tr></thead><tbody>`;
-                
+                        <th>Port/Proto</th>
+                        <th>Service</th>
+                        <th>Product/Version</th>
+                        <th>CPE</th>
+                        <th>Actions</th>
+                     </tr></thead><tbody>`;
+
                 hostInfo.ports.forEach(p => {
-                    // START: NEW LOGIC
-                    // 1. Check if there's meaningful data (service, version, cpe)
+                    // --- NEW SMARTER ROW RENDERING LOGIC ---
+                    // Only render a row if it has meaningful data or actions available
                     const hasMeaningfulData = p.service || p.product || p.version || p.cpe;
 
-                    // 2. Check if there are any available actions for this port
                     let hasActions = false;
-                    Object.keys(followUpActions).forEach(actionId => {
-                        const actionConfig = followUpActions[actionId];
-                        let canRun = true;
+                    Object.values(followUpActions).forEach(actionConfig => {
                         const queryFormat = actionConfig.query_format.toLowerCase();
-
-                        if (queryFormat.includes("{version}") && !p.version && !p.product) canRun = false;
-                        if (queryFormat.includes("{service}") && !p.service) canRun = false;
-                        if (queryFormat.includes("{cpe}") && !p.cpe) canRun = false;
-                        
-                        if (canRun) {
-                            hasActions = true;
-                        }
+                        if (queryFormat.includes("{version}") && !p.version && !p.product) return;
+                        if (queryFormat.includes("{service}") && !p.service) return;
+                        if (queryFormat.includes("{cpe}") && !p.cpe) return;
+                        hasActions = true;
                     });
 
-                    // 3. Only render the row if it has data OR it has actions
                     if (hasMeaningfulData || hasActions) {
                         let productVersion = p.product || '';
                         if (p.version) {
@@ -314,12 +309,13 @@ document.addEventListener('DOMContentLoaded', function () {
                         }
 
                         html += `<tr>
-                                    <td><code>${p.port}/${p.protocol}</code></td>
-                                    <td>${p.service || 'N/A'}</td>
-                                    <td>${productVersion || 'N/A'}</td>
-                                    <td>${p.cpe ? `<code>${p.cpe}</code>` : 'N/A'}</td>
-                                    <td class="analysis-actions">`;
+                                <td><code>${p.port}/${p.protocol}</code></td>
+                                <td>${p.service || 'N/A'}</td>
+                                <td>${productVersion || 'N/A'}</td>
+                                <td>${p.cpe ? `<code>${p.cpe}</code>` : 'N/A'}</td>
+                                <td class="analysis-actions">`;
 
+                        // Logic to render follow-up buttons
                         Object.keys(followUpActions).forEach(actionId => {
                             const actionConfig = followUpActions[actionId];
                             let canRun = true;
@@ -328,32 +324,30 @@ document.addEventListener('DOMContentLoaded', function () {
                             if (queryFormat.includes("{version}") && !p.version && !p.product) canRun = false;
                             if (queryFormat.includes("{service}") && !p.service) canRun = false;
                             if (queryFormat.includes("{cpe}") && !p.cpe) canRun = false;
-                            
+
                             if (canRun) {
                                 html += `<button class="run-follow-up" 
-                                            data-action-id="${actionId}" 
-                                            data-port="${p.port}" 
-                                            data-protocol="${p.protocol}" 
-                                            data-service="${p.service || ''}" 
-                                            data-version="${p.version || ''}"
-                                            data-product="${p.product || ''}"
-                                            data-cpe="${p.cpe || ''}"
-                                            data-host-ip="${hostInfo.ip || ''}" 
-                                            title="Run ${actionConfig.name}">
-                                        <i class="fas fa-play-circle me-1"></i> ${actionConfig.name.replace('SearchSploit ', 'SS ')}
-                                        </button>`;
+                                        data-action-id="${actionId}" 
+                                        data-service="${p.service || ''}" 
+                                        data-version="${p.version || ''}"
+                                        data-product="${p.product || ''}"
+                                        data-cpe="${p.cpe || ''}"
+                                        data-host-ip="${hostInfo.ip || ''}"
+                                        title="Run ${actionConfig.name}">
+                                    <i class="fas fa-play-circle me-1"></i> ${actionConfig.name.replace('SearchSploit ', 'SS ')}
+                                    </button>`;
                             }
                         });
                         html += `</td></tr>`;
                     }
-                    // END: NEW LOGIC
                 });
                 html += '</tbody></table>';
             }
-            html += `</div>`; 
+            html += `</div>`;
         });
         container.innerHTML = html;
 
+        // Re-attach event listeners
         document.querySelectorAll('.run-follow-up').forEach(button => {
             button.addEventListener('click', handleFollowUpClick);
         });
@@ -368,7 +362,7 @@ document.addEventListener('DOMContentLoaded', function () {
             service: button.dataset.service,
             version: button.dataset.version,
             cpe: button.dataset.cpe,
-            host_ip: button.dataset.hostIp 
+            host_ip: button.dataset.hostIp
         };
         if (!serviceInfo.version && button.dataset.product) {
             serviceInfo.version = button.dataset.product;
@@ -378,8 +372,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const originalNmapTarget = ORIGINAL_NMAP_TARGET_FROM_HTML;
 
         if (!originalNmapTarget) {
-             alert('Original Nmap target (overall scan target) not found. Cannot run follow-up.');
-             return;
+            alert('Original Nmap target (overall scan target) not found. Cannot run follow-up.');
+            return;
         }
 
         const originalButtonHtml = button.innerHTML;
@@ -392,34 +386,34 @@ document.addEventListener('DOMContentLoaded', function () {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 action_id: actionId,
-                service_info: serviceInfo, 
+                service_info: serviceInfo,
                 original_nmap_target: originalNmapTarget
             })
         })
-        .then(response => response.json())
-        .then(result => {
-            if (result.status === 'success') {
-                alert(`Follow-up task started: ${result.message}\nTask ID: ${result.task_id}. You can view it in the Tasks list.`);
-            } else {
-                alert(`Error: ${result.message || 'Could not start follow-up task.'}`);
-            }
-        })
-        .catch(error => {
-            console.error('Error running follow-up action:', error);
-            alert('An unexpected error occurred. Check console.');
-        })
-        .finally(() => {
-            button.disabled = false;
-            button.innerHTML = originalButtonHtml;
-        });
+            .then(response => response.json())
+            .then(result => {
+                if (result.status === 'success') {
+                    alert(`Follow-up task started: ${result.message}\nTask ID: ${result.task_id}. You can view it in the Tasks list.`);
+                } else {
+                    alert(`Error: ${result.message || 'Could not start follow-up task.'}`);
+                }
+            })
+            .catch(error => {
+                console.error('Error running follow-up action:', error);
+                alert('An unexpected error occurred. Check console.');
+            })
+            .finally(() => {
+                button.disabled = false;
+                button.innerHTML = originalButtonHtml;
+            });
     }
-    
+
     // Auto-load analysis if Nmap and tab is active on initial page load
     // (if task is already completed)
     const activeTab = document.querySelector('.tabs-nav-item.active');
     if (activeTab && activeTab.dataset.tab === 'analysisTab' && isNmapTask) {
         if (!analysisTabItem.dataset.loaded) { // Check if not already loaded by some other means
-             loadNmapAnalysis();
+            loadNmapAnalysis();
         }
     }
 });

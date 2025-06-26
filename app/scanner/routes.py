@@ -1,16 +1,15 @@
 # /S2E/app/scanner/routes.py
-# UPDATED: Removed the '/' and '/home' routes. They now live in app/home/routes.py.
+# UPDATED: This version removes the dependency on the old storage.py and uses the database.
 
 from flask import Blueprint, redirect, url_for, current_app, request, flash, jsonify
-import os # Imported os for path operations
+import os
 
 # Import from new locations
 from app.auth.routes import login_required
-from app.tasks.storage import TASKS
+from app.models import Task  # <--- Import the Task model
 from .services import _create_and_start_task
 from .parsers import parse_nmap_xml_python_nmap, parse_nmap_output_simple
 
-# Note: No template_folder needed if the blueprint doesn't render templates itself
 scanner_bp = Blueprint('scanner', __name__)
 
 # --- Web Page Route for Starting a Scan ---
@@ -25,7 +24,6 @@ def home_scan():
 
     if not target:
         flash('Target is required.', 'danger')
-        # UPDATED: Redirect to the new home blueprint's home page
         return redirect(url_for('home.home'))
 
     tool_config_map = INTENSITY_TOOL_CONFIG.get(intensity, {})
@@ -43,7 +41,6 @@ def home_scan():
 
     if not task_ids:
         flash('No tasks could be started.', 'danger')
-        # UPDATED: Redirect to the new home blueprint's home page
         return redirect(url_for('home.home'))
         
     flash(f'Successfully started {len(task_ids)} scan(s).', 'success')
@@ -52,18 +49,17 @@ def home_scan():
 # --- API Endpoints ---
 # (The API endpoints analyze_nmap_task and run_follow_up_action remain here unchanged)
 
-@scanner_bp.route('/api/task/<task_id>/analyze_nmap', methods=['GET'])
+@scanner_bp.route('/api/task/<int:task_id>/analyze_nmap', methods=['GET'])
 @login_required
-def analyze_nmap_task(task_id):
-    if task_id not in TASKS:
-        return jsonify({'status': 'error', 'message': 'Task not found'}), 404
+def analyze_nmap(task_id):
+    # Fetch the task from the database or return a 404 error
+    task_info = Task.query.get_or_404(task_id)
 
-    task_info = TASKS[task_id]
-    if task_info.get('tool_id') != 'nmap':
+    if task_info.tool_id != 'nmap':
         return jsonify({'status': 'error', 'message': 'Analysis only for Nmap tasks'}), 400
 
-    xml_file = task_info.get('xml_output_file')
-    raw_file = task_info.get('raw_output_file')
+    xml_file = task_info.xml_output_file
+    raw_file = task_info.raw_output_file
 
     if xml_file and os.path.exists(xml_file) and os.path.getsize(xml_file) > 0:
         try:
@@ -84,10 +80,9 @@ def analyze_nmap_task(task_id):
     parsed_data["warning"] = "Could not find or parse XML file. Results are from raw text and may be incomplete."
     return jsonify({'status': 'success', 'data': parsed_data, 'source': 'text'})
 
-
 @scanner_bp.route('/api/task/run_follow_up', methods=['POST'])
 @login_required
-def run_follow_up_action():
+def run_follow_up():
     data = request.json
     action_id = data.get('action_id')
     service_info = data.get('service_info', {})
@@ -111,6 +106,7 @@ def run_follow_up_action():
     except KeyError as e:
         return jsonify({'status': 'error', 'message': f'Missing key for query: {e}'}), 400
 
+    # _create_and_start_task was already updated to use the DB, so this part works as is
     task_id, err = _create_and_start_task(tool_id, target, options)
 
     if err:

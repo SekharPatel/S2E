@@ -1,13 +1,14 @@
 # /S2E/app/auth/routes.py
-# UPDATED: The redirect after a successful login now points to 'home.home'.
+# UPDATED: Uses the User database model for secure authentication.
 
-from flask import Blueprint, render_template, request, redirect, url_for, session, current_app
+from flask import Blueprint, render_template, request, redirect, url_for, session
 from functools import wraps
+from app.models import User # Import the User model
 
 # Define the blueprint for this feature
 auth_bp = Blueprint('auth', __name__, template_folder='../templates')
 
-# --- Authentication Decorator ---
+# --- Authentication Decorator (unchanged) ---
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -24,11 +25,12 @@ def login():
         username = request.form['username']
         password = request.form['password']
         
-        USERS = current_app.config.get('USERS', {})
+        # Query the database for the user
+        user = User.query.filter_by(username=username).first()
         
-        if username in USERS and USERS[username] == password:
+        # Check if the user exists and the password is correct
+        if user and user.check_password(password):
             session['username'] = username
-            # UPDATED: Redirect to the home page in the new 'home' blueprint
             return redirect(url_for('home.home')) 
         else:
             error = 'Invalid credentials. Please try again.'

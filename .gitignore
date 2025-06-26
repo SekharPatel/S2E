@@ -1,2 +1,4 @@
 __pycache__/
 output/
+migrations/
+app.db
