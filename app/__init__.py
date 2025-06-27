@@ -21,7 +21,7 @@ def load_config(app, dir_path):
 
     loaded_files = 0
     for filename in os.listdir(dir_path):
-        if filename.endswith('.json') and filename != 'users.json': # Ignore users.json now
+        if filename.endswith('.json'):
             file_path = os.path.join(dir_path, filename)
             try:
                 with open(file_path, 'r', encoding='utf-8') as f:
