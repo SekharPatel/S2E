@@ -72,13 +72,15 @@ def create_app():
         from .auth.routes import auth_bp
         from .scanner.routes import scanner_bp
         from .tasks.routes import tasks_bp
+        from .projects.routes import projects_bp
 
         app.register_blueprint(home_bp)
         app.register_blueprint(auth_bp)
         app.register_blueprint(scanner_bp)
         app.register_blueprint(tasks_bp)
+        app.register_blueprint(projects_bp)
 
-        app.add_url_rule('/', endpoint='home.index')
+        # app.add_url_rule('/', endpoint='home.index')
         
     # --- Add CLI command for user management ---
     @app.cli.command("create-user")

@@ -1,63 +1,208 @@
 {% extends "base.html" %}
 
-{% block title %}Quick Run - Scan 2 Exploit{% endblock %}
+{% block title %}Dashboard - Scan 2 Exploit{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 {% endblock %}
 
 {% block content %}
-<div class="home-feature-intro">
-    <!-- <p class="home-feature-headline">Scan networks for vulnerabilities, identify exploits with searchsploit and metasploit, and run simulated attacks to test security posture.</p> -->
-    <div class="home-feature-row">
-        <div class="home-feature-card">
-            <div class="home-feature-icon" style="color:#3fa7ff;"><i class="fas fa-globe fa-2x"></i></div>
-            <div class="home-feature-title">Network Scanning</div>
-            <div class="home-feature-desc">Scan entire networks for open ports and services</div>
+<div class="dashboard-container">
+    <header class="project-header">
+        <div class="project-selector">
+            <i class="fas fa-briefcase"></i>
+            {% if data.all_projects %}
+            <select id="project-select-dropdown" name="project">
+                {% for project in data.all_projects %}
+                <option value="{{ project.id }}" {% if data.active_project and project.id == data.active_project.id %}selected{% endif %}>
+                    Project: {{ project.name }}
+                </option>
+                {% endfor %}
+            </select>
+            {% else %}
+            <span>No Projects Found</span>
+            {% endif %}
         </div>
-        <div class="home-feature-card">
-            <div class="home-feature-icon" style="color:#4ade80;"><i class="fas fa-exclamation-triangle fa-2x"></i></div>
-            <div class="home-feature-title">Vulnerability Detection</div>
-            <div class="home-feature-desc">Identify security vulnerabilities and weaknesses</div>
+        <div class="project-actions">
+            {% if data.active_project %}
+            <button class="header-btn" id="editProjectBtn"><i class="fas fa-edit me-1"></i> Edit Project</button>
+            {% endif %}
+            <button class="header-btn" id="newProjectBtn"><i class="fas fa-plus me-1"></i> New Project</button>
         </div>
-        <div class="home-feature-card">
-            <div class="home-feature-icon" style="color:#a056f7;"><i class="fas fa-database fa-2x"></i></div>
-            <div class="home-feature-title">Exploit Database</div>
-            <div class="home-feature-desc">Access searchsploit and metasploit databases</div>
+    </header>
+
+    {% if data.active_project %}
+    <div class="dashboard-grid">
+        <!-- LEFT COLUMN: Information and Workflows -->
+        <div class="dashboard-main-col">
+            <!-- Project Overview Card -->
+            <section class="dashboard-card">
+                <h2 class="card-title"><i class="fas fa-chart-pie me-2"></i>Project Overview</h2>
+                <div class="project-stats-grid">
+                    <div class="stat-item">
+                        <span class="stat-value">{{ data.stats.targets }}</span>
+                        <span class="stat-label">Targets</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">{{ data.stats.tasks }}</span>
+                        <span class="stat-label">Tasks Run</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">{{ data.stats.findings }}</span>
+                        <span class="stat-label">Findings</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Scope / Targets Card -->
+            <section class="dashboard-card">
+                <h2 class="card-title"><i class="fas fa-crosshairs me-2"></i>Project Scope</h2>
+                <ul class="project-target-list">
+                    {% for target in data.targets %}
+                    <li><i class="fas fa-server"></i> {{ target.value }}</li>
+                    {% else %}
+                    <li class="empty-list-item">No targets defined for this project.</li>
+                    {% endfor %}
+                </ul>
+                <!-- Logic for adding targets would go here -->
+            </section>
+
+            <!-- Playbooks Card -->
+            <section class="dashboard-card">
+                <h2 class="card-title"><i class="fas fa-robot me-2"></i>Playbooks</h2>
+                <ul class="playbook-list">
+                    {% for playbook in data.playbooks %}
+                    <li class="playbook-item">
+                        <div class="playbook-info">
+                            <span class="playbook-name">{{ playbook.name }}</span>
+                            <span class="playbook-desc">{{ playbook.description }}</span>
+                        </div>
+                        <button class="run-playbook-btn"><i class="fas fa-play me-1"></i> Run</button>
+                    </li>
+                    {% else %}
+                    <li class="empty-list-item">No playbooks configured in playbooks.json.</li>
+                    {% endfor %}
+                </ul>
+            </section>
         </div>
-        <div class="home-feature-card">
-            <div class="home-feature-icon" style="color:#22d3ee;"><i class="fas fa-check-circle fa-2x"></i></div>
-            <div class="home-feature-title">Automated Exploits</div>
-            <div class="home-feature-desc">Run exploits and verify their effectiveness</div>
+
+        <!-- RIGHT COLUMN: Actions and Activity Feed -->
+        <div class="dashboard-side-col">
+            <!-- Tool Launcher Card -->
+            <section class="dashboard-card tool-launcher-card">
+                <h2 class="card-title"><i class="fas fa-terminal me-2"></i>Quick Run</h2>
+                <form action="{{ url_for('scanner.home_scan') }}" method="POST">
+                    <div class="form-group">
+                        <label for="tool-select">Tool</label>
+                        <select id="tool-select" name="tool_id" class="form-control">
+                            {% for tool_id, tool_info in data.tools.items() %}
+                            <option value="{{ tool_id }}">{{ tool_info.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="target-input">Target / Query</label>
+                        <input type="text" id="target-input" name="target" class="form-control" placeholder="127.0.0.1 or 'apache 2.4'" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="options-input">Options</label>
+                        <textarea id="options-input" name="options" class="form-control" rows="3" placeholder="-sV -p- --min-rate=1000"></textarea>
+                    </div>
+                    <button type="submit" class="run-tool-btn"><i class="fas fa-bolt me-1"></i> Launch Task</button>
+                </form>
+            </section>
+
+            <!-- Recent Activity Card -->
+            <section class="dashboard-card">
+                <h2 class="card-title"><i class="fas fa-history me-2"></i>Recent Activity</h2>
+                <ul class="activity-feed">
+                    {% for task in data.recent_tasks %}
+                    <li class="activity-item status-{{ task.status|lower }}">
+                        <span class="activity-tool">{{ data.tools[task.tool_id].name }}</span>
+                        <span class="activity-target">{{ task.command | truncate(30) }}</span>
+                        <a href="{{ url_for('tasks.task_details', task_id=task.id) }}" class="activity-details-link" title="View Details"><i class="fas fa-eye"></i></a>
+                    </li>
+                    {% else %}
+                    <li class="empty-list-item">No tasks have been run for this project yet.</li>
+                    {% endfor %}
+                </ul>
+            </section>
+        </div>
+    </div>
+    {% else %}
+    <div class="no-projects-placeholder">
+        <i class="fas fa-folder-open fa-4x"></i>
+        <h2>No Projects Found</h2>
+        <p>Get started by creating your first project.</p>
+    </div>
+    {% endif %}
+</div>
+
+<div id="newProjectModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Create New Project</h2>
+            <span class="close-button" id="closeModalBtn">×</span>
+        </div>
+        <div class="modal-body">
+            <form id="newProjectForm">
+                <div class="form-group">
+                    <label for="projectName">Project Name</label>
+                    <input type="text" id="projectName" name="name" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="projectDescription">Description (Optional)</label>
+                    <textarea id="projectDescription" name="description" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="projectTargets">Scope / Targets (Optional)</label>
+                    <textarea id="projectTargets" name="targets" class="form-control" rows="5" placeholder="Enter one IP, domain, or network range per line.
+e.g., 10.10.0.0/24
+e.g., example.com"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="run-tool-btn" id="createProjectSubmitBtn">
+                        <i class="fas fa-plus-circle me-1"></i>Create Project
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
-<hr class="home-divider" />
-<div class="home-form-container">
-    <form class="home-run-form" method="post" action="{{ url_for('scanner.home_scan') }}">
-        <h2 class="home-title">Network Scanner</h2>
-        <div class="home-subtitle">Enter target IP address to scan for vulnerabilities</div>
-        <div class="home-form-group">
-            <label for="target" class="home-label">Target IP Address</label>
-            <div class="home-input-row">
-                <input type="text" id="target" name="target" class="home-input" placeholder="127.0.0.1" required>
-                <button type="button" class="home-localhost-btn" onclick="document.getElementById('target').value='127.0.0.1'">Localhost</button>
-            </div>
+
+<div id="editProjectModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Edit Project</h2>
+            <span class="close-button" id="closeEditProjectBtn">×</span>
         </div>
-        <div class="home-form-group">
-            <label class="home-label">Scan Intensity</label>
-            <div class="home-toggle-group" id="intensityToggle">
-                <input type="hidden" name="intensity" id="intensityInput" value="low">
-                <button type="button" class="home-toggle-btn active" data-value="low">Low</button>
-                <button type="button" class="home-toggle-btn" data-value="medium">Medium</button>
-                <button type="button" class="home-toggle-btn" data-value="high">High</button>
-            </div>
+        <div class="modal-body">
+            <form id="editProjectForm">
+                <input type="hidden" id="editProjectId" name="project_id">
+                <div class="form-group">
+                    <label for="editProjectName">Project Name</label>
+                    <input type="text" id="editProjectName" name="name" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="editProjectDescription">Description</label>
+                    <textarea id="editProjectDescription" name="description" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="editProjectTargets">Scope / Targets</label>
+                    <textarea id="editProjectTargets" name="targets" class="form-control" rows="5" placeholder="Enter one IP, domain, or network range per line."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="form-submit-btn">
+                        <i class="fas fa-save me-1"></i>Save Changes
+                    </button>
+                </div>
+            </form>
         </div>
-        <button type="submit" class="home-run-btn">Start Scan</button>
-    </form>
+    </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script src="{{ url_for('static', filename='js/home.js') }}"></script>
-{% endblock %} 
+{% endblock %}

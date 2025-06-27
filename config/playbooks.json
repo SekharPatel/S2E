@@ -1,0 +1,14 @@
+{
+    "PLAYBOOKS": [
+        {
+            "id": "playbook_infra_recon",
+            "name": "Initial Infrastructure Recon",
+            "description": "Nmap > Enum4Linux > SearchSploit"
+        },
+        {
+            "id": "playbook_web_discovery",
+            "name": "Web App Discovery",
+            "description": "Sublist3r > WhatWeb > Gobuster"
+        }
+    ]
+}

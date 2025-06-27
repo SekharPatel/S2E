@@ -9,7 +9,6 @@ from datetime import datetime
 import time
 import shlex
 
-# Import database and Task model
 from app import db
 from app.models import Task
 
@@ -66,8 +65,8 @@ def run_tool(task_id, command_list, command_str_for_log, raw_output_file, app):
             current_app.logger.error(f"Error in run_tool for task {task_id}: {e}", exc_info=True)
 
 
-def _create_and_start_task(tool_id, target_or_query, options_str):
-    """Helper to create a database Task record and start the thread."""
+def _create_and_start_task(tool_id, target_or_query, options_str, project_id):
+    """UPDATED: Helper to create a DB Task record and start the thread, linking it to a project."""
     TOOLS = current_app.config.get('TOOLS', {})
     OUTPUT_DIR = current_app.config['OUTPUT_DIR']
     
@@ -78,7 +77,6 @@ def _create_and_start_task(tool_id, target_or_query, options_str):
 
     tool_config = TOOLS[tool_id]
     
-    # Generate timestamped filename base before creating the record
     filename_base = f"{tool_id}_{int(time.time())}"
     
     formats = [f.strip() for f in tool_config.get('output_formats', 'raw').split(',')]
@@ -99,18 +97,18 @@ def _create_and_start_task(tool_id, target_or_query, options_str):
     # --- Create the Task record in the database ---
     new_task = Task(
         tool_id=tool_id,
-        command="pending", # Will be updated below
+        command="pending",
         original_target=target_or_query if tool_id == 'nmap' else None,
         raw_output_file=raw_output_file_path,
-        xml_output_file=xml_output_file_path
+        xml_output_file=xml_output_file_path,
+        project_id=project_id  # <-- LINK THE TASK TO THE PROJECT
     )
     db.session.add(new_task)
-    db.session.commit() # Commit to get a task ID
+    db.session.commit()
 
-    # Now that we have an ID, we can finalize the command and paths
-    task_id_str = str(new_task.id) # Use the database ID
+    task_id_str = str(new_task.id)
 
-    # Safely parse the user-provided options string into a list
+    # ... The rest of the command generation logic is unchanged ...
     options_list = shlex.split(options_str)
     final_options_list = options_list
     default_opts_str = tool_config.get('default_options', '')
@@ -132,8 +130,7 @@ def _create_and_start_task(tool_id, target_or_query, options_str):
         else:
             command_list_for_exec.append(part)
     command_for_display = ' '.join(command_list_for_exec)
-
-    # Now update the task record with the final command string
+    
     new_task.command = command_for_display
     db.session.commit()
 

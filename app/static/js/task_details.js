@@ -354,8 +354,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // handleFollowUpClick (function definition from previous step - unchanged)
-    function handleFollowUpClick(event) {
+        function handleFollowUpClick(event) {
         const button = event.currentTarget;
+        const originalNmapTaskId = TASK_ID_FROM_HTML; 
+
         const serviceInfo = {
             port: button.dataset.port,
             protocol: button.dataset.protocol,
@@ -387,7 +389,8 @@ document.addEventListener('DOMContentLoaded', function () {
             body: JSON.stringify({
                 action_id: actionId,
                 service_info: serviceInfo,
-                original_nmap_target: originalNmapTarget
+                original_nmap_target: originalNmapTarget,
+                original_nmap_task_id: originalNmapTaskId // <-- ADD THIS LINE
             })
         })
             .then(response => response.json())

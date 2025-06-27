@@ -16,7 +16,7 @@
     <!-- <div class="bg-animated"></div> -->
     <nav>
         <div class="nav-container">
-            <a href="{{ url_for('home.index') }}" class="logo">S2E</a>
+            <a href="{{ url_for('home.home') }}" class="logo">S2E</a>
             <ul class="nav-links">
                 {% if session.username %}
                 <li><a href="{{ url_for('tasks.list_tasks') }}">TASKS</a></li>
