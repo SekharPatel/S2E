@@ -10,19 +10,6 @@ from app.models import User, Project, Task, Target
 home_bp = Blueprint('home', __name__, template_folder='../templates')
 
 
-def _load_config_file(filename):
-    """Helper to load a JSON config file."""
-    config_path = os.path.join(current_app.config['CONFIG_DIR'], filename)
-    try:
-        with open(config_path, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        # Return a default structure if file is missing or invalid
-        # This prevents the app from crashing.
-        if 'playbooks' in filename:
-            return {"PLAYBOOKS": []}
-        return {}
-
 @home_bp.route('/')
 @home_bp.route('/home')
 @login_required
@@ -61,3 +48,17 @@ def home():
     dashboard_data["playbooks"] = _load_config_file('playbooks.json').get("PLAYBOOKS", [])
         
     return render_template('home.html', data=dashboard_data)
+
+
+def _load_config_file(filename):
+    """Helper to load a JSON config file."""
+    config_path = os.path.join(current_app.config['CONFIG_DIR'], filename)
+    try:
+        with open(config_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        # Return a default structure if file is missing or invalid
+        # This prevents the app from crashing.
+        if 'playbooks' in filename:
+            return {"PLAYBOOKS": []}
+        return {}
