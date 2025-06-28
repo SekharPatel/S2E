@@ -1,9 +1,8 @@
 // /S2E/app/static/js/home.js
-// FINAL VERSION: Handles project switching, new project modal, and edit project modal.
+// FINAL VERSION: Fixes New Project bug and adds fully functional Edit/Delete logic.
 
 document.addEventListener('DOMContentLoaded', function() {
 
-    // --- GENERIC MODAL HELPER FUNCTIONS ---
     const openModal = (modalElement) => modalElement.classList.add('show-modal');
     const closeModal = (modalElement) => {
         modalElement.classList.remove('show-modal');
@@ -11,7 +10,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (form) form.reset();
     };
 
-    // --- PROJECT SWITCHING ---
     const projectSelect = document.getElementById('project-select-dropdown');
     if (projectSelect) {
         projectSelect.addEventListener('change', function() {
@@ -66,18 +64,18 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // --- EDIT PROJECT MODAL LOGIC ---
+    // --- EDIT & DELETE PROJECT MODAL LOGIC ---
     const editProjectModal = document.getElementById('editProjectModal');
     const editProjectBtn = document.getElementById('editProjectBtn');
     const closeEditProjectBtn = document.getElementById('closeEditProjectBtn');
     const editProjectForm = document.getElementById('editProjectForm');
-    
-    if (editProjectModal && editProjectBtn && closeEditProjectBtn && editProjectForm) {
+    const deleteProjectBtn = document.getElementById('deleteProjectBtn');
+
+    if (editProjectModal && editProjectBtn && closeEditProjectBtn && editProjectForm && deleteProjectBtn) {
         editProjectBtn.addEventListener('click', function() {
             const activeProjectId = projectSelect.value;
             if (!activeProjectId) return;
 
-            // Fetch current project data to populate the form
             fetch(`/api/projects/${activeProjectId}`)
                 .then(res => res.json())
                 .then(data => {
@@ -93,6 +91,7 @@ document.addEventListener('DOMContentLoaded', function() {
         closeEditProjectBtn.addEventListener('click', () => closeModal(editProjectModal));
         editProjectModal.addEventListener('click', (e) => { if (e.target === editProjectModal) closeModal(editProjectModal); });
 
+        // CRITICAL FIX: Implement the save functionality
         editProjectForm.addEventListener('submit', function(event) {
             event.preventDefault();
             const submitBtn = this.querySelector('button[type="submit"]');
@@ -109,13 +108,40 @@ document.addEventListener('DOMContentLoaded', function() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             }).then(res => res.json()).then(result => {
-                if (result.status === 'success') window.location.reload();
-                else alert('Error: ' + (result.message || 'Could not update project.'));
+                if (result.status === 'success') {
+                    window.location.reload();
+                } else {
+                    alert('Error: ' + (result.message || 'Could not update project.'));
+                }
             }).catch(err => alert('An unexpected network error occurred.'))
             .finally(() => {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalBtnHTML;
             });
+        });
+
+        deleteProjectBtn.addEventListener('click', function() {
+            const projectId = document.getElementById('editProjectId').value;
+            const projectName = document.getElementById('editProjectName').value;
+
+            if (!projectId) return;
+
+            if (confirm(`Are you sure you want to permanently delete the project "${projectName}"?\n\nThis will delete all associated targets and tasks.`)) {
+                this.disabled = true;
+                this.innerHTML = `<i class="fas fa-spinner fa-spin me-1"></i>Deleting...`;
+
+                fetch(`/api/projects/${projectId}`, {
+                    method: 'DELETE'
+                }).then(response => {
+                    if (response.ok) {
+                        window.location.reload();
+                    } else {
+                        alert('Error deleting project. Please try again.');
+                        this.disabled = false;
+                        this.innerHTML = `<i class="fas fa-trash-alt me-1"></i>Delete Project`;
+                    }
+                });
+            }
         });
     }
 });

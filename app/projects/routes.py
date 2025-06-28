@@ -109,3 +109,21 @@ def update_project(project_id):
             
     db.session.commit()
     return jsonify({'status': 'success', 'message': 'Project updated successfully'})
+
+
+@projects_bp.route('/api/projects/<int:project_id>', methods=['DELETE'])
+@login_required
+def delete_project(project_id):
+    user = User.query.filter_by(username=session['username']).first_or_404()
+    project = user.projects.filter_by(id=project_id).first_or_404()
+
+    # The 'cascade="all, delete-orphan"' in the model handles deleting
+    # all associated Tasks and Targets automatically.
+    db.session.delete(project)
+    db.session.commit()
+    
+    # If the deleted project was the active one, clear it from the session
+    if session.get('active_project_id') == project_id:
+        session.pop('active_project_id', None)
+        
+    return jsonify({'status': 'success', 'message': 'Project deleted successfully'})

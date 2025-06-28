@@ -143,7 +143,7 @@
     <div class="modal-content">
         <div class="modal-header">
             <h2>Create New Project</h2>
-            <span class="close-button" id="closeModalBtn">×</span>
+            <span class="close-button" id="closeNewProjectBtn">×</span>
         </div>
         <div class="modal-body">
             <form id="newProjectForm">
@@ -162,7 +162,7 @@ e.g., 10.10.0.0/24
 e.g., example.com"></textarea>
                 </div>
                 <div class="modal-footer">
-                    <button type="submit" class="run-tool-btn" id="createProjectSubmitBtn">
+                    <button type="submit" class="form-submit-btn" id="createProjectSubmitBtn">
                         <i class="fas fa-plus-circle me-1"></i>Create Project
                     </button>
                 </div>
@@ -171,6 +171,7 @@ e.g., example.com"></textarea>
     </div>
 </div>
 
+<!-- ========================= EDIT PROJECT MODAL ========================= -->
 <div id="editProjectModal" class="modal-overlay">
     <div class="modal-content">
         <div class="modal-header">
@@ -192,7 +193,11 @@ e.g., example.com"></textarea>
                     <label for="editProjectTargets">Scope / Targets</label>
                     <textarea id="editProjectTargets" name="targets" class="form-control" rows="5" placeholder="Enter one IP, domain, or network range per line."></textarea>
                 </div>
+                <!-- MODIFIED: Wrapped buttons in a styled footer -->
                 <div class="modal-footer">
+                    <button type="button" class="form-submit-btn btn-danger" id="deleteProjectBtn">
+                        <i class="fas fa-trash-alt me-1"></i>Delete Project
+                    </button>
                     <button type="submit" class="form-submit-btn">
                         <i class="fas fa-save me-1"></i>Save Changes
                     </button>
