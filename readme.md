@@ -26,9 +26,11 @@ S2E/
 ├── app/
 │   ├── auth/         # Authentication (login, logout)
 │   ├── home/         # Home and landing pages
+|   ├── project/      # Project management UI and API
 │   ├── scanner/      # Logic for running and parsing scans
 │   ├── tasks/        # Task management UI and API
 │   ├── static/       # CSS, JS, Images
+|   ├── tasks/        # Task management UI and API
 │   └── templates/    # HTML templates
 │
 ├── config/           # JSON-based tool and app configuration
@@ -100,7 +102,7 @@ export FLASK_APP=run.py
 flask db init
 
 # 2. Generate the first migration script based on the models
-flask db migrate -m "Initial migration with User and Task tables."
+flask db migrate -m "Initialize migration."
 
 # 3. Apply the migration to create the database and its tables
 flask db upgrade
