@@ -15,7 +15,8 @@
             {% if data.all_projects %}
             <select id="project-select-dropdown" name="project">
                 {% for project in data.all_projects %}
-                <option value="{{ project.id }}" {% if data.active_project and project.id == data.active_project.id %}selected{% endif %}>
+                <option value="{{ project.id }}" {% if data.active_project and project.id==data.active_project.id
+                    %}selected{% endif %}>
                     Project: {{ project.name }}
                 </option>
                 {% endfor %}
@@ -73,15 +74,16 @@
                 <h2 class="card-title"><i class="fas fa-robot me-2"></i>Playbooks</h2>
                 <ul class="playbook-list">
                     {% for playbook in data.playbooks %}
-                    <li class="playbook-item">
+                    <!-- ADD data-playbook-id to the <li> tag -->
+                    <li class="playbook-item" data-playbook-id="{{ playbook.id }}">
                         <div class="playbook-info">
                             <span class="playbook-name">{{ playbook.name }}</span>
                             <span class="playbook-desc">{{ playbook.description }}</span>
                         </div>
-                        <button class="run-playbook-btn"><i class="fas fa-play me-1"></i> Run</button>
+                        <button type="button" class="run-playbook-btn"><i class="fas fa-play me-1"></i> Run</button>
                     </li>
                     {% else %}
-                    <li class="empty-list-item">No playbooks configured in playbooks.json.</li>
+                    <li class="empty-list-item">No playbooks configured.</li>
                     {% endfor %}
                 </ul>
             </section>
@@ -103,11 +105,13 @@
                     </div>
                     <div class="form-group">
                         <label for="target-input">Target / Query</label>
-                        <input type="text" id="target-input" name="target" class="form-control" placeholder="127.0.0.1 or 'apache 2.4'" required>
+                        <input type="text" id="target-input" name="target" class="form-control"
+                            placeholder="127.0.0.1 or 'apache 2.4'" required>
                     </div>
                     <div class="form-group">
                         <label for="options-input">Options</label>
-                        <textarea id="options-input" name="options" class="form-control" rows="3" placeholder="-sV -p- --min-rate=1000"></textarea>
+                        <textarea id="options-input" name="options" class="form-control" rows="3"
+                            placeholder="-sV -p- --min-rate=1000"></textarea>
                     </div>
                     <button type="submit" class="run-tool-btn"><i class="fas fa-bolt me-1"></i> Launch Task</button>
                 </form>
@@ -121,7 +125,8 @@
                     <li class="activity-item status-{{ task.status|lower }}">
                         <span class="activity-tool">{{ data.tools[task.tool_id].name }}</span>
                         <span class="activity-target">{{ task.command | truncate(30) }}</span>
-                        <a href="{{ url_for('tasks.task_details', task_id=task.id) }}" class="activity-details-link" title="View Details"><i class="fas fa-eye"></i></a>
+                        <a href="{{ url_for('tasks.task_details', task_id=task.id) }}" class="activity-details-link"
+                            title="View Details"><i class="fas fa-eye"></i></a>
                     </li>
                     {% else %}
                     <li class="empty-list-item">No tasks have been run for this project yet.</li>
@@ -191,7 +196,8 @@ e.g., example.com"></textarea>
                 </div>
                 <div class="form-group">
                     <label for="editProjectTargets">Scope / Targets</label>
-                    <textarea id="editProjectTargets" name="targets" class="form-control" rows="5" placeholder="Enter one IP, domain, or network range per line."></textarea>
+                    <textarea id="editProjectTargets" name="targets" class="form-control" rows="5"
+                        placeholder="Enter one IP, domain, or network range per line."></textarea>
                 </div>
                 <!-- MODIFIED: Wrapped buttons in a styled footer -->
                 <div class="modal-footer">

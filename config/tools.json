@@ -29,6 +29,12 @@
             "command": "curl {target} {options}",
             "default_options": "",
             "output_formats": "raw"
+        },
+        "gobuster": {
+            "name": "Gobuster",
+            "command": "gobuster {options}",
+            "default_options": "",
+            "output_formats": "raw"
         }
     }
 }

@@ -73,6 +73,8 @@ def create_app():
         from .scanner.routes import scanner_bp
         from .tasks.routes import tasks_bp
         from .projects.routes import projects_bp
+        from .tasks.task_manager import start_task_manager
+        start_task_manager(app)  # Start the task manager
 
         app.register_blueprint(home_bp)
         app.register_blueprint(auth_bp)

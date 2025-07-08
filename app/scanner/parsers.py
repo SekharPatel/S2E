@@ -4,6 +4,77 @@
 from flask import current_app
 import re
 import nmap
+import os
+
+def parse_nmap_for_http_hosts(filepath):
+    """
+    Parses a raw Nmap output file and returns a list of URLs (http/https)
+    for hosts with common web ports open.
+    """
+    if not os.path.exists(filepath):
+        return []
+
+    found_hosts = set()
+    with open(filepath, 'r', encoding='utf-8') as f:
+        content = f.read()
+
+    # Regex to find IPs or hostnames in "Nmap scan report for ..." lines
+    host_regex = re.compile(r"Nmap scan report for ([a-zA-Z0-9\.\-_]+)")
+    # Regex to find open web ports
+    port_regex = re.compile(r"(\d+)/(tcp|udp)\s+open\s+(http|https|http-proxy)")
+    
+    current_host = None
+    for line in content.splitlines():
+        host_match = host_regex.search(line)
+        if host_match:
+            current_host = host_match.group(1)
+            continue
+        
+        if current_host:
+            port_match = port_regex.search(line)
+            if port_match:
+                port = port_match.group(1)
+                service = port_match.group(3)
+                protocol = "https" if '443' in port or 'https' in service else "http"
+                found_hosts.add(f"{protocol}://{current_host}:{port}")
+                
+    return list(found_hosts)
+
+def parse_nmap_xml_for_services(xml_file_path):
+    """
+    Parses an Nmap XML file and returns a structured list of open services.
+    This is the core data source for the playbook engine.
+    """
+    if not os.path.exists(xml_file_path) or os.path.getsize(xml_file_path) == 0:
+        return []
+
+    nm = nmap.PortScanner()
+    found_services = []
+    
+    try:
+        with open(xml_file_path, 'r', encoding='utf-8') as f:
+            xml_content = f.read()
+        
+        scan_result = nm.analyse_nmap_xml_scan(xml_content)
+        
+        for host in nm.all_hosts():
+            if 'tcp' in nm[host]:
+                for port in nm[host]['tcp']:
+                    service_info = nm[host]['tcp'][port]
+                    if service_info.get('state') == 'open':
+                        protocol = 'https' if '443' in str(port) or 'ssl' in service_info.get('name', '') else 'http'
+                        found_services.append({
+                            'host': host,
+                            'port': str(port),
+                            'service_name': service_info.get('name', 'unknown'),
+                            'product': service_info.get('product', ''),
+                            'version': service_info.get('version', ''),
+                            'protocol': protocol # For constructing URLs like http:// or https://
+                        })
+    except Exception as e:
+        print(f"Error parsing Nmap XML file {xml_file_path}: {e}")
+
+    return found_services
 
 def parse_nmap_output_simple(output_content):
     """

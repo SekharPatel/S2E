@@ -5,8 +5,28 @@ from flask import Blueprint, request, jsonify, session
 from app import db
 from app.models import User, Project, Target
 from app.auth.routes import login_required
+from app.tasks.task_manager import TASK_QUEUE, QUEUE_LOCK
 
 projects_bp = Blueprint('projects', __name__)
+
+
+@projects_bp.route('/api/playbooks/<playbook_id>/run', methods=['POST'])
+@login_required
+def run_playbook(playbook_id):
+    active_project_id = session.get('active_project_id')
+    if not active_project_id:
+        return jsonify({'status': 'error', 'message': 'No active project selected'}), 400
+
+    job = {
+        'type': 'playbook',
+        'playbook_id': playbook_id,
+        'project_id': active_project_id
+    }
+    
+    with QUEUE_LOCK:
+        TASK_QUEUE.append(job)
+        
+    return jsonify({'status': 'success', 'message': f"Playbook '{playbook_id}' has been queued."})
 
 @projects_bp.route('/api/projects', methods=['POST'])
 @login_required

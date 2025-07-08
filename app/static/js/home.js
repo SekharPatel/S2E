@@ -1,7 +1,7 @@
 // /S2E/app/static/js/home.js
 // FINAL VERSION: Fixes New Project bug and adds fully functional Edit/Delete logic.
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
 
     const openModal = (modalElement) => modalElement.classList.add('show-modal');
     const closeModal = (modalElement) => {
@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const projectSelect = document.getElementById('project-select-dropdown');
     if (projectSelect) {
-        projectSelect.addEventListener('change', function() {
+        projectSelect.addEventListener('change', function () {
             document.body.style.cursor = 'wait';
             fetch('/api/projects/set_active', {
                 method: 'POST',
@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
         closeNewProjectBtn.addEventListener('click', () => closeModal(newProjectModal));
         newProjectModal.addEventListener('click', (e) => { if (e.target === newProjectModal) closeModal(newProjectModal); });
 
-        newProjectForm.addEventListener('submit', function(event) {
+        newProjectForm.addEventListener('submit', function (event) {
             event.preventDefault();
             const submitBtn = this.querySelector('button[type="submit"]');
             const originalBtnHTML = submitBtn.innerHTML;
@@ -57,10 +57,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (result.status === 'success') window.location.reload();
                 else alert('Error: ' + (result.message || 'Could not create project.'));
             }).catch(err => alert('An unexpected network error occurred.'))
-            .finally(() => {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalBtnHTML;
-            });
+                .finally(() => {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnHTML;
+                });
         });
     }
 
@@ -72,7 +72,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const deleteProjectBtn = document.getElementById('deleteProjectBtn');
 
     if (editProjectModal && editProjectBtn && closeEditProjectBtn && editProjectForm && deleteProjectBtn) {
-        editProjectBtn.addEventListener('click', function() {
+        editProjectBtn.addEventListener('click', function () {
             const activeProjectId = projectSelect.value;
             if (!activeProjectId) return;
 
@@ -92,7 +92,7 @@ document.addEventListener('DOMContentLoaded', function() {
         editProjectModal.addEventListener('click', (e) => { if (e.target === editProjectModal) closeModal(editProjectModal); });
 
         // CRITICAL FIX: Implement the save functionality
-        editProjectForm.addEventListener('submit', function(event) {
+        editProjectForm.addEventListener('submit', function (event) {
             event.preventDefault();
             const submitBtn = this.querySelector('button[type="submit"]');
             const originalBtnHTML = submitBtn.innerHTML;
@@ -114,13 +114,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     alert('Error: ' + (result.message || 'Could not update project.'));
                 }
             }).catch(err => alert('An unexpected network error occurred.'))
-            .finally(() => {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalBtnHTML;
-            });
+                .finally(() => {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnHTML;
+                });
         });
 
-        deleteProjectBtn.addEventListener('click', function() {
+        deleteProjectBtn.addEventListener('click', function () {
             const projectId = document.getElementById('editProjectId').value;
             const projectName = document.getElementById('editProjectName').value;
 
@@ -144,4 +144,29 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+    document.querySelectorAll('.run-playbook-btn').forEach(button => {
+        button.addEventListener('click', function () {
+            const playbookItem = this.closest('.playbook-item');
+            const playbookId = playbookItem.dataset.playbookId;
+
+            if (!playbookId) return;
+
+            if (confirm(`Are you sure you want to run the "${playbookId}" playbook?`)) {
+                this.disabled = true;
+                this.innerHTML = `<i class="fas fa-spinner fa-spin me-1"></i>Queued`;
+
+                fetch(`/api/playbooks/${playbookId}/run`, { method: 'POST' })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            alert(data.message);
+                        } else {
+                            alert('Error: ' + (data.message || 'Could not queue playbook.'));
+                            this.disabled = false;
+                            this.innerHTML = `<i class="fas fa-play me-1"></i> Run`;
+                        }
+                    });
+            }
+        });
+    });
 });
