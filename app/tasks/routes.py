@@ -1,7 +1,4 @@
 # /S2E/app/tasks/routes.py
-# Key Changes: New blueprint. Combines task list/details pages and task status/stop APIs.
-
-# /S2E/app/tasks/routes.py
 # UPDATED: All routes now query the Task model from the database.
 
 from flask import Blueprint, render_template, redirect, url_for, jsonify, current_app

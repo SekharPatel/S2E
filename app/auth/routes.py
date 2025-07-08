@@ -1,5 +1,4 @@
 # /S2E/app/auth/routes.py
-# UPDATED: Uses the User database model for secure authentication.
 
 from flask import Blueprint, render_template, request, redirect, url_for, session
 from functools import wraps

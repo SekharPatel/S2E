@@ -1,5 +1,4 @@
 # /S2E/app/scanner/services.py
-# REFACTORED: Now interacts with our custom task queue instead of threading.
 
 from flask import current_app
 import os

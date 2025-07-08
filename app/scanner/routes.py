@@ -1,5 +1,4 @@
 # /S2E/app/scanner/routes.py
-# UPDATED: This version removes the dependency on the old storage.py and uses the database.
 
 from flask import Blueprint, redirect, url_for, current_app, request, flash, jsonify, session
 import os

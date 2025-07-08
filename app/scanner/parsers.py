@@ -1,5 +1,4 @@
 # /S2E/app/scanner/parsers.py
-# Key Changes: Moved to the 'scanner' feature module. No code changes needed.
 
 from flask import current_app
 import re

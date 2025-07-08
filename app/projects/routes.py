@@ -1,5 +1,4 @@
 # /S2E/app/projects/routes.py
-# UPDATED: The create_project function now handles description and targets.
 
 from flask import Blueprint, request, jsonify, session
 from app import db
