@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard - Scan 2 Exploit{% endblock %}
+{% block title %}Dashboard - {{ data.active_project.name if data.active_project else 'S2E' }}{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
@@ -27,24 +27,57 @@
         </div>
         <div class="project-actions">
             {% if data.active_project %}
-            <button class="header-btn" id="editProjectBtn"><i class="fas fa-edit me-1"></i> Edit Project</button>
+            <button class="header-btn" id="editProjectBtn"><i class="fas fa-edit me-1"></i> Manage Project</button>
             {% endif %}
             <button class="header-btn" id="newProjectBtn"><i class="fas fa-plus me-1"></i> New Project</button>
         </div>
     </header>
 
     {% if data.active_project %}
-    <div class="dashboard-grid">
-        <!-- LEFT COLUMN: Information and Workflows -->
+    <div class="dashboard-grid-simplified">
+        <!-- Main Column: Playbooks and Scope -->
         <div class="dashboard-main-col">
+            <!-- Playbooks Card - This is now the primary action center -->
+            <section class="dashboard-card">
+                <h2 class="card-title"><i class="fas fa-robot me-2"></i>Available Playbooks</h2>
+                <p class="card-subtitle">Select a playbook to run against all targets in the current project scope.</p>
+                <ul class="playbook-list">
+                    {% for playbook in data.playbooks %}
+                    <li class="playbook-item" data-playbook-id="{{ playbook.id }}">
+                        <div class="playbook-icon"><i class="fas fa-play-circle"></i></div>
+                        <div class="playbook-info">
+                            <span class="playbook-name">{{ playbook.name }}</span>
+                            <span class="playbook-desc">{{ playbook.description }}</span>
+                        </div>
+                        <button type="button" class="run-playbook-btn">Launch Playbook</button>
+                    </li>
+                    {% else %}
+                    <li class="empty-list-item">No playbooks defined. Create one in the Playbooks section.</li>
+                    {% endfor %}
+                </ul>
+            </section>
+
+            <!-- Scope / Targets Card -->
+            <section class="dashboard-card">
+                <h2 class="card-title"><i class="fas fa-crosshairs me-2"></i>Project Scope ({{ data.stats.targets }}
+                    targets)</h2>
+                <ul class="project-target-list">
+                    {% for target in data.targets %}
+                    <li><i class="fas fa-server"></i> {{ target.value }}</li>
+                    {% else %}
+                    <li class="empty-list-item">No targets defined for this project. Add targets via "Manage Project".
+                    </li>
+                    {% endfor %}
+                </ul>
+            </section>
+        </div>
+
+        <!-- Side Column: Stats and Activity -->
+        <div class="dashboard-side-col">
             <!-- Project Overview Card -->
             <section class="dashboard-card">
-                <h2 class="card-title"><i class="fas fa-chart-pie me-2"></i>Project Overview</h2>
+                <h2 class="card-title"><i class="fas fa-chart-pie me-2"></i>Project Stats</h2>
                 <div class="project-stats-grid">
-                    <div class="stat-item">
-                        <span class="stat-value">{{ data.stats.targets }}</span>
-                        <span class="stat-label">Targets</span>
-                    </div>
                     <div class="stat-item">
                         <span class="stat-value">{{ data.stats.tasks }}</span>
                         <span class="stat-label">Tasks Run</span>
@@ -54,67 +87,6 @@
                         <span class="stat-label">Findings</span>
                     </div>
                 </div>
-            </section>
-
-            <!-- Scope / Targets Card -->
-            <section class="dashboard-card">
-                <h2 class="card-title"><i class="fas fa-crosshairs me-2"></i>Project Scope</h2>
-                <ul class="project-target-list">
-                    {% for target in data.targets %}
-                    <li><i class="fas fa-server"></i> {{ target.value }}</li>
-                    {% else %}
-                    <li class="empty-list-item">No targets defined for this project.</li>
-                    {% endfor %}
-                </ul>
-                <!-- Logic for adding targets would go here -->
-            </section>
-
-            <!-- Playbooks Card -->
-            <section class="dashboard-card">
-                <h2 class="card-title"><i class="fas fa-robot me-2"></i>Playbooks</h2>
-                <ul class="playbook-list">
-                    {% for playbook in data.playbooks %}
-                    <!-- ADD data-playbook-id to the <li> tag -->
-                    <li class="playbook-item" data-playbook-id="{{ playbook.id }}">
-                        <div class="playbook-info">
-                            <span class="playbook-name">{{ playbook.name }}</span>
-                            <span class="playbook-desc">{{ playbook.description }}</span>
-                        </div>
-                        <button type="button" class="run-playbook-btn"><i class="fas fa-play me-1"></i> Run</button>
-                    </li>
-                    {% else %}
-                    <li class="empty-list-item">No playbooks configured.</li>
-                    {% endfor %}
-                </ul>
-            </section>
-        </div>
-
-        <!-- RIGHT COLUMN: Actions and Activity Feed -->
-        <div class="dashboard-side-col">
-            <!-- Tool Launcher Card -->
-            <section class="dashboard-card tool-launcher-card">
-                <h2 class="card-title"><i class="fas fa-terminal me-2"></i>Quick Run</h2>
-                <form action="{{ url_for('scanner.home_scan') }}" method="POST">
-                    <div class="form-group">
-                        <label for="tool-select">Tool</label>
-                        <select id="tool-select" name="tool_id" class="form-control">
-                            {% for tool_id, tool_info in data.tools.items() %}
-                            <option value="{{ tool_id }}">{{ tool_info.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="target-input">Target / Query</label>
-                        <input type="text" id="target-input" name="target" class="form-control"
-                            placeholder="127.0.0.1 or 'apache 2.4'" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="options-input">Options</label>
-                        <textarea id="options-input" name="options" class="form-control" rows="3"
-                            placeholder="-sV -p- --min-rate=1000"></textarea>
-                    </div>
-                    <button type="submit" class="run-tool-btn"><i class="fas fa-bolt me-1"></i> Launch Task</button>
-                </form>
             </section>
 
             <!-- Recent Activity Card -->

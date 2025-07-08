@@ -1,6 +1,7 @@
-/* /S2E/app/static/css/home.css */
+/* /S2E/app/static/css/home.css
+   COMPLETE REWRITE for the new streamlined, playbook-focused dashboard. */
 
-/* --- UTILITY CLASSES --- */
+/* --- UTILITY & BASE --- */
 .me-1 {
     margin-right: 0.25rem;
 }
@@ -9,7 +10,6 @@
     margin-right: 0.5rem;
 }
 
-/* --- MAIN DASHBOARD LAYOUT --- */
 .dashboard-container {
     max-width: 1400px;
     margin: 0 auto;
@@ -84,28 +84,8 @@
     transform: translateY(-2px);
 }
 
-.run-tool-btn {
-    background: #2d2d42;
-    color: #c7d2fe;
-    border: 1px solid rgba(165, 180, 252, 0.3);
-    border-radius: 8px;
-    padding: 0.7rem 1.2rem;
-    font-size: 0.95rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: inline-flex;
-    align-items: center;
-}
-
-.run-tool-btn:hover {
-    background: #a5b4fc;
-    color: #14141e;
-    border-color: #a5b4fc;
-    transform: translateY(-2px);
-}
-
-.dashboard-grid {
+/* --- NEW SIMPLIFIED GRID LAYOUT --- */
+.dashboard-grid-simplified {
     display: grid;
     grid-template-columns: 2fr 1fr;
     gap: 1.5rem;
@@ -129,9 +109,16 @@
     font-weight: 600;
     color: #a5b4fc;
     margin-top: 0;
-    margin-bottom: 1.25rem;
+    margin-bottom: 0.5rem;
     display: flex;
     align-items: center;
+}
+
+.card-subtitle {
+    font-size: 0.95rem;
+    color: #9ca3af;
+    margin-top: 0;
+    margin-bottom: 1.5rem;
 }
 
 .empty-list-item {
@@ -152,10 +139,72 @@
     opacity: 0.5;
 }
 
-/* --- SPECIFIC CARD STYLES --- */
+/* --- PLAYBOOK CARD REDESIGN --- */
+.playbook-list {
+    list-style: none;
+    padding: 0;
+}
+
+.playbook-item {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.playbook-item:hover {
+    background: rgba(165, 180, 252, 0.1);
+    border-color: #a5b4fc;
+}
+
+.playbook-icon {
+    font-size: 1.5rem;
+    color: #a5b4fc;
+}
+
+.playbook-name {
+    font-weight: 600;
+    color: #fff;
+    display: block;
+}
+
+.playbook-desc {
+    font-size: 0.85rem;
+    color: #9ca3af;
+}
+
+.run-playbook-btn {
+    background: #8025db;
+    color: #fff;
+    border: none;
+    font-weight: 600;
+    border-radius: 6px;
+    padding: 0.6rem 1.2rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.run-playbook-btn:hover {
+    background: #a5b4fc;
+    color: #14141e;
+}
+
+.run-playbook-btn:disabled {
+    background: #4a4a6a;
+    color: #9ca3af;
+    cursor: not-allowed;
+}
+
+/* --- OTHER CARDS --- */
 .project-stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
     gap: 1rem;
     text-align: center;
 }
@@ -176,7 +225,6 @@
 .project-target-list {
     list-style: none;
     padding: 0;
-    margin-bottom: 1.5rem;
 }
 
 .project-target-list li {
@@ -189,51 +237,6 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
-}
-
-.playbook-list {
-    list-style: none;
-    padding: 0;
-}
-
-.playbook-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem;
-    border-radius: 8px;
-    margin-bottom: 0.75rem;
-    background: rgba(255, 255, 255, 0.03);
-    transition: background 0.2s ease;
-}
-
-.playbook-item:hover {
-    background: rgba(255, 255, 255, 0.07);
-}
-
-.playbook-name {
-    font-weight: 600;
-    color: #fff;
-    display: block;
-}
-
-.playbook-desc {
-    font-size: 0.85rem;
-    color: #9ca3af;
-}
-
-.run-playbook-btn {
-    background: #23243a;
-    border: 1px solid #8025db;
-    color: #fff;
-    border-radius: 6px;
-    padding: 0.5rem 1rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.run-playbook-btn:hover {
-    background: #8025db;
 }
 
 .activity-feed {
@@ -435,20 +438,24 @@ textarea.form-control {
 
 .modal-footer {
     margin-top: 2rem;
-    display: flex; /* Use flexbox for alignment */
-    justify-content: flex-end; /* Align buttons to the right */
-    gap: 1rem; /* Space between buttons */
+    display: flex;
+    /* Use flexbox for alignment */
+    justify-content: flex-end;
+    /* Align buttons to the right */
+    gap: 1rem;
+    /* Space between buttons */
 }
 
 .modal-footer .form-submit-btn {
-    width: auto; /* Override the 100% width */
+    width: auto;
+    /* Override the 100% width */
     padding-left: 1.5rem;
     padding-right: 1.5rem;
 }
 
 /* Push the delete button to the far left */
 .modal-footer .btn-danger {
-    margin-right: auto; 
+    margin-right: auto;
 }
 
 .form-submit-btn {

@@ -10,39 +10,6 @@ from .services import add_project_scan_to_queue, add_single_task_to_queue
 
 scanner_bp = Blueprint('scanner', __name__)
 
-@scanner_bp.route('/home/scan', methods=['POST'])
-@login_required
-def home_scan():
-    tool_id = request.form.get('tool_id')
-    target = request.form.get('target')
-    options = request.form.get('options', '')
-    run_on_all = request.form.get('run_on_all_targets') == 'true'
-    
-    active_project_id = session.get('active_project_id')
-    if not active_project_id:
-        flash('No active project. Please create or select a project first.', 'danger')
-        return redirect(url_for('home.home'))
-
-    if run_on_all:
-        tasks_added, err = add_project_scan_to_queue(tool_id, options, active_project_id)
-        if err:
-            flash(f"Error starting project scan: {err}", 'danger')
-        else:
-            flash(f'Successfully queued {tasks_added} tasks for a project scan.', 'success')
-    else:
-        if not target:
-            flash('Target is required for a single scan.', 'danger')
-            return redirect(url_for('home.home'))
-        task_id, err = add_single_task_to_queue(tool_id, target, options, active_project_id)
-        if err:
-            flash(f"Error starting task: {err}", 'danger')
-        else:
-            flash(f'Successfully queued task #{task_id}.', 'success')
-    
-    return redirect(url_for('tasks.list_tasks'))
-
-
-
 # --- API Endpoints ---
 # (The API endpoints analyze_nmap_task and run_follow_up_action remain here unchanged)
 

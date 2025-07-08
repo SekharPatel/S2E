@@ -81,8 +81,6 @@ def create_app():
         app.register_blueprint(scanner_bp)
         app.register_blueprint(tasks_bp)
         app.register_blueprint(projects_bp)
-
-        # app.add_url_rule('/', endpoint='home.index')
         
     # --- Add CLI command for user management ---
     @app.cli.command("create-user")

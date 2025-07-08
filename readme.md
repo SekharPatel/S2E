@@ -24,13 +24,14 @@ A web-based interface for orchestrating and managing cybersecurity scanning tool
 ```
 S2E/
 ├── app/
+│   ├── __init__.py   # Flask app factory and configuration
+|   ├── models.py     # Database models (User, Project, Task, Scan)
 │   ├── auth/         # Authentication (login, logout)
 │   ├── home/         # Home and landing pages
 |   ├── project/      # Project management UI and API
 │   ├── scanner/      # Logic for running and parsing scans
-│   ├── tasks/        # Task management UI and API
 │   ├── static/       # CSS, JS, Images
-|   ├── tasks/        # Task management UI and API
+│   ├── tasks/        # Task management UI and API
 │   └── templates/    # HTML templates
 │
 ├── config/           # JSON-based tool and app configuration
@@ -60,7 +61,7 @@ First, ensure you have the necessary system-level dependencies installed.
 ### 2. Clone the Repository
 
 ```bash
-git clone <your-repository-url>
+git clone https://github.com/SekharPatel/S2E.git
 cd S2E
 ```
 
@@ -132,5 +133,5 @@ Open your web browser and navigate to **http://127.0.0.1:5000**. You should see 
 
 You can easily customize the tools available in S2E by editing the JSON files in the `S2E/config/` directory:
 -   `tools.json`: Define the command structure for each tool.
--   `intensity.json`: Define which tools and options run for `low`, `medium`, and `high` intensity scans.
--   `follow-up.json`: Define the actions available in the Nmap analysis tab.
+-   `playbook.json`: Define the sequence of tasks and how they interact.
+-   `follow-up.json`: Define the actions available in the Nmap analysis tab
