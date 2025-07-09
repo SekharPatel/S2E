@@ -24,11 +24,6 @@
                         "name": "SSH User Enumeration",
                         "tool_id": "nmap",
                         "options": "-p {port} --script ssh2-enum-users --script-args ssh2-enum-users.userlist='E:/Hacking Things/wordlist/username-lists/first-names_top100_lower.txt' {host}"
-                    },
-                    "2_action": {
-                        "name": "SSH Brute-force",
-                        "tool_id": "hydra",
-                        "options": "-l {username} -P 'E:/Hacking Things/wordlist/password-lists/rockyou.txt' ssh://{host}:{port}"
                     }
                 },
                 {
@@ -37,11 +32,6 @@
                         "name": "FTP Anonymous Login Check",
                         "tool_id": "nmap",
                         "options": "-p {port} --script ftp-anon {host}"
-                    },
-                    "2_action": {
-                        "name": "FTP Brute-force",
-                        "tool_id": "hydra",
-                        "options": "-l {username} -P 'E:/Hacking Things/wordlist/password-lists/rockyou.txt' ftp://{host}:{port}"
                     }
                 }
             ]
