@@ -1,34 +1,19 @@
-document.addEventListener('DOMContentLoaded', function() {
-    // User dropdown functionality
-    var dropdown = document.getElementById('userDropdown');
-    var closeTimer = null;
-    if (dropdown) {
-        dropdown.addEventListener('mouseenter', function() {
-            if (closeTimer) {
-                clearTimeout(closeTimer);
-                closeTimer = null;
-            }
-            dropdown.classList.add('open');
-        });
-        dropdown.addEventListener('mouseleave', function() {
-            closeTimer = setTimeout(function() {
-                dropdown.classList.remove('open');
-            }, 200); // 200ms delay before closing
-        });
+let sidebar = document.querySelector(".sidebar");
+let closeBtn = document.querySelector("#btn");
+
+// Ensure elements exist before adding listeners to prevent errors on pages without a sidebar
+if (sidebar && closeBtn) {
+    closeBtn.addEventListener("click", () => {
+        sidebar.classList.toggle("open");
+        menuBtnChange(); //calling the function(optional)
+    });
+}
+
+// following are the code to change sidebar button(optional)
+function menuBtnChange() {
+    if (sidebar.classList.contains("open")) {
+        closeBtn.classList.replace("bx-menu", "bx-menu-alt-right"); //replacing the iocns class
+    } else {
+        closeBtn.classList.replace("bx-menu-alt-right", "bx-menu"); //replacing the iocns class
     }
-    
-    // Navbar scroll behavior
-    // const navbar = document.querySelector('nav');
-    // let lastScrollY = window.scrollY;
-    
-    // window.addEventListener('scroll', function() {
-    //     if (window.scrollY > lastScrollY) {
-    //         // Scrolling down
-    //         navbar.classList.add('nav-hidden');
-    //     } else {
-    //         // Scrolling up
-    //         navbar.classList.remove('nav-hidden');
-    //     }
-    //     lastScrollY = window.scrollY;
-    // });
-});
+}

@@ -1,55 +1,78 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="en" dir="ltr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Scan 2 Exploit(S2E){% endblock %}</title>
-    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
-    {% block extra_css %}{% endblock %}
-</head>
+    <meta charset="UTF-8" />
+    <title>{% block title %}S2E - Scan 2 Exploit{% endblock %}</title>
 
-<body>
-    <!-- <div class="bg-animated"></div> -->
-    <nav>
-        <div class="nav-container">
-            <a href="{{ url_for('home.home') }}" class="logo">S2E</a>
-            <ul class="nav-links">
-                {% if session.username %}
-                <li><a href="{{ url_for('tasks.list_tasks') }}">TASKS</a></li>
-                {% else %}
-                <li><a href="{{ url_for('auth.login') }}">TASKS</a></li>
-                {% endif %}
-            </ul>
-            {% if session.username %}
-            <div class="user-dropdown" id="userDropdown">
-                <button class="user-dropdown-btn" id="userDropdownBtn">
-                    <i class="fas fa-user-circle" style="font-size:1.1em;"></i> {{ session.username }}
-                    <svg style="margin-left:6px;" width="12" height="8" viewBox="0 0 12 8">
-                        <path d="M2 2l4 4 4-4" stroke="#000" stroke-width="1.5" fill="none" stroke-linecap="round" />
-                    </svg>
-                </button>
-                <div class="user-dropdown-menu" id="userDropdownMenu">
-                    <a href="{{ url_for('auth.logout') }}">Logout</a>
+    <!-- Boxicons CDN Link -->
+    <link href="https://unpkg.com/boxicons@2.1.2/css/boxicons.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}" />
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+
+    {% block extra_css %}{% endblock %}
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+<body class="{% if not session.username %}no-sidebar{% endif %}">
+    {% if session.username %}
+    <div class="sidebar">
+        <div class="logo-details">
+            <div class="logo_name">S2E</div>
+            <i class="bx bx-menu" id="btn"></i>
+        </div>
+        <ul class="nav-list">
+            <li>
+                <a href="{{ url_for('home.home') }}">
+                    <i class="bx bx-grid-alt"></i>
+                    <span class="links_name">Dashboard</span>
+                </a>
+                <span class="tooltip">Dashboard</span>
+            </li>
+            <li>
+                <a href="{{ url_for('tasks.list_tasks') }}">
+                    <i class="bx bx-list-ul"></i>
+                    <span class="links_name">Tasks</span>
+                </a>
+                <span class="tooltip">Tasks</span>
+            </li>
+            <!-- Placeholder for future pages -->
+            <!--
+            <li>
+                <a href="#">
+                    <i class="bx bx-folder"></i>
+                    <span class="links_name">Projects</span>
+                </a>
+                <span class="tooltip">Projects</span>
+            </li>
+            <li>
+                <a href="#">
+                    <i class="bx bx-bot"></i>
+                    <span class="links_name">Playbooks</span>
+                </a>
+                <span class="tooltip">Playbooks</span>
+            </li>
+            -->
+            <li class="profile">
+                <div class="profile-details">
+                    <i class="bx bx-user"></i>
+                    <div class="name_job">
+                        <div class="name">{{ session.username }}</div>
+                    </div>
                 </div>
-            </div>
-            {% else %}
-            <a href="{{ url_for('auth.login') }}" class="signin-button">Sign In</a>
-            {% endif %}
-        </div>
-    </nav>
-    <div class="container">
-        {% block content %}{% endblock %}
+                <a href="{{ url_for('auth.logout') }}" style="background: none;">
+                    <i class="bx bx-log-out" id="log_out"></i>
+                </a>
+            </li>
+        </ul>
     </div>
-    <footer class="bg-dark text-white text-center py-4 mt-5">
-        <div class="container">
-            <p class="mb-0">© 2025 Scan 2 Exploit. For educational purposes only.</p>
+    {% endif %}
+
+    <section class="home-section">
+        <div class="main-content">
+            {% block content %}{% endblock %}
         </div>
-    </footer>
+    </section>
+
     <script src="{{ url_for('static', filename='js/base.js') }}"></script>
     {% block extra_js %}{% endblock %}
 </body>
-
 </html>
