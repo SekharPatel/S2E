@@ -1,24 +1,80 @@
 # /S2E/app/tasks/task_manager.py
-# NEW FILE: A simple, in-memory task queue and worker manager.
+# UPDATED: Replace in-memory queue with persistent SQLite-based queue system
 
 import threading
 import time
-from collections import deque
-import subprocess
 from datetime import datetime
 import os
 import json
 import shlex
 
-from app.models import db, Task, Target
+from app.models import db, Task, Target, JobQueue
 from app.scanner.parsers import parse_nmap_xml_for_services
 
-# --- In-Memory Queue and Global State ---
-# deque is a thread-safe list-like object, perfect for a simple queue.
-TASK_QUEUE = deque()
-QUEUE_LOCK = threading.Lock()
+# --- Global State ---
 _APP = None
+_WORKER_RUNNING = False
 
+def add_job_to_queue(job_type, job_data, priority=0):
+    """
+    Add a job to the persistent database queue.
+    
+    Args:
+        job_type: 'single_task' or 'playbook'
+        job_data: Dictionary containing job parameters
+        priority: Integer priority (higher = more important)
+    """
+    try:
+        with _APP.app_context():
+            job = JobQueue(
+                job_type=job_type,
+                priority=priority
+            )
+            job.set_job_data(job_data)
+            db.session.add(job)
+            db.session.commit()
+            print(f"Added {job_type} job to queue with ID {job.id}")
+            return job.id
+    except Exception as e:
+        print(f"Error adding job to queue: {e}")
+        return None
+
+def get_next_job():
+    """
+    Get the next pending job from the database queue.
+    Returns the job with highest priority, then oldest created_at.
+    """
+    try:
+        with _APP.app_context():
+            job = JobQueue.query.filter_by(status='pending').order_by(
+                JobQueue.priority.desc(),
+                JobQueue.created_at.asc()
+            ).first()
+            
+            if job:
+                # Mark as processing
+                job.status = 'processing'
+                job.started_at = datetime.utcnow()
+                db.session.commit()
+                print(f"Retrieved job {job.id} ({job.job_type}) from queue")
+                return job
+            return None
+    except Exception as e:
+        print(f"Error retrieving job from queue: {e}")
+        return None
+
+def mark_job_completed(job_id, success=True):
+    """Mark a job as completed or failed."""
+    try:
+        with _APP.app_context():
+            job = JobQueue.query.get(job_id)
+            if job:
+                job.status = 'completed' if success else 'failed'
+                job.completed_at = datetime.utcnow()
+                db.session.commit()
+                print(f"Marked job {job_id} as {'completed' if success else 'failed'}")
+    except Exception as e:
+        print(f"Error marking job {job_id} as completed: {e}")
 
 def run_tool_process(task_id):
     """
@@ -78,8 +134,6 @@ def run_tool_process(task_id):
                 f.write(f"Status: {task.status}\n")
 
     return task
-
-
 
 def handle_playbook(playbook_job):
     """
@@ -157,36 +211,82 @@ def handle_playbook(playbook_job):
                     action['tool_id'], target_for_action, options, project_id
                 )
                 if new_task_id:
-                    with QUEUE_LOCK:
-                        TASK_QUEUE.append({'type': 'single_task', 'task_id': new_task_id})
+                    # Use the new database queue system
+                    add_job_to_queue('single_task', {'task_id': new_task_id})
                     tasks_queued += 1
                     print(f"  - Queued '{action['name']}' for {service['host']}:{service['port']}")
                 break # Move to the next service once a rule has matched
 
     print(f"Playbook '{playbook_id}': Finished. Queued {tasks_queued} new follow-up tasks.")
 
-
 def task_manager_worker():
-    """The main worker function for our background thread."""
-    with _APP.app_context():
-        while True:
-            job = None
-            with QUEUE_LOCK:
-                if TASK_QUEUE:
-                    job = TASK_QUEUE.popleft()
+    """
+    The main worker function for our background thread.
+    Now uses the persistent database queue instead of in-memory deque.
+    """
+    global _WORKER_RUNNING
+    _WORKER_RUNNING = True
+    
+    print("Task manager worker started with persistent database queue")
+    
+    while _WORKER_RUNNING:
+        try:
+            job = get_next_job()
             if job:
-                print(f"Task manager picked up job: {job}")
-                if job['type'] == 'single_task':
-                    run_tool_process(job['task_id'])
-                elif job['type'] == 'playbook':
-                    handle_playbook(job)
-            time.sleep(2)
+                job_data = job.get_job_data()
+                success = True
+                
+                print(f"Processing job {job.id}: {job.job_type}")
+                
+                if job.job_type == 'single_task':
+                    task = run_tool_process(job_data['task_id'])
+                    success = task and task.status in ['completed', 'failed']  # Not 'error'
+                elif job.job_type == 'playbook':
+                    try:
+                        handle_playbook(job_data)
+                    except Exception as e:
+                        print(f"Error handling playbook job {job.id}: {e}")
+                        success = False
+                
+                mark_job_completed(job.id, success)
+            else:
+                # No jobs available, sleep a bit
+                time.sleep(2)
+                
+        except Exception as e:
+            print(f"Error in task manager worker: {e}")
+            time.sleep(5)  # Sleep longer on errors
 
 def start_task_manager(app):
-    """Starts the background manager thread."""
+    """
+    Starts the background manager thread.
+    On startup, checks for any jobs that were 'processing' when the app shut down
+    and resets them to 'pending' for retry.
+    """
     global _APP
     _APP = app
+    
+    # Recovery: Reset any jobs that were stuck in 'processing' state
+    with app.app_context():
+        stuck_jobs = JobQueue.query.filter_by(status='processing').all()
+        for job in stuck_jobs:
+            job.status = 'pending'
+            job.started_at = None
+            print(f"Reset stuck job {job.id} to pending")
+        if stuck_jobs:
+            db.session.commit()
+            print(f"Reset {len(stuck_jobs)} stuck jobs to pending")
+    
     manager_thread = threading.Thread(target=task_manager_worker)
     manager_thread.daemon = True
     manager_thread.start()
-    print("Task manager thread started.")
+    print("Task manager thread started with persistent queue system.")
+
+def stop_task_manager():
+    """Stop the task manager worker gracefully."""
+    global _WORKER_RUNNING
+    _WORKER_RUNNING = False
+    print("Task manager worker stopped.")
+
+# Missing import for subprocess
+import subprocess

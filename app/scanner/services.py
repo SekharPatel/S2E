@@ -7,7 +7,7 @@ import time
 
 from app import db
 from app.models import Task
-from app.tasks.task_manager import TASK_QUEUE, QUEUE_LOCK
+from app.tasks.task_manager import add_job_to_queue
 
 def _create_task_record(tool_id, target_or_query, options_str, project_id):
     """
@@ -63,16 +63,18 @@ def _create_task_record(tool_id, target_or_query, options_str, project_id):
 
 def add_single_task_to_queue(tool_id, target, options, project_id):
     """
-    Creates a single task record and adds it to the run queue.
+    Creates a single task record and adds it to the persistent database queue.
     """
     task_id, err = _create_task_record(tool_id, target, options, project_id)
     if err:
         return None, err
-        
-    with QUEUE_LOCK:
-        TASK_QUEUE.append({'type': 'single_task', 'task_id': task_id})
-        
-    return task_id, None
+    
+    # Add to the persistent database queue
+    job_id = add_job_to_queue('single_task', {'task_id': task_id})
+    if job_id:
+        return task_id, None
+    else:
+        return None, "Failed to add task to queue"
 
 def add_project_scan_to_queue(tool_id, options, project_id):
     """
@@ -94,3 +96,18 @@ def add_project_scan_to_queue(tool_id, options, project_id):
             tasks_added += 1
             
     return tasks_added, None
+
+def add_playbook_to_queue(playbook_id, project_id, priority=0):
+    """
+    Add a playbook job to the persistent database queue.
+    """
+    job_data = {
+        'playbook_id': playbook_id,
+        'project_id': project_id
+    }
+    
+    job_id = add_job_to_queue('playbook', job_data, priority)
+    if job_id:
+        return job_id, None
+    else:
+        return None, "Failed to add playbook to queue"
