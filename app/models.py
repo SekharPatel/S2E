@@ -5,6 +5,7 @@ from . import db
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 from sqlalchemy.orm import relationship
+import json
 
 # A Project is the top-level container for an engagement
 class Project(db.Model):
@@ -70,3 +71,31 @@ class Task(db.Model):
 
     def __repr__(self):
         return f'<Task {self.id} ({self.tool_id})>'
+
+class JobQueue(db.Model):
+    """
+    Persistent job queue for background tasks.
+    Replaces the in-memory deque for restart-safe task queuing.
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    job_type = db.Column(db.String(64), nullable=False)  # 'single_task' or 'playbook'
+    job_data = db.Column(db.Text, nullable=False)  # JSON-encoded job data
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    status = db.Column(db.String(32), default='pending', index=True)  # 'pending', 'processing', 'completed', 'failed'
+    started_at = db.Column(db.DateTime, nullable=True)
+    completed_at = db.Column(db.DateTime, nullable=True)
+    priority = db.Column(db.Integer, default=0)  # Higher numbers = higher priority
+    
+    def set_job_data(self, data):
+        """Store job data as JSON."""
+        self.job_data = json.dumps(data)
+    
+    def get_job_data(self):
+        """Retrieve job data from JSON."""
+        try:
+            return json.loads(self.job_data)
+        except json.JSONDecodeError:
+            return {}
+    
+    def __repr__(self):
+        return f'<JobQueue {self.id} ({self.job_type})>'
