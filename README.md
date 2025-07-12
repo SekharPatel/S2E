@@ -1,10 +1,14 @@
-# Scan 2 Exploit (S2E) - Complete Documentation
+# Scan 2 Exploit (S2E)
+
+A sophisticated web-based cybersecurity scanning orchestration platform designed to streamline the initial phases of penetration testing. S2E provides a unified interface for managing multiple scanning tools, organizing projects, and automating follow-up actions based on scan results.
+
+S2E transforms complex command-line security tools into an intuitive web dashboard, making it easier for security professionals to conduct comprehensive assessments while maintaining detailed records of all activities.
 
 ## Table of Contents
-1. [Overview](#overview)
-2. [Features](#features)
-3. [Architecture](#architecture)
-4. [Performance Optimizations](#performance-optimizations)
+1. [Features](#features)
+2. [Performance Optimizations](#performance-optimizations)
+3. [Technology Stack](#technology-stack)
+4. [Architecture](#architecture)
 5. [Getting Started](#getting-started)
 6. [User Guide](#user-guide)
 7. [Configuration](#configuration)
@@ -12,21 +16,7 @@
 9. [Database Schema](#database-schema)
 10. [Troubleshooting](#troubleshooting)
 11. [Contributing](#contributing)
-
----
-
-## Overview
-
-**Scan 2 Exploit (S2E)** is a sophisticated web-based cybersecurity scanning orchestration platform designed to streamline the initial phases of penetration testing. It provides a unified interface for managing multiple scanning tools, organizing projects, and automating follow-up actions based on scan results.
-
-S2E transforms complex command-line security tools into an intuitive web dashboard, making it easier for security professionals to conduct comprehensive assessments while maintaining detailed records of all activities.
-
-### Key Philosophy
-- **Simplicity**: One-command setup with minimal dependencies
-- **Persistence**: All data survives application restarts
-- **Scalability**: Built-in task queue system for handling multiple concurrent scans
-- **Security**: Safe execution environment with proper input validation
-- **Extensibility**: Configuration-driven tool integration
+12. [License](#license)
 
 ---
 
@@ -77,55 +67,6 @@ S2E transforms complex command-line security tools into an intuitive web dashboa
 
 ---
 
-## Architecture
-
-### System Components
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    Web Interface (Flask)                    │
-├─────────────────────────────────────────────────────────────┤
-│                  Authentication Layer                       │
-├─────────────────────────────────────────────────────────────┤
-│  Projects  │  Scanner  │  Tasks  │  Auth  │  Home          │
-│  Module    │  Module   │ Module  │ Module │ Module         │
-├─────────────────────────────────────────────────────────────┤
-│                    Database Layer                           │
-│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐          │
-│  │  Projects   │ │   Tasks     │ │  JobQueue   │          │
-│  │             │ │             │ │ (New!)      │          │
-│  └─────────────┘ └─────────────┘ └─────────────┘          │
-├─────────────────────────────────────────────────────────────┤
-│                 Task Manager (Background)                   │
-│  ┌─────────────────────────────────────────────────────────┐│
-│  │  Persistent Queue Worker                                ││
-│  │  • Polls SQLite database for new jobs                  ││
-│  │  • Executes tasks safely in subprocess                 ││
-│  │  • Handles task recovery after restart                 ││
-│  │  • Manages playbook automation                         ││
-│  └─────────────────────────────────────────────────────────┘│
-├─────────────────────────────────────────────────────────────┤
-│                    File System                              │
-│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐          │
-│  │   Config    │ │   Output    │ │  Instance   │          │
-│  │   Files     │ │   Files     │ │   Data      │          │
-│  └─────────────┘ └─────────────┘ └─────────────┘          │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### Request Flow
-
-1. **User Authentication**: Login verification and session management
-2. **Project Selection**: Set active project context
-3. **Target Definition**: Specify scan targets (IPs, domains, ranges)
-4. **Task Creation**: Configure tools and parameters
-5. **Queue Management**: Tasks added to persistent SQLite queue
-6. **Background Processing**: Worker thread processes tasks sequentially
-7. **Result Storage**: Output files and metadata stored in database
-8. **Real-time Updates**: WebSocket-like polling for live status updates
-
----
-
 ## Performance Optimizations
 
 ### 🚀 **Persistent Queue System**
@@ -165,6 +106,79 @@ class JobQueue(db.Model):
 - **Memory Usage**: Constant memory footprint regardless of queue size
 - **Scalability**: Can handle thousands of queued jobs without performance degradation
 - **Recovery Time**: Sub-second recovery of interrupted jobs on restart
+
+---
+
+## Technology Stack
+
+- **Backend**: Python 3, Flask
+- **Database**: SQLite (via Flask-SQLAlchemy & Flask-Migrate)
+- **Frontend**: HTML5, CSS3, Vanilla JavaScript
+- **Key Python Libraries**: `psutil`, `python-nmap`
+- **Task Queue**: SQLite-based persistent queue system
+
+---
+
+## Architecture
+
+### System Components
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Web Interface (Flask)                    │
+├─────────────────────────────────────────────────────────────┤
+│                  Authentication Layer                       │
+├─────────────────────────────────────────────────────────────┤
+│  Projects  │  Scanner  │  Tasks  │  Auth  │  Home          │
+│  Module    │  Module   │ Module  │ Module │ Module         │
+├─────────────────────────────────────────────────────────────┤
+│                    Database Layer                           │
+│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐          │
+│  │  Projects   │ │   Tasks     │ │  JobQueue   │          │
+│  │             │ │             │ │ (New!)      │          │
+│  └─────────────┘ └─────────────┘ └─────────────┘          │
+├─────────────────────────────────────────────────────────────┤
+│                 Task Manager (Background)                   │
+│  ┌─────────────────────────────────────────────────────────┐│
+│  │  Persistent Queue Worker                                ││
+│  │  • Polls SQLite database for new jobs                  ││
+│  │  • Executes tasks safely in subprocess                 ││
+│  │  • Handles task recovery after restart                 ││
+│  │  • Manages playbook automation                         ││
+│  └─────────────────────────────────────────────────────────┘│
+├─────────────────────────────────────────────────────────────┤
+│                    File System                              │
+│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐          │
+│  │   Config    │ │   Output    │ │  Instance   │          │
+│  │   Files     │ │   Files     │ │   Data      │          │
+│  └─────────────┘ └─────────────┘ └─────────────┘          │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Project Structure
+
+```
+S2E/
+├── app/
+│   ├── __init__.py   # Flask app factory and configuration
+│   ├── models.py     # Database models (User, Project, Task, JobQueue)
+│   ├── auth/         # Authentication (login, logout)
+│   ├── home/         # Home and landing pages
+│   ├── projects/     # Project management UI and API
+│   ├── scanner/      # Logic for running and parsing scans
+│   ├── static/       # CSS, JS, Images
+│   ├── tasks/        # Task management UI and API
+│   └── templates/    # HTML templates
+│
+├── config/           # JSON-based tool and app configuration
+├── migrations/       # Database migration scripts
+├── instance/         # Instance-specific config (auto-generated)
+├── output/           # Raw and XML output from tool scans
+│
+├── app.db            # SQLite database file (auto-generated)
+├── requirements.txt  # Python dependencies
+└── run.py            # Application entry point
+```
 
 ---
 
@@ -774,7 +788,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - **Issues**: [GitHub Issues](https://github.com/SekharPatel/S2E/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/SekharPatel/S2E/discussions)
-- **Documentation**: This file and inline code comments
+- **Documentation**: This comprehensive README
 
 ---
 
