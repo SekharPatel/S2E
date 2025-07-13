@@ -20,6 +20,7 @@ class Project(db.Model):
     # Relationships
     targets = db.relationship('Target', backref='project', lazy='dynamic', cascade="all, delete-orphan")
     tasks = db.relationship('Task', backref='project', lazy='dynamic', cascade="all, delete-orphan")
+    jobs = db.relationship('JobQueue', backref='project', lazy='dynamic', cascade="all, delete-orphan")
 
     def __repr__(self):
         return f'<Project {self.name}>'
@@ -85,6 +86,10 @@ class JobQueue(db.Model):
     started_at = db.Column(db.DateTime, nullable=True)
     completed_at = db.Column(db.DateTime, nullable=True)
     priority = db.Column(db.Integer, default=0)  # Higher numbers = higher priority
+    
+    # Add Foreign Key to associate job with a project
+    # Nullable=True for backward compatibility with old jobs without a project.
+    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=True)
     
     def set_job_data(self, data):
         """Store job data as JSON."""

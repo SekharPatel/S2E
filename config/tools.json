@@ -2,7 +2,7 @@
     "TOOLS": {
         "nmap": {
             "name": "Nmap",
-            "command": "nmap {target} {options}",
+            "command": "nmap {options}",
             "default_options": "",
             "output_formats": "raw, xml"
         },
@@ -14,19 +14,13 @@
         },
         "sqlmap": {
             "name": "SQLMap",
-            "command": "sqlmap -u {target} {options}",
+            "command": "sqlmap -u {options}",
             "default_options": "--batch",
             "output_formats": "raw"
         },
         "dirb": {
             "name": "Dirb",
-            "command": "dirb {target} {options}",
-            "default_options": "",
-            "output_formats": "raw"
-        },
-        "curl": {
-            "name": "curl",
-            "command": "curl {target} {options}",
+            "command": "dirb {options}",
             "default_options": "",
             "output_formats": "raw"
         },

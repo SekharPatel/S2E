@@ -2,18 +2,18 @@
     "PLAYBOOKS": [
         {
             "id": "standard_recon_playbook",
-            "name": "Standard Recon Playbook",
-            "description": "Performs a full TCP port scan on all project targets, then runs specific follow-up tools based on common services found.",
+            "name": "Standard Reconnaissance Playbook",
+            "description": "Performs initial port scanning and follows up with service-specific enumeration tools",
             "trigger": {
-                "name": "Initial Nmap Project Scan",
+                "name": "Initial Port Scan",
                 "tool_id": "nmap",
-                "options": "-T5 --open -p 22,21,80,8080,5000"
+                "options": "-T4 --open -p 21,22,23,25,53,80,110,111,135,139,143,443,993,995,1723,3306,3389,5900,8080,8443"
             },
             "rules": [
                 {
                     "on_service": ["http", "https", "http-proxy", "http-alt", "upnp"],
                     "action": {
-                        "name": "Web Directory Brute-force",
+                        "name": "Web Directory Enumeration",
                         "tool_id": "gobuster",
                         "options": "dir -r -w 'E:/Hacking Things/wordlist/directory-list/small.txt' -u {protocol}://{host}:{port} -t 50 --no-error"
                     }
@@ -32,6 +32,158 @@
                         "name": "FTP Anonymous Login Check",
                         "tool_id": "nmap",
                         "options": "-p {port} --script ftp-anon {host}"
+                    }
+                },
+                {
+                    "on_service": ["telnet"],
+                    "action": {
+                        "name": "Telnet Banner Grab",
+                        "tool_id": "nmap",
+                        "options": "-p {port} --script telnet-ntlm-info {host}"
+                    }
+                },
+                {
+                    "on_service": ["smtp"],
+                    "action": {
+                        "name": "SMTP User Enumeration",
+                        "tool_id": "nmap",
+                        "options": "-p {port} --script smtp-enum-users --script-args smtp-enum-users.methods={VRFY,EXPN,RCPT} {host}"
+                    }
+                },
+                {
+                    "on_service": ["dns"],
+                    "action": {
+                        "name": "DNS Zone Transfer",
+                        "tool_id": "nmap",
+                        "options": "-p {port} --script dns-zone-transfer {host}"
+                    }
+                },
+                {
+                    "on_service": ["pop3", "imap"],
+                    "action": {
+                        "name": "Mail Service Enumeration",
+                        "tool_id": "nmap",
+                        "options": "-p {port} --script pop3-ntlm-info,imap-ntlm-info {host}"
+                    }
+                },
+                {
+                    "on_service": ["mysql", "mariadb"],
+                    "action": {
+                        "name": "MySQL Enumeration",
+                        "tool_id": "nmap",
+                        "options": "-p {port} --script mysql-enum,mysql-info {host}"
+                    }
+                },
+                {
+                    "on_service": ["rdp", "ms-wbt-server"],
+                    "action": {
+                        "name": "RDP Security Check",
+                        "tool_id": "nmap",
+                        "options": "-p {port} --script rdp-ntlm-info {host}"
+                    }
+                },
+                {
+                    "on_service": ["vnc"],
+                    "action": {
+                        "name": "VNC Security Check",
+                        "tool_id": "nmap",
+                        "options": "-p {port} --script vnc-info,vnc-auth {host}"
+                    }
+                }
+            ]
+        },
+        {
+            "id": "web_focused_playbook",
+            "name": "Web Application Focused Playbook",
+            "description": "Specialized playbook for web application security testing",
+            "trigger": {
+                "name": "Web Port Scan",
+                "tool_id": "nmap",
+                "options": "-T4 --open -p 80,443,8080,8443,3000,5000,8000,8888"
+            },
+            "rules": [
+                {
+                    "on_service": ["http", "https", "http-proxy", "http-alt"],
+                    "action": {
+                        "name": "Directory Bruteforce",
+                        "tool_id": "gobuster",
+                        "options": "dir -r -w 'E:/Hacking Things/wordlist/directory-list/medium.txt' -u {protocol}://{host}:{port} -t 100 --no-error"
+                    }
+                },
+                {
+                    "on_service": ["http", "https", "http-proxy", "http-alt"],
+                    "action": {
+                        "name": "Subdomain Enumeration",
+                        "tool_id": "gobuster",
+                        "options": "vhost -w 'E:/Hacking Things/wordlist/subdomain-list/common.txt' -u {protocol}://{host}:{port} -t 50"
+                    }
+                },
+                {
+                    "on_service": ["http", "https", "http-proxy", "http-alt"],
+                    "action": {
+                        "name": "Technology Detection",
+                        "tool_id": "curl",
+                        "options": "-k -I {protocol}://{host}:{port}"
+                    }
+                }
+            ]
+        },
+        {
+            "id": "service_enumeration_playbook",
+            "name": "Service Enumeration Playbook",
+            "description": "Comprehensive service enumeration and version detection",
+            "trigger": {
+                "name": "Service Detection Scan",
+                "tool_id": "nmap",
+                "options": "-T4 -sV -sC --open -p 21,22,23,25,53,80,110,111,135,139,143,443,993,995,1723,3306,3389,5900,8080,8443"
+            },
+            "rules": [
+                {
+                    "on_service": ["ssh"],
+                    "action": {
+                        "name": "SSH Security Audit",
+                        "tool_id": "nmap",
+                        "options": "-p {port} --script ssh2-enum-algos,ssh-hostkey,ssh-auth-methods {host}"
+                    }
+                },
+                {
+                    "on_service": ["ftp"],
+                    "action": {
+                        "name": "FTP Security Check",
+                        "tool_id": "nmap",
+                        "options": "-p {port} --script ftp-anon,ftp-syst {host}"
+                    }
+                },
+                {
+                    "on_service": ["smtp"],
+                    "action": {
+                        "name": "SMTP Security Audit",
+                        "tool_id": "nmap",
+                        "options": "-p {port} --script smtp-commands,smtp-enum-users {host}"
+                    }
+                },
+                {
+                    "on_service": ["dns"],
+                    "action": {
+                        "name": "DNS Security Check",
+                        "tool_id": "nmap",
+                        "options": "-p {port} --script dns-recursion,dns-cache-snoop {host}"
+                    }
+                },
+                {
+                    "on_service": ["mysql", "mariadb"],
+                    "action": {
+                        "name": "MySQL Security Audit",
+                        "tool_id": "nmap",
+                        "options": "-p {port} --script mysql-enum,mysql-info,mysql-databases {host}"
+                    }
+                },
+                {
+                    "on_service": ["rdp", "ms-wbt-server"],
+                    "action": {
+                        "name": "RDP Security Audit",
+                        "tool_id": "nmap",
+                        "options": "-p {port} --script rdp-ntlm-info,rdp-enum-encryption {host}"
                     }
                 }
             ]

@@ -63,11 +63,71 @@ def create_app():
         app.register_blueprint(tasks_bp)
         app.register_blueprint(scanner_bp)
 
-        # Create database tables for our models
-        db.create_all()
+
+
+    # --- NEW: Master Initialization CLI Command ---
+    @app.cli.command("init-db")
+    @click.option('--username', default='admin', help='Username for the initial admin user.')
+    @click.option('--password', default='admin', help='Password for the initial admin user.')
+    @with_appcontext
+    def init_db_command(username, password):
+        """
+        Clears existing data and initializes the database with a default user and playbooks.
+        """
+        from .models import User # , Playbook, PlaybookRule
         
-        # Start the background task manager
-        from .tasks.task_manager import start_task_manager
-        start_task_manager(app)
+        # 1. Drop and recreate tables
+        click.echo("Dropping all database tables...")
+        db.drop_all()
+        click.echo("Creating all database tables...")
+        db.create_all()
+        click.echo("Tables created successfully.")
+        
+        # 2. Create the initial user
+        if User.query.filter_by(username=username).first():
+            click.echo(f"User '{username}' already exists. Skipping user creation.")
+        else:
+            user = User()
+            user.username = username
+            user.set_password(password)
+            db.session.add(user)
+            click.echo(f"Created initial user '{username}'.")
+        
+        # # 3. Seed the default playbooks
+        # playbook_config_path = os.path.join(current_app.config['CONFIG_DIR'], 'playbooks.json')
+        # if not os.path.exists(playbook_config_path):
+        #     click.echo("WARNING: playbooks.json not found. No default playbooks will be seeded.")
+        # else:
+        #     with open(playbook_config_path, 'r') as f:
+        #         data = json.load(f)
+            
+        #     playbooks_in_json = data.get("PLAYBOOKS", [])
+        #     click.echo(f"Seeding {len(playbooks_in_json)} playbook(s) from config file...")
+
+        #     for pb_data in playbooks_in_json:
+        #         new_playbook = Playbook(
+        #             name=pb_data['name'],
+        #             description=pb_data['description'],
+        #             trigger=pb_data['trigger']
+        #         )
+        #         db.session.add(new_playbook)
+        #         db.session.flush() # Flush to get ID for rules
+
+        #         for rule_data in pb_data.get('rules', []):
+        #             new_rule = PlaybookRule(
+        #                 on_service=rule_data['on_service'],
+        #                 action=rule_data['action'],
+        #                 playbook_id=new_playbook.id
+        #             )
+        #             db.session.add(new_rule)
+        #         click.echo(f"  - Seeded playbook '{pb_data['name']}'.")
+
+
+
+        db.session.commit()
+        #click.secho("\nDatabase initialization complete!", fg='green', bold=True)
+        click.secho(f"You can now log in with:", fg='yellow')
+        click.secho(f"  Username: {username}", fg='yellow')
+        click.secho(f"  Password: {password}", fg='yellow')
 
     return app
