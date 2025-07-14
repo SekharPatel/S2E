@@ -154,7 +154,7 @@ First, ensure you have the following system-level dependencies installed:
 ### 2. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/S2E.git
+git clone https://github.com/SekharPatel/S2E.git
 cd S2E
 ```
 
