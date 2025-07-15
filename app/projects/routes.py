@@ -47,6 +47,7 @@ def create_project():
     project_name = data.get('name')
     project_desc = data.get('description', '')
     targets_string = data.get('targets', '')
+    playbook_ids = data.get('playbook_ids', [])  # List of playbook IDs to link
 
     if not project_name:
         return jsonify({'status': 'error', 'message': 'Project name is required'}), 400
@@ -78,6 +79,31 @@ def create_project():
         except Exception as e:
             db.session.rollback()
             return jsonify({'status': 'error', 'message': f'Error processing targets: {str(e)}'}), 400
+
+    # Link playbooks if they were provided
+    if playbook_ids:
+        try:
+            from app.models import Playbook
+            for playbook_id in playbook_ids:
+                # Validate playbook_id is an integer
+                if not isinstance(playbook_id, int):
+                    try:
+                        playbook_id = int(playbook_id)
+                    except (ValueError, TypeError):
+                        db.session.rollback()
+                        return jsonify({'status': 'error', 'message': f'Invalid playbook ID: {playbook_id}'}), 400
+                
+                # Check if playbook exists
+                playbook = Playbook.query.get(playbook_id)
+                if not playbook:
+                    db.session.rollback()
+                    return jsonify({'status': 'error', 'message': f'Playbook with ID {playbook_id} not found'}), 400
+                
+                # Link the playbook to the project
+                new_project.linked_playbooks.append(playbook)
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'status': 'error', 'message': f'Error linking playbooks: {str(e)}'}), 400
 
     # Commit all changes to the database
     try:
@@ -128,12 +154,14 @@ def get_project_details(project_id):
     project = user.projects.filter_by(id=project_id).first_or_404()
     
     targets = [target.value for target in project.targets.all()]
+    linked_playbook_ids = [playbook.id for playbook in project.linked_playbooks]
     
     project_data = {
         'id': project.id,
         'name': project.name,
         'description': project.description or '',
-        'targets': '\n'.join(targets)
+        'targets': '\n'.join(targets),
+        'playbook_ids': linked_playbook_ids
     }
     return jsonify(project_data)
 
@@ -149,6 +177,8 @@ def update_project(project_id):
         return jsonify({'status': 'error', 'message': 'No data provided'}), 400
     
     project_name = data.get('name')
+    playbook_ids = data.get('playbook_ids', [])  # List of playbook IDs to link
+    
     if not project_name:
         return jsonify({'status': 'error', 'message': 'Project name is required'}), 400
     
@@ -177,6 +207,32 @@ def update_project(project_id):
         except Exception as e:
             db.session.rollback()
             return jsonify({'status': 'error', 'message': f'Error processing targets: {str(e)}'}), 400
+
+    # Update linked playbooks: clear existing links and add new ones
+    project.linked_playbooks.clear()
+    if playbook_ids:
+        try:
+            from app.models import Playbook
+            for playbook_id in playbook_ids:
+                # Validate playbook_id is an integer
+                if not isinstance(playbook_id, int):
+                    try:
+                        playbook_id = int(playbook_id)
+                    except (ValueError, TypeError):
+                        db.session.rollback()
+                        return jsonify({'status': 'error', 'message': f'Invalid playbook ID: {playbook_id}'}), 400
+                
+                # Check if playbook exists
+                playbook = Playbook.query.get(playbook_id)
+                if not playbook:
+                    db.session.rollback()
+                    return jsonify({'status': 'error', 'message': f'Playbook with ID {playbook_id} not found'}), 400
+                
+                # Link the playbook to the project
+                project.linked_playbooks.append(playbook)
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'status': 'error', 'message': f'Error linking playbooks: {str(e)}'}), 400
             
     try:
         db.session.commit()

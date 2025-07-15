@@ -7,6 +7,12 @@ from datetime import datetime
 from sqlalchemy.orm import relationship
 import json
 
+# Many-to-many relationship table between Project and Playbook
+project_playbooks = db.Table('project_playbooks',
+    db.Column('project_id', db.Integer, db.ForeignKey('project.id'), primary_key=True),
+    db.Column('playbook_id', db.Integer, db.ForeignKey('playbook.id'), primary_key=True)
+)
+
 # A Project is the top-level container for an engagement
 class Project(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -21,6 +27,10 @@ class Project(db.Model):
     targets = db.relationship('Target', backref='project', lazy='dynamic', cascade="all, delete-orphan")
     tasks = db.relationship('Task', backref='project', lazy='dynamic', cascade="all, delete-orphan")
     jobs = db.relationship('JobQueue', backref='project', lazy='dynamic', cascade="all, delete-orphan")
+    
+    # Many-to-many relationship with Playbook
+    linked_playbooks = db.relationship('Playbook', secondary=project_playbooks, lazy='subquery',
+                                       backref=db.backref('linked_projects', lazy=True))
 
     def __repr__(self):
         return f'<Project {self.name}>'
@@ -41,8 +51,9 @@ class User(db.Model):
     username = db.Column(db.String(64), index=True, unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
 
-    # Add relationship to Project
+    # Add relationship to Project and Playbook
     projects = db.relationship('Project', backref='owner', lazy='dynamic')
+    playbooks = db.relationship('Playbook', backref='owner', lazy='dynamic')
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -104,3 +115,84 @@ class JobQueue(db.Model):
     
     def __repr__(self):
         return f'<JobQueue {self.id} ({self.job_type})>'
+
+
+class Playbook(db.Model):
+    """
+    A reusable playbook template that defines an automated testing workflow.
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(128), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Trigger configuration - the initial scan that starts the playbook
+    trigger_name = db.Column(db.String(128), nullable=False)
+    trigger_tool_id = db.Column(db.String(64), nullable=False)
+    trigger_options = db.Column(db.Text, nullable=False)
+    
+    # Foreign Key to associate playbook with the user who created it
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    # Relationships
+    rules = db.relationship('PlaybookRule', backref='playbook', lazy='dynamic', cascade="all, delete-orphan")
+
+    def __repr__(self):
+        return f'<Playbook {self.name}>'
+
+    def to_dict(self):
+        """Convert playbook to dictionary format similar to the old JSON structure."""
+        return {
+            'id': str(self.id),  # Keep as string for compatibility
+            'name': self.name,
+            'description': self.description or '',
+            'trigger': {
+                'name': self.trigger_name,
+                'tool_id': self.trigger_tool_id,
+                'options': self.trigger_options
+            },
+            'rules': [rule.to_dict() for rule in self.rules.all()]
+        }
+
+
+class PlaybookRule(db.Model):
+    """
+    Individual rules within a playbook that define actions based on discovered services.
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # The services this rule applies to (stored as JSON list)
+    on_service = db.Column(db.Text, nullable=False)  # JSON array like ["http", "https"]
+    
+    # Action configuration
+    action_name = db.Column(db.String(128), nullable=False)
+    action_tool_id = db.Column(db.String(64), nullable=False)
+    action_options = db.Column(db.Text, nullable=False)
+    
+    # Foreign Key to associate rule with a playbook
+    playbook_id = db.Column(db.Integer, db.ForeignKey('playbook.id'), nullable=False)
+
+    def __repr__(self):
+        return f'<PlaybookRule {self.id} ({self.action_name})>'
+
+    def get_on_service_list(self):
+        """Get the on_service field as a Python list."""
+        try:
+            return json.loads(self.on_service)
+        except json.JSONDecodeError:
+            return []
+
+    def set_on_service_list(self, service_list):
+        """Set the on_service field from a Python list."""
+        self.on_service = json.dumps(service_list)
+
+    def to_dict(self):
+        """Convert rule to dictionary format similar to the old JSON structure."""
+        return {
+            'on_service': self.get_on_service_list(),
+            'action': {
+                'name': self.action_name,
+                'tool_id': self.action_tool_id,
+                'options': self.action_options
+            }
+        }

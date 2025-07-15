@@ -4,7 +4,7 @@ import json
 import os
 
 from app.auth.routes import login_required
-from app.models import User, Project, Task, Target
+from app.models import User, Project, Task, Target, Playbook
 
 # Define the blueprint for this feature
 home_bp = Blueprint('home', __name__, template_folder='../templates')
@@ -44,21 +44,17 @@ def home():
         dashboard_data["stats"]["tasks"] = active_project.tasks.count()
 
     dashboard_data["tools"] = current_app.config.get("TOOLS", {})
-    # Use the helper to safely load playbooks.json
-    dashboard_data["playbooks"] = _load_config_file('playbooks.json').get("PLAYBOOKS", [])
+    
+    # Get all available playbooks for the project creation/edit modals
+    all_playbooks = Playbook.query.all()
+    dashboard_data["all_playbooks"] = [playbook.to_dict() for playbook in all_playbooks]
+    
+    # Get only the linked playbooks for the active project dashboard
+    if active_project:
+        dashboard_data["linked_playbooks"] = [playbook.to_dict() for playbook in active_project.linked_playbooks]
+    else:
+        dashboard_data["linked_playbooks"] = []
         
     return render_template('home.html', data=dashboard_data)
 
 
-def _load_config_file(filename):
-    """Helper to load a JSON config file."""
-    config_path = os.path.join(current_app.config['CONFIG_DIR'], filename)
-    try:
-        with open(config_path, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        # Return a default structure if file is missing or invalid
-        # This prevents the app from crashing.
-        if 'playbooks' in filename:
-            return {"PLAYBOOKS": []}
-        return {}
