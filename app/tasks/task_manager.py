@@ -203,54 +203,35 @@ def handle_playbook(playbook_job):
         return
         
     from app.scanner.services import _create_task_record
+    from app.models import Playbook
     
     playbook_id = playbook_job['playbook_id']
     project_id = playbook_job['project_id']
 
-    # Validate playbook_id
-    if not isinstance(playbook_id, str) or len(playbook_id) > 64:
+    # Validate playbook_id - it should now be an integer (database ID)
+    try:
+        playbook_id = int(playbook_id)
+    except (ValueError, TypeError):
         print(f"Security error: Invalid playbook_id: {playbook_id}")
         return
 
-    # 1. Load the Playbook Definition
-    playbooks_path = os.path.join(_APP.config['CONFIG_DIR'], 'playbooks.json')
-    
-    # Validate file path
-    if not validate_file_path(playbooks_path, _APP.config['CONFIG_DIR']):
-        print(f"Security error: Invalid playbooks path: {playbooks_path}")
-        return
-    
-    try:
-        with open(playbooks_path, 'r') as f:
-            playbooks_data = json.load(f)
-            playbook_def = next((p for p in playbooks_data["PLAYBOOKS"] if p["id"] == playbook_id), None)
-    except FileNotFoundError:
-        print(f"CRITICAL: playbooks.json not found.")
-        return
-    except (json.JSONDecodeError, KeyError) as e:
-        print(f"Error parsing playbooks.json: {e}")
-        return
-        
-    if not playbook_def:
-        print(f"Error: Playbook '{playbook_id}' not defined.")
-        return
-
-    # 2. Run the Trigger Scan
-    print(f"Playbook '{playbook_id}': Running trigger scan...")
-    trigger_def = playbook_def['trigger']
-    
-    # Validate trigger configuration
-    if not isinstance(trigger_def, dict) or 'tool_id' not in trigger_def or 'options' not in trigger_def:
-        print(f"Security error: Invalid trigger definition in playbook {playbook_id}")
-        return
-    
-    # Sanitize trigger options
-    trigger_def['options'] = sanitize_command_options(trigger_def['options'])
-    
     with _APP.app_context():
+        # 1. Load the Playbook Definition from Database
+        playbook = Playbook.query.get(playbook_id)
+        if not playbook:
+            print(f"Error: Playbook with ID '{playbook_id}' not found in database.")
+            return
+        
+        print(f"Playbook '{playbook.name}': Loaded from database with {playbook.rules.count()} rules")
+
+        # 2. Run the Trigger Scan
+        print(f"Playbook '{playbook.name}': Running trigger scan...")
+        
+        # Sanitize trigger options
+        trigger_options = sanitize_command_options(playbook.trigger_options)
         project_targets = Target.query.filter_by(project_id=project_id).all()
         if not project_targets:
-            print(f"Playbook '{playbook_id}': No targets in project. Aborting.")
+            print(f"Playbook '{playbook.name}': No targets in project. Aborting.")
             return
 
         # For now, we assume the trigger runs on all targets.
@@ -259,7 +240,7 @@ def handle_playbook(playbook_job):
         for target in project_targets:
             # Create and run the trigger task for one target
             task_id, err = _create_task_record(
-                trigger_def['tool_id'], target.value, trigger_def['options'], project_id
+                playbook.trigger_tool_id, target.value, trigger_options, project_id
             )
             if err:
                 print(f"Playbook trigger error for {target.value}: {err}")
@@ -286,28 +267,20 @@ def handle_playbook(playbook_job):
                     print(f"  XML output file: {completed_task.xml_output_file}")
 
         # 4. Apply Rules and Queue New Tasks
-        print(f"Playbook '{playbook_id}': Trigger scans complete. Applying {len(playbook_def['rules'])} rules to {len(all_found_services)} found services...")
+        playbook_rules = playbook.rules.all()
+        print(f"Playbook '{playbook.name}': Trigger scans complete. Applying {len(playbook_rules)} rules to {len(all_found_services)} found services...")
         tasks_queued = 0
         for service in all_found_services:
-            for rule in playbook_def['rules']:
-                # Validate rule structure
-                if not isinstance(rule, dict) or 'on_service' not in rule or 'action' not in rule:
-                    print(f"Security warning: Invalid rule structure in playbook {playbook_id}")
-                    continue
+            for rule in playbook_rules:
+                # Get the service list for this rule
+                rule_services = rule.get_on_service_list()
                 
                 # Check if the found service name matches any in the rule's list
-                if any(rule_service in service['service_name'] for rule_service in rule['on_service']):
-                    action = rule['action']
-                    
-                    # Validate action structure
-                    if not isinstance(action, dict) or 'options' not in action:
-                        print(f"Security warning: Invalid action structure in playbook {playbook_id}")
-                        continue
-                    
+                if any(rule_service in service['service_name'] for rule_service in rule_services):
                     try:
                         # Replace placeholders in the action's options
                         # Support both <protocol> and {protocol} style placeholders
-                        action_options = action['options']
+                        action_options = rule.action_options
                         action_options = (action_options
                             .replace('<host>', '{host}')
                             .replace('<port>', '{port}')
@@ -338,21 +311,21 @@ def handle_playbook(playbook_job):
 
                     # Create and queue the new task
                     new_task_id, err = _create_task_record(
-                        action['tool_id'], target_for_action, options, project_id
+                        rule.action_tool_id, target_for_action, options, project_id
                     )
                     if new_task_id:
                         # Use the new database queue system
                         job_id = add_job_to_queue('single_task', {'task_id': new_task_id}, project_id=project_id)
                         if job_id:
                             tasks_queued += 1
-                            print(f"  - Queued '{action['name']}' for {service['host']}:{service['port']}")
+                            print(f"  - Queued '{rule.action_name}' for {service['host']}:{service['port']}")
                         else:
                             print(f"Failed to add task to queue for {service['host']}:{service['port']}")
                     else:
                         print(f"Failed to create task: {err}")
                     break # Move to the next service once a rule has matched
 
-        print(f"Playbook '{playbook_id}': Finished. Queued {tasks_queued} new follow-up tasks.")
+        print(f"Playbook '{playbook.name}': Finished. Queued {tasks_queued} new follow-up tasks.")
 
 def task_manager_worker():
     """

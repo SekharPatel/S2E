@@ -48,6 +48,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const formData = new FormData(this);
             const data = Object.fromEntries(formData.entries());
+            
+            // Handle multiple select for playbooks
+            const playbookSelect = this.querySelector('#projectPlaybooks');
+            if (playbookSelect) {
+                data.playbook_ids = Array.from(playbookSelect.selectedOptions).map(option => parseInt(option.value));
+            }
 
             fetch('/api/projects', {
                 method: 'POST',
@@ -83,6 +89,19 @@ document.addEventListener('DOMContentLoaded', function () {
                     document.getElementById('editProjectName').value = data.name;
                     document.getElementById('editProjectDescription').value = data.description;
                     document.getElementById('editProjectTargets').value = data.targets;
+                    
+                    // Set selected playbooks
+                    const playbookSelect = document.getElementById('editProjectPlaybooks');
+                    if (playbookSelect && data.playbook_ids) {
+                        // Clear all selections
+                        Array.from(playbookSelect.options).forEach(option => option.selected = false);
+                        // Select the linked playbooks
+                        data.playbook_ids.forEach(playbookId => {
+                            const option = playbookSelect.querySelector(`option[value="${playbookId}"]`);
+                            if (option) option.selected = true;
+                        });
+                    }
+                    
                     openModal(editProjectModal);
                 })
                 .catch(err => alert('Could not load project data.'));
@@ -102,6 +121,12 @@ document.addEventListener('DOMContentLoaded', function () {
             const formData = new FormData(this);
             const data = Object.fromEntries(formData.entries());
             const projectId = data.project_id;
+            
+            // Handle multiple select for playbooks
+            const playbookSelect = this.querySelector('#editProjectPlaybooks');
+            if (playbookSelect) {
+                data.playbook_ids = Array.from(playbookSelect.selectedOptions).map(option => parseInt(option.value));
+            }
 
             fetch(`/api/projects/${projectId}/edit`, {
                 method: 'POST',

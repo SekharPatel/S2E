@@ -42,7 +42,7 @@
                 <h2 class="card-title"><i class="fas fa-robot me-2"></i>Available Playbooks</h2>
                 <p class="card-subtitle">Select a playbook to run against all targets in the current project scope.</p>
                 <ul class="playbook-list">
-                    {% for playbook in data.playbooks %}
+                    {% for playbook in data.linked_playbooks %}
                     <li class="playbook-item" data-playbook-id="{{ playbook.id }}">
                         <div class="playbook-icon"><i class="fas fa-play-circle"></i></div>
                         <div class="playbook-info">
@@ -52,7 +52,7 @@
                         <button type="button" class="run-playbook-btn">Launch Playbook</button>
                     </li>
                     {% else %}
-                    <li class="empty-list-item">No playbooks defined. Create one in the Playbooks section.</li>
+                    <li class="empty-list-item">No playbooks linked to this project. Link playbooks via "Manage Project".</li>
                     {% endfor %}
                 </ul>
             </section>
@@ -138,6 +138,15 @@
 e.g., 10.10.0.0/24
 e.g., example.com"></textarea>
                 </div>
+                <div class="form-group">
+                    <label for="projectPlaybooks">Link Playbooks (Optional)</label>
+                    <select id="projectPlaybooks" name="playbook_ids" class="form-control" multiple>
+                        {% for playbook in data.all_playbooks %}
+                        <option value="{{ playbook.id }}">{{ playbook.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <small class="form-text">Hold Ctrl/Cmd to select multiple playbooks</small>
+                </div>
                 <div class="modal-footer">
                     <button type="submit" class="form-submit-btn" id="createProjectSubmitBtn">
                         <i class="fas fa-plus-circle me-1"></i>Create Project
@@ -170,6 +179,15 @@ e.g., example.com"></textarea>
                     <label for="editProjectTargets">Scope / Targets</label>
                     <textarea id="editProjectTargets" name="targets" class="form-control" rows="5"
                         placeholder="Enter one IP, domain, or network range per line."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="editProjectPlaybooks">Link Playbooks</label>
+                    <select id="editProjectPlaybooks" name="playbook_ids" class="form-control" multiple>
+                        {% for playbook in data.all_playbooks %}
+                        <option value="{{ playbook.id }}">{{ playbook.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <small class="form-text">Hold Ctrl/Cmd to select multiple playbooks</small>
                 </div>
                 <!-- MODIFIED: Wrapped buttons in a styled footer -->
                 <div class="modal-footer">
