@@ -34,23 +34,13 @@
                 </a>
                 <span class="tooltip">Tasks</span>
             </li>
-            <!-- Placeholder for future pages -->
-            <!--
             <li>
-                <a href="#">
-                    <i class="bx bx-folder"></i>
-                    <span class="links_name">Projects</span>
-                </a>
-                <span class="tooltip">Projects</span>
-            </li>
-            <li>
-                <a href="#">
+                <a href="{{ url_for('playbooks.list_playbooks') }}">
                     <i class="bx bx-bot"></i>
                     <span class="links_name">Playbooks</span>
                 </a>
                 <span class="tooltip">Playbooks</span>
             </li>
-            -->
             <li class="profile">
                 <div class="profile-details">
                     <i class="bx bx-user"></i>
@@ -68,6 +58,18 @@
 
     <section class="home-section">
         <div class="main-content">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-messages">
+                        {% for category, message in messages %}
+                            <div class="flash-message flash-{{ category }}">
+                                {{ message }}
+                                <button type="button" class="close-flash" onclick="this.parentElement.style.display='none';">&times;</button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
             {% block content %}{% endblock %}
         </div>
     </section>

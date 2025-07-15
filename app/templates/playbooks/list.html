@@ -1,0 +1,359 @@
+{% extends "base.html" %}
+
+{% block title %}Playbooks - S2E{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+.playbooks-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #2c3e50;
+}
+
+.page-header h1 {
+    color: #ffffff;
+    margin: 0;
+    font-size: 2rem;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background-color 0.3s;
+}
+
+.btn-primary {
+    background-color: #3498db;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #2980b9;
+}
+
+.btn-secondary {
+    background-color: #95a5a6;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #7f8c8d;
+}
+
+.btn-danger {
+    background-color: #e74c3c;
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #c0392b;
+}
+
+.btn-success {
+    background-color: #27ae60;
+    color: white;
+}
+
+.btn-success:hover {
+    background-color: #229954;
+}
+
+.playbooks-section {
+    margin-bottom: 2rem;
+}
+
+.section-title {
+    color: #ffffff;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #34495e;
+}
+
+.playbooks-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.playbook-card {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    border-radius: 8px;
+    padding: 1.5rem;
+    border: 1px solid #34495e;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.playbook-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(52, 73, 94, 0.3);
+}
+
+.playbook-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.playbook-title {
+    color: #3498db;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0;
+    flex: 1;
+}
+
+.playbook-meta {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: #bdc3c7;
+}
+
+.playbook-description {
+    color: #ecf0f1;
+    margin-bottom: 1rem;
+    line-height: 1.4;
+}
+
+.playbook-trigger {
+    background: #1a252f;
+    padding: 0.8rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    border-left: 4px solid #3498db;
+}
+
+.trigger-title {
+    color: #3498db;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+}
+
+.trigger-details {
+    color: #bdc3c7;
+    font-size: 0.85rem;
+    font-family: 'Courier New', monospace;
+}
+
+.playbook-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #7f8c8d;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.project-links {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+}
+
+.project-link {
+    display: inline-block;
+    background: #3498db;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    margin-right: 5px;
+    margin-bottom: 3px;
+    text-decoration: none;
+    font-size: 0.8rem;
+}
+
+.project-link:hover {
+    background: #2980b9;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="playbooks-container">
+    <div class="page-header">
+        <h1><i class="fas fa-robot"></i> Playbook Management</h1>
+        <a href="{{ url_for('playbooks.new_playbook') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Create New Playbook
+        </a>
+    </div>
+
+    <!-- User's Playbooks -->
+    <div class="playbooks-section">
+        <h2 class="section-title">
+            <i class="fas fa-user"></i> My Playbooks ({{ user_playbooks|length }})
+        </h2>
+        
+        {% if user_playbooks %}
+        <div class="playbooks-grid">
+            {% for playbook in user_playbooks %}
+            <div class="playbook-card">
+                <div class="playbook-header">
+                    <h3 class="playbook-title">{{ playbook.name }}</h3>
+                </div>
+                
+                <div class="playbook-meta">
+                    <div class="meta-item">
+                        <i class="fas fa-cogs"></i>
+                        <span>{{ playbook.rules.count() }} rules</span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-link"></i>
+                        <span>{{ playbook.linked_projects|length }} projects</span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-calendar"></i>
+                        <span>{{ playbook.created_at.strftime('%Y-%m-%d') }}</span>
+                    </div>
+                </div>
+                
+                {% if playbook.description %}
+                <div class="playbook-description">{{ playbook.description }}</div>
+                {% endif %}
+                
+                <div class="playbook-trigger">
+                    <div class="trigger-title">Trigger: {{ playbook.trigger_name }}</div>
+                    <div class="trigger-details">{{ playbook.trigger_tool_id }}: {{ playbook.trigger_options|truncate(60) }}</div>
+                </div>
+                
+                {% if playbook.linked_projects %}
+                <div class="project-links">
+                    <strong>Linked to:</strong>
+                    {% for project in playbook.linked_projects %}
+                    <a href="{{ url_for('home.home') }}" class="project-link">{{ project.name }}</a>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                <div class="playbook-actions">
+                    <a href="{{ url_for('playbooks.edit_playbook', playbook_id=playbook.id) }}" 
+                       class="btn btn-secondary btn-sm">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>
+                    <a href="{{ url_for('playbooks.export_playbook', playbook_id=playbook.id) }}" 
+                       class="btn btn-success btn-sm" target="_blank">
+                        <i class="fas fa-download"></i> Export
+                    </a>
+                    <form style="display: inline;" method="POST" 
+                          action="{{ url_for('playbooks.clone_playbook', playbook_id=playbook.id) }}">
+                        <button type="submit" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-copy"></i> Clone
+                        </button>
+                    </form>
+                    <form style="display: inline;" method="POST" 
+                          action="{{ url_for('playbooks.delete_playbook', playbook_id=playbook.id) }}"
+                          onsubmit="return confirm('Are you sure you want to delete this playbook?');">
+                        <button type="submit" class="btn btn-danger btn-sm">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-robot"></i>
+            <h3>No Custom Playbooks</h3>
+            <p>You haven't created any custom playbooks yet.</p>
+            <a href="{{ url_for('playbooks.new_playbook') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Create Your First Playbook
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- System Playbooks -->
+    {% if system_playbooks %}
+    <div class="playbooks-section">
+        <h2 class="section-title">
+            <i class="fas fa-cog"></i> System Playbooks ({{ system_playbooks|length }})
+        </h2>
+        
+        <div class="playbooks-grid">
+            {% for playbook in system_playbooks %}
+            <div class="playbook-card">
+                <div class="playbook-header">
+                    <h3 class="playbook-title">{{ playbook.name }} <i class="fas fa-shield-alt" title="System Playbook"></i></h3>
+                </div>
+                
+                <div class="playbook-meta">
+                    <div class="meta-item">
+                        <i class="fas fa-cogs"></i>
+                        <span>{{ playbook.rules.count() }} rules</span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-link"></i>
+                        <span>{{ playbook.linked_projects|length }} projects</span>
+                    </div>
+                </div>
+                
+                {% if playbook.description %}
+                <div class="playbook-description">{{ playbook.description }}</div>
+                {% endif %}
+                
+                <div class="playbook-trigger">
+                    <div class="trigger-title">Trigger: {{ playbook.trigger_name }}</div>
+                    <div class="trigger-details">{{ playbook.trigger_tool_id }}: {{ playbook.trigger_options|truncate(60) }}</div>
+                </div>
+                
+                <div class="playbook-actions">
+                    <a href="{{ url_for('playbooks.export_playbook', playbook_id=playbook.id) }}" 
+                       class="btn btn-success btn-sm" target="_blank">
+                        <i class="fas fa-download"></i> Export
+                    </a>
+                    <form style="display: inline;" method="POST" 
+                          action="{{ url_for('playbooks.clone_playbook', playbook_id=playbook.id) }}">
+                        <button type="submit" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-copy"></i> Clone to Edit
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
