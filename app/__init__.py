@@ -26,7 +26,7 @@ def create_app():
     
     # Load tool configurations
     with open(os.path.join(app.config['CONFIG_DIR'], 'tools.json'), 'r') as f:
-        app.config['TOOLS'] = json.load(f)
+        app.config['TOOLS'] = json.load(f)["TOOLS"]
 
     # Initialize extensions
     db.init_app(app)

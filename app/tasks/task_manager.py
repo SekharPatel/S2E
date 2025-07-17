@@ -335,7 +335,7 @@ def task_manager_worker():
     global _WORKER_RUNNING
     _WORKER_RUNNING = True
     
-    print("Task manager worker started with persistent database queue.\n")
+    print("Task manager worker started with persistent database queue.")
     
     while _WORKER_RUNNING:
         try:
@@ -388,7 +388,7 @@ def start_task_manager(app):
     manager_thread = threading.Thread(target=task_manager_worker)
     manager_thread.daemon = True
     manager_thread.start()
-    print("Task manager thread started with persistent queue system.\n")
+    print("Task manager thread started with persistent queue system.")
 
 def stop_task_manager():
     """Stop the task manager worker gracefully."""
