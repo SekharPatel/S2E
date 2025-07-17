@@ -183,23 +183,53 @@ pip install -r requirements.txt
 
 ### 5. Initialize the Application
 
-This is the most important step. We will use a custom command to initialize the database, create a default user, and seed the application with pre-configured playbooks.
+This is the most important step. Use the Flask CLI command to set up the database, create an initial user, and seed the application with pre-configured playbooks.
 
 ```bash
-# Set the Flask application entry point for the terminal
+# Activate your virtual environment first
+
+# Set the Flask application entry point
 # On Windows:
 set FLASK_APP=run.py
 # On macOS/Linux:
 export FLASK_APP=run.py
 
-# Run the initialization command
+# Run the database initialization command
 flask init-db
 ```
 
-This command will create the `instance/app.db` file, set up all tables, and print the default `admin` credentials to the console.
+This will:
+- Create the database and all tables
+- Prompt you for username and password (if not provided)
+- Create the initial admin user
+- Seed the database with default playbooks
 
-To use custom credentials, you can run:
-`flask init-db --username myuser --password mypass`
+#### Database Initialization Options
+
+You can also provide credentials as command-line arguments:
+
+```bash
+# With command-line arguments
+flask init-db --username admin --password secure_password
+
+# Or with short flags
+flask init-db -u admin -p secure_password
+
+# Force recreation of existing database
+flask init-db --force --username admin --password secure_password
+
+# Skip playbook seeding (only create user)
+flask init-db --skip-playbooks --username admin --password secure_password
+```
+
+#### Available Options
+
+- `--username, -u`: Username for the initial admin user
+- `--password, -p`: Password for the initial admin user  
+- `--force, -f`: Force recreation of database even if it exists
+- `--skip-playbooks`: Skip seeding playbooks (only create user)
+
+If no credentials are provided, the script will prompt for them interactively.
 
 ### 6. Run the Application
 
