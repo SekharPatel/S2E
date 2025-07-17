@@ -236,7 +236,7 @@ If no credentials are provided, the script will prompt for them interactively.
 You are now ready to start the Flask development server.
 
 ```bash
-flask run
+python run.py
 ```
 
 Navigate to `http://localhost:5000` and log in with your credentials.

@@ -130,9 +130,9 @@ def create_app():
                     new_playbook.name = playbook_data['name']
                     new_playbook.description = playbook_data.get('description', '')
                     new_playbook.trigger_name = trigger['name']
-                    new_playbook.trigger_tool_id = trigger['tool_id']
-                    new_playbook.trigger_options = trigger['options']
-                    new_playbook.user_id = user
+                    new_playbook.trigger_tool_id = trigger.get('tool_id')
+                    new_playbook.trigger_options = trigger.get('options', {})
+                    new_playbook.user_id = user.id if user else None
                     db.session.add(new_playbook)
                     db.session.flush()
                     for rule_data in playbook_data.get('rules', []):
