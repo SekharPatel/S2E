@@ -1,205 +1,62 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard - {{ data.active_project.name if data.active_project else 'S2E' }}{% endblock %}
+{% block title %}Home - My Scans{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 {% endblock %}
 
+{% macro project_row(project) %}
+<div class="project-row">
+    <div class="project-cell project-name">{{ project.name }}</div>
+    <div class="project-cell project-status"><span class="status-badge status-{{ project.status|lower }}">{{ project.status }}</span></div>
+    <div class="project-cell project-last-scan">{{ project.last_scan_time }}</div>
+    <div class="project-cell project-actions">
+        <button class="quick-run-btn" title="Run Default Playbook">▶</button>
+        <button class="delete-btn" title="Delete Project">🗑</button>
+    </div>
+</div>
+{% endmacro %}
+
 {% block content %}
-<div class="dashboard-container">
-    <header class="project-header">
-        <div class="project-selector">
-            <i class="fas fa-briefcase"></i>
-            {% if data.all_projects %}
-            <select id="project-select-dropdown" name="project">
-                {% for project in data.all_projects %}
-                <option value="{{ project.id }}" {% if data.active_project and project.id==data.active_project.id
-                    %}selected{% endif %}>
-                    Project: {{ project.name }}
-                </option>
-                {% endfor %}
-            </select>
-            {% else %}
-            <span>No Projects Found</span>
-            {% endif %}
-        </div>
-        <div class="project-actions">
-            {% if data.active_project %}
-            <button class="header-btn" id="editProjectBtn"><i class="fas fa-edit me-1"></i> Manage Project</button>
-            {% endif %}
-            <button class="header-btn" id="newProjectBtn"><i class="fas fa-plus me-1"></i> New Project</button>
-        </div>
-    </header>
-
-    {% if data.active_project %}
-    <div class="dashboard-grid-simplified">
-        <!-- Main Column: Playbooks and Scope -->
-        <div class="dashboard-main-col">
-            <!-- Playbooks Card - This is now the primary action center -->
-            <section class="dashboard-card">
-                <h2 class="card-title"><i class="fas fa-robot me-2"></i>Available Playbooks</h2>
-                <p class="card-subtitle">Select a playbook to run against all targets in the current project scope.</p>
-                <ul class="playbook-list">
-                    {% for playbook in data.linked_playbooks %}
-                    <li class="playbook-item" data-playbook-id="{{ playbook.id }}">
-                        <div class="playbook-icon"><i class="fas fa-play-circle"></i></div>
-                        <div class="playbook-info">
-                            <span class="playbook-name">{{ playbook.name }}</span>
-                            <span class="playbook-desc">{{ playbook.description }}</span>
-                        </div>
-                        <button type="button" class="run-playbook-btn">Launch Playbook</button>
-                    </li>
-                    {% else %}
-                    <li class="empty-list-item">No playbooks linked to this project. Link playbooks via "Manage Project".</li>
-                    {% endfor %}
-                </ul>
-            </section>
-
-            <!-- Scope / Targets Card -->
-            <section class="dashboard-card">
-                <h2 class="card-title"><i class="fas fa-crosshairs me-2"></i>Project Scope ({{ data.stats.targets }}
-                    targets)</h2>
-                <ul class="project-target-list">
-                    {% for target in data.targets %}
-                    <li><i class="fas fa-server"></i> {{ target.value }}</li>
-                    {% else %}
-                    <li class="empty-list-item">No targets defined for this project. Add targets via "Manage Project".
-                    </li>
-                    {% endfor %}
-                </ul>
-            </section>
-        </div>
-
-        <!-- Side Column: Stats and Activity -->
-        <div class="dashboard-side-col">
-            <!-- Project Overview Card -->
-            <section class="dashboard-card">
-                <h2 class="card-title"><i class="fas fa-chart-pie me-2"></i>Project Stats</h2>
-                <div class="project-stats-grid">
-                    <div class="stat-item">
-                        <span class="stat-value">{{ data.stats.tasks }}</span>
-                        <span class="stat-label">Tasks Run</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-value">{{ data.stats.findings }}</span>
-                        <span class="stat-label">Findings</span>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Recent Activity Card -->
-            <section class="dashboard-card">
-                <h2 class="card-title"><i class="fas fa-history me-2"></i>Recent Activity</h2>
-                <ul class="activity-feed">
-                    {% for task in data.recent_tasks %}
-                    <li class="activity-item status-{{ task.status|lower }}">
-                        <span class="activity-tool">{{ data.tools[task.tool_id].name }}</span>
-                        <span class="activity-target">{{ task.command | truncate(30) }}</span>
-                        <a href="{{ url_for('tasks.task_details', task_id=task.id) }}" class="activity-details-link"
-                            title="View Details"><i class="fas fa-eye"></i></a>
-                    </li>
-                    {% else %}
-                    <li class="empty-list-item">No tasks have been run for this project yet.</li>
-                    {% endfor %}
-                </ul>
-            </section>
-        </div>
+<div class="main-pane-header">
+    <div class="filters">
+        <!-- Add filter controls here -->
     </div>
+    <div class="search-sort">
+        <input type="search" placeholder="Search projects..." />
+        <select>
+            <option>Sort by Name</option>
+            <option>Sort by Status</option>
+            <option>Sort by Last Scan</option>
+        </select>
+    </div>
+</div>
+
+<div class="project-grid-header">
+    <div>Project Name</div>
+    <div>Status</div>
+    <div>Last Scan</div>
+    <div>Quick Run</div>
+</div>
+
+<div class="project-grid">
+    {% for project in projects %}
+        {{ project_row(project) }}
     {% else %}
-    <div class="no-projects-placeholder">
-        <i class="fas fa-folder-open fa-4x"></i>
-        <h2>No Projects Found</h2>
-        <p>Get started by creating your first project.</p>
-    </div>
-    {% endif %}
+        <p>No projects found.</p>
+    {% endfor %}
 </div>
 
-<div id="newProjectModal" class="modal-overlay">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>Create New Project</h2>
-            <span class="close-button" id="closeNewProjectBtn">×</span>
-        </div>
-        <div class="modal-body">
-            <form id="newProjectForm">
-                <div class="form-group">
-                    <label for="projectName">Project Name</label>
-                    <input type="text" id="projectName" name="name" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label for="projectDescription">Description (Optional)</label>
-                    <textarea id="projectDescription" name="description" class="form-control" rows="3"></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="projectTargets">Scope / Targets (Optional)</label>
-                    <textarea id="projectTargets" name="targets" class="form-control" rows="5" placeholder="Enter one IP, domain, or network range per line.
-e.g., 10.10.0.0/24
-e.g., example.com"></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="projectPlaybooks">Link Playbooks (Optional)</label>
-                    <select id="projectPlaybooks" name="playbook_ids" class="form-control" multiple>
-                        {% for playbook in data.all_playbooks %}
-                        <option value="{{ playbook.id }}">{{ playbook.name }}</option>
-                        {% endfor %}
-                    </select>
-                    <small class="form-text">Hold Ctrl/Cmd to select multiple playbooks</small>
-                </div>
-                <div class="modal-footer">
-                    <button type="submit" class="form-submit-btn" id="createProjectSubmitBtn">
-                        <i class="fas fa-plus-circle me-1"></i>Create Project
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+<button class="fab new-project-fab">+</button>
 
-<!-- ========================= EDIT PROJECT MODAL ========================= -->
-<div id="editProjectModal" class="modal-overlay">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>Edit Project</h2>
-            <span class="close-button" id="closeEditProjectBtn">×</span>
-        </div>
-        <div class="modal-body">
-            <form id="editProjectForm">
-                <input type="hidden" id="editProjectId" name="project_id">
-                <div class="form-group">
-                    <label for="editProjectName">Project Name</label>
-                    <input type="text" id="editProjectName" name="name" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label for="editProjectDescription">Description</label>
-                    <textarea id="editProjectDescription" name="description" class="form-control" rows="3"></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="editProjectTargets">Scope / Targets</label>
-                    <textarea id="editProjectTargets" name="targets" class="form-control" rows="5"
-                        placeholder="Enter one IP, domain, or network range per line."></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="editProjectPlaybooks">Link Playbooks</label>
-                    <select id="editProjectPlaybooks" name="playbook_ids" class="form-control" multiple>
-                        {% for playbook in data.all_playbooks %}
-                        <option value="{{ playbook.id }}">{{ playbook.name }}</option>
-                        {% endfor %}
-                    </select>
-                    <small class="form-text">Hold Ctrl/Cmd to select multiple playbooks</small>
-                </div>
-                <!-- MODIFIED: Wrapped buttons in a styled footer -->
-                <div class="modal-footer">
-                    <button type="button" class="form-submit-btn btn-danger" id="deleteProjectBtn">
-                        <i class="fas fa-trash-alt me-1"></i>Delete Project
-                    </button>
-                    <button type="submit" class="form-submit-btn">
-                        <i class="fas fa-save me-1"></i>Save Changes
-                    </button>
-                </div>
-            </form>
-        </div>
+<div class="slide-over-panel">
+    <div class="slide-over-header">
+        <h2>New Project</h2>
+        <button class="close-slide-over">×</button>
+    </div>
+    <div class="slide-over-content">
+        <!-- New project form goes here -->
     </div>
 </div>
 {% endblock %}

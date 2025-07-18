@@ -1,0 +1,17 @@
+.main-pane-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.policy-table-header,
+.policy-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    padding: 8px;
+    border-bottom: 1px solid var(--border);
+}
+
+.policy-table-header {
+    font-weight: bold;
+}

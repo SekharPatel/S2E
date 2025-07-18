@@ -6,58 +6,52 @@
 
     <!-- Boxicons CDN Link -->
     <link href="https://unpkg.com/boxicons@2.1.2/css/boxicons.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}" />
     <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}" />
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
 
     {% block extra_css %}{% endblock %}
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 </head>
-<body class="{% if not session.username %}no-sidebar{% endif %}">
-    {% if session.username %}
-    <div class="sidebar">
-        <div class="logo-details">
-            <div class="logo_name">S2E</div>
-            <i class="bx bx-menu" id="btn"></i>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">S2E</div>
+            <nav class="header-nav">
+                <a href="{{ url_for('home.home') }}" class="header-tab">Home</a>
+                <a href="{{ url_for('playbooks.list_playbooks') }}" class="header-tab">Playbooks</a>
+                <a href="#" class="header-tab">Tasks</a>
+                <a href="#" class="header-tab">Settings</a>
+            </nav>
         </div>
-        <ul class="nav-list">
-            <li>
-                <a href="{{ url_for('home.home') }}">
-                    <i class="bx bx-grid-alt"></i>
-                    <span class="links_name">Dashboard</span>
-                </a>
-                <span class="tooltip">Dashboard</span>
-            </li>
-            <li>
-                <a href="{{ url_for('playbooks.list_playbooks') }}">
-                    <i class="bx bx-bot"></i>
-                    <span class="links_name">Playbooks</span>
-                </a>
-                <span class="tooltip">Playbooks</span>
-            </li>
-            <li>
-                <a href="{{ url_for('tasks.list_tasks') }}">
-                    <i class="bx bx-list-ul"></i>
-                    <span class="links_name">Tasks</span>
-                </a>
-                <span class="tooltip">Tasks</span>
-            </li>
-            <li class="profile">
-                <div class="profile-details">
-                    <i class="bx bx-user"></i>
-                    <div class="name_job">
-                        <div class="name">{{ session.username }}</div>
-                    </div>
-                </div>
-                <a href="{{ url_for('auth.logout') }}" style="background: none;">
-                    <i class="bx bx-log-out" id="log_out"></i>
-                </a>
-            </li>
-        </ul>
-    </div>
-    {% endif %}
+    </header>
 
-    <section class="home-section">
-        <div class="main-content">
+    <div class="page-container">
+        <aside class="sidebar">
+            <button class="new-project-btn">+ New Project</button>
+            <nav class="project-nav">
+                <ul class="project-tree">
+                    <li>
+                        <span>All Projects</span>
+                        <ul>
+                            <li>
+                                <span>Project Name</span>
+                                <ul>
+                                    <li><a href="#">Targets</a></li>
+                                    <li><a href="#">Scans (tasks)</a></li>
+                                    <li><a href="#">Playbooks</a></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                    <li>
+                        <a href="#">System Playbooks</a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="main-pane">
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     <div class="flash-messages">
@@ -71,8 +65,8 @@
                 {% endif %}
             {% endwith %}
             {% block content %}{% endblock %}
-        </div>
-    </section>
+        </main>
+    </div>
 
     <script src="{{ url_for('static', filename='js/base.js') }}"></script>
     {% block extra_js %}{% endblock %}

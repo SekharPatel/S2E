@@ -117,7 +117,7 @@ def create_app():
                 c_echo(f"Error parsing playbooks.json: {e}", fg="red", bold=True)
                 return
             with app.app_context():
-                user = User.query.get(user_id)
+                user = db.session.get(User, user_id)
                 playbooks_created = 0
                 rules_created = 0
                 for playbook_data in playbooks_data.get('PLAYBOOKS', []):

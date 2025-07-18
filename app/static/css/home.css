@@ -1,518 +1,57 @@
-/* /S2E/app/static/css/home.css
-   COMPLETE REWRITE for the new streamlined, playbook-focused dashboard. */
-
-/* --- UTILITY & BASE --- */
-.me-1 {
-    margin-right: 0.25rem;
-}
-
-.me-2 {
-    margin-right: 0.5rem;
-}
-
-.dashboard-container {
-    margin: 0 auto;
-}
-
-.project-header {
+.main-pane-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    gap: 1rem;
+    margin-bottom: 16px;
 }
 
-.project-selector {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: #e0e0e0;
-}
-
-.project-selector .fas {
-    color: #a5b4fc;
-}
-
-#project-select-dropdown {
-    background: transparent;
-    border: none;
-    color: #e0e0e0;
-    font-size: 1.5rem;
-    font-weight: 600;
-    font-family: inherit;
-    cursor: pointer;
-}
-
-#project-select-dropdown:focus {
-    outline: none;
-}
-
-#project-select-dropdown option {
-    background: #1e1e2d;
-    color: #e0e0e0;
-}
-
-.project-actions {
-    display: flex;
-    gap: 0.75rem;
-}
-
-.header-btn {
-    background: #2d2d42;
-    color: #c7d2fe;
-    border: 1px solid rgba(165, 180, 252, 0.3);
-    border-radius: 8px;
-    padding: 0.7rem 1.2rem;
-    font-size: 0.95rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: inline-flex;
-    align-items: center;
-}
-
-.header-btn:hover {
-    background: #a5b4fc;
-    color: #14141e;
-    border-color: #a5b4fc;
-    transform: translateY(-2px);
-}
-
-/* --- NEW SIMPLIFIED GRID LAYOUT --- */
-.dashboard-grid-simplified {
+.project-grid-header,
+.project-row {
     display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 1.5rem;
-    align-items: start;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    padding: 8px;
+    border-bottom: 1px solid var(--border);
 }
 
-.dashboard-card {
-    background: rgba(20, 20, 30, 0.9);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-}
-
-.dashboard-card:last-child {
-    margin-bottom: 0;
-}
-
-.card-title {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: #a5b4fc;
-    margin-top: 0;
-    margin-bottom: 0.5rem;
-    display: flex;
-    align-items: center;
-}
-
-.card-subtitle {
-    font-size: 0.95rem;
-    color: #9ca3af;
-    margin-top: 0;
-    margin-bottom: 1.5rem;
-}
-
-.empty-list-item {
-    color: #6b7280;
-    font-style: italic;
-    padding: 1rem 0;
-    text-align: center;
-}
-
-.no-projects-placeholder {
-    text-align: center;
-    color: #6b7280;
-    padding: 4rem 1rem;
-}
-
-.no-projects-placeholder .fas {
-    margin-bottom: 1.5rem;
-    opacity: 0.5;
-}
-
-/* --- PLAYBOOK CARD REDESIGN --- */
-.playbook-list {
-    list-style: none;
-    padding: 0;
-}
-
-.playbook-item {
-    display: grid;
-    grid-template-columns: auto 1fr auto;
-    align-items: center;
-    gap: 1rem;
-    padding: 1rem;
-    border-radius: 8px;
-    margin-bottom: 0.75rem;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid transparent;
-    transition: all 0.2s ease;
-}
-
-.playbook-item:hover {
-    background: rgba(165, 180, 252, 0.1);
-    border-color: #a5b4fc;
-}
-
-.playbook-icon {
-    font-size: 1.5rem;
-    color: #a5b4fc;
-}
-
-.playbook-name {
-    font-weight: 600;
-    color: #fff;
-    display: block;
-}
-
-.playbook-desc {
-    font-size: 0.85rem;
-    color: #9ca3af;
-}
-
-.run-playbook-btn {
-    background: #8025db;
-    color: #fff;
-    border: none;
-    font-weight: 600;
-    border-radius: 6px;
-    padding: 0.6rem 1.2rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.run-playbook-btn:hover {
-    background: #a5b4fc;
-    color: #14141e;
-}
-
-.run-playbook-btn:disabled {
-    background: #4a4a6a;
-    color: #9ca3af;
-    cursor: not-allowed;
-}
-
-/* --- OTHER CARDS --- */
-.project-stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-    gap: 1rem;
-    text-align: center;
-}
-
-.stat-item .stat-value {
-    display: block;
-    font-size: 2rem;
-    font-weight: 700;
-    color: #fff;
-    line-height: 1.1;
-}
-
-.stat-item .stat-label {
-    font-size: 0.9rem;
-    color: #9ca3af;
-}
-
-.project-target-list {
-    list-style: none;
-    padding: 0;
-}
-
-.project-target-list li {
-    background: rgba(255, 255, 255, 0.05);
-    padding: 0.75rem 1rem;
-    border-radius: 6px;
-    margin-bottom: 0.5rem;
-    font-family: 'Fira Mono', monospace;
-    color: #c7d2fe;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.activity-feed {
-    list-style: none;
-    padding: 0;
-    max-height: 300px;
-    overflow-y: auto;
-}
-
-.activity-item {
-    display: grid;
-    grid-template-columns: 1fr auto auto;
-    gap: 1rem;
-    align-items: center;
-    padding: 0.75rem 0.5rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.activity-tool {
-    font-weight: 600;
-    color: #fff;
-    grid-column: 1;
-    grid-row: 1;
-    padding-left: 1.25rem;
-}
-
-.activity-target {
-    font-size: 0.9rem;
-    color: #9ca3af;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.activity-details-link {
-    color: #9ca3af;
-    transition: color 0.2s ease;
-}
-
-.activity-details-link:hover {
-    color: #fff;
-}
-
-.activity-item::before {
-    content: '';
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    justify-self: start;
-    grid-column: 1;
-    grid-row: 1;
-}
-
-.activity-item.status-completed::before {
-    background-color: #4ade80;
-}
-
-.activity-item.status-running::before {
-    background-color: #60a5fa;
-    animation: pulse 1.5s infinite;
-}
-
-.activity-item.status-failed::before,
-.activity-item.status-error::before {
-    background-color: #f87171;
-}
-
-.activity-item.status-stopped::before {
-    background-color: #6b7280;
-}
-
-@keyframes pulse {
-    0% {
-        box-shadow: 0 0 0 0 rgba(96, 165, 250, 0.7);
-    }
-
-    70% {
-        box-shadow: 0 0 0 10px rgba(96, 165, 250, 0);
-    }
-
-    100% {
-        box-shadow: 0 0 0 0 rgba(96, 165, 250, 0);
-    }
-}
-
-/* --- MODAL STYLES (APPLIES TO BOTH NEW AND EDIT) --- */
-.modal-overlay {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(5px);
-    align-items: center;
-    justify-content: center;
-}
-
-.modal-overlay.show-modal {
-    display: flex;
-}
-
-.modal-content {
-    background: #1e1e2d;
-    margin: auto;
-    padding: 2rem;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    width: 90%;
-    max-width: 550px;
-    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.5);
-    animation: slide-in 0.3s ease-out;
-}
-
-@keyframes slide-in {
-    from {
-        transform: translateY(-50px);
-        opacity: 0;
-    }
-
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
-
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    padding-bottom: 1rem;
-    margin-bottom: 1.5rem;
-}
-
-.modal-header h2 {
-    margin: 0;
-    color: #a5b4fc;
-}
-
-.close-button {
-    color: #aaa;
-    float: right;
-    font-size: 28px;
+.project-grid-header {
     font-weight: bold;
-    transition: color 0.2s;
 }
 
-.close-button:hover,
-.close-button:focus {
-    color: #fff;
-    text-decoration: none;
-    cursor: pointer;
-}
-
-/* --- FORM STYLES (TOOL LAUNCHER & MODALS) --- */
-.form-group {
-    margin-bottom: 1.25rem;
-}
-
-.form-group label {
-    display: block;
-    color: #c7d2fe;
-    font-weight: 500;
-    margin-bottom: 0.5rem;
-}
-
-.form-control {
-    width: 100%;
-    padding: 0.85rem 1rem;
-    background: rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.13);
-    border-radius: 8px;
-    color: #fff;
-    font-size: 1rem;
-    font-family: inherit;
-    transition: all 0.2s ease;
-}
-
-.form-control:focus {
-    outline: none;
-    border-color: #8025db;
-    background: rgba(0, 0, 0, 0.3);
-}
-
-textarea.form-control {
-    font-family: 'Fira Mono', monospace;
-    resize: vertical;
-    min-height: 80px;
-}
-
-.form-control::placeholder {
-    color: #6b7280;
-    font-size: 0.9em;
-}
-
-.modal-footer {
-    margin-top: 2rem;
-    display: flex;
-    /* Use flexbox for alignment */
-    justify-content: flex-end;
-    /* Align buttons to the right */
-    gap: 1rem;
-    /* Space between buttons */
-}
-
-.modal-footer .form-submit-btn {
-    width: auto;
-    /* Override the 100% width */
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
-}
-
-/* Push the delete button to the far left */
-.modal-footer .btn-danger {
-    margin-right: auto;
-}
-
-.form-submit-btn {
-    width: 100%;
-    padding: 0.85rem;
-    font-size: 1.05rem;
-    border-radius: 8px;
-    background: #8025db;
-    color: #fff;
-    font-weight: 600;
+.fab {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background-color: var(--primary);
+    color: white;
     border: none;
+    font-size: 24px;
     cursor: pointer;
-    transition: all 0.2s ease;
-    display: inline-flex;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.slide-over-panel {
+    position: fixed;
+    top: 0;
+    right: -400px;
+    width: 400px;
+    height: 100%;
+    background-color: var(--surface);
+    box-shadow: -4px 0 8px rgba(0, 0, 0, 0.2);
+    transition: right 0.3s;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+}
+
+.slide-over-panel.open {
+    right: 0;
+}
+
+.slide-over-header {
+    display: flex;
+    justify-content: space-between;
     align-items: center;
-    justify-content: center;
-}
-
-
-.form-submit-btn:hover {
-    background: #a5b4fc;
-    color: #14141e;
-}
-
-.form-submit-btn:disabled {
-    background: #4a4a6a;
-    cursor: not-allowed;
-}
-
-.form-submit-btn.btn-danger {
-    background: #b91c1c;
-    /* A dark red */
-}
-
-.form-submit-btn.btn-danger:hover {
-    background: #ef4444;
-    /* A brighter red on hover */
-    color: #fff;
-}
-
-/* --- RESPONSIVE ADJUSTMENTS --- */
-@media (max-width: 992px) {
-    .dashboard-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-@media (max-width: 768px) {
-    .project-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 1rem;
-    }
-
-    .project-selector {
-        font-size: 1.25rem;
-    }
-
-    #project-select-dropdown {
-        font-size: 1.25rem;
-    }
+    margin-bottom: 16px;
 }
