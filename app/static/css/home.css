@@ -1,57 +1,65 @@
+/* /S2E/app/static/css/home.css */
+
 .main-pane-header {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 16px;
-}
-
-.project-grid-header,
-.project-row {
-    display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1fr;
-    padding: 8px;
-    border-bottom: 1px solid var(--border);
-}
-
-.project-grid-header {
-    font-weight: bold;
-}
-
-.fab {
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background-color: var(--primary);
-    color: white;
-    border: none;
-    font-size: 24px;
-    cursor: pointer;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-.slide-over-panel {
-    position: fixed;
-    top: 0;
-    right: -400px;
-    width: 400px;
-    height: 100%;
-    background-color: var(--surface);
-    box-shadow: -4px 0 8px rgba(0, 0, 0, 0.2);
-    transition: right 0.3s;
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-}
-
-.slide-over-panel.open {
-    right: 0;
-}
-
-.slide-over-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 16px;
+}
+
+/* --- Search Bar Styling --- */
+.search-sort input[type="search"] {
+    padding: 8px 12px;
+    background-color: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    color: var(--text);
+    min-width: 250px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.search-sort input[type="search"]:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(0, 128, 255, 0.3);
+}
+/* ----------------------------- */
+
+.project-grid-header,
+.project-row {
+    display: grid;
+    grid-template-columns: 3fr 1fr 1fr 1fr 150px;
+    padding: 12px 8px;
+    border-bottom: 1px solid var(--border);
+    align-items: center;
+}
+
+.project-grid-header {
+    font-weight: bold;
+    color: var(--text-muted);
+}
+
+.project-row:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.project-actions button {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-right: 5px;
+    transition: all 0.2s;
+}
+
+.project-actions .run-btn:hover {
+    background-color: var(--success);
+    border-color: var(--success);
+}
+
+.project-actions .delete-btn:hover {
+    background-color: var(--danger);
+    border-color: var(--danger);
 }

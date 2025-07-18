@@ -1,9 +1,13 @@
+/* /S2E/app/static/css/theme.css */
+
 :root {
     --bg: #1e1e2e;
     --surface: #252836;
     --primary: #0080ff;
     --text: #e6e6e6;
+    --text-muted: #a5b4fc;
     --border: #3d3d4d;
     --success: #00b894;
     --danger: #e17055;
+    --warning: #f1c40f;
 }

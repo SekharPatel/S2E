@@ -6,6 +6,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 from sqlalchemy.orm import relationship
 import json
+from flask_login import UserMixin
+
 
 # Many-to-many relationship table between Project and Playbook
 project_playbooks = db.Table('project_playbooks',
@@ -46,7 +48,7 @@ class Target(db.Model):
     def __repr__(self):
         return f'<Target {self.value}>'
 
-class User(db.Model):
+class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), index=True, unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)

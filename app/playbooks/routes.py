@@ -11,7 +11,6 @@ import json
 
 playbooks_bp = Blueprint('playbooks', __name__)
 
-
 @playbooks_bp.route('/playbooks')
 @login_required
 def list_playbooks():

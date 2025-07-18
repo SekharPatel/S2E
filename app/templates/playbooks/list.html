@@ -6,44 +6,40 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/playbooks.css') }}">
 {% endblock %}
 
-{% macro policy_row(policy) %}
-<div class="policy-row">
-    <div class="policy-cell policy-name">{{ policy.name }}</div>
-    <div class="policy-cell policy-tool-count">{{ policy.tool_count }}</div>
-    <div class="policy-cell policy-rules">{{ policy.rules }}</div>
-    <div class="policy-cell policy-actions">
-        <button class="edit-btn" title="Edit Policy">✏️</button>
-        <button class="run-btn" title="Run Policy">▶️</button>
-    </div>
-</div>
-{% endmacro %}
-
 {% block content %}
 <div class="main-pane-header">
     <h1>Playbooks</h1>
-    <div class="actions">
-        <button class="new-policy-btn">New Policy ▼</button>
-        <button class="import-btn">Import</button>
-        <button class="export-btn">Export</button>
-    </div>
 </div>
 
 <div class="policy-table-header">
     <div>Policy Name</div>
-    <div>Tool Count</div>
+    <div>Trigger Tool</div>
     <div>Rules</div>
+    <div>Owner</div>
     <div>Actions</div>
 </div>
 
 <div class="policy-table">
-    {% for policy in policies %}
-        {{ policy_row(policy) }}
+    {% for policy in user_playbooks + system_playbooks %}
+    <div class="policy-row">
+        <div>{{ policy.name }}</div>
+        <div>{{ policy.trigger_tool_id }}</div>
+        <div>{{ policy.rules.count() }}</div>
+        <div>{{ policy.owner.username }}</div>
+        <div class="policy-actions">
+            <a href="{{ url_for('playbooks.edit_playbook', playbook_id=policy.id) }}" class="edit-btn" title="Edit Policy"><i class="fas fa-edit"></i></a>
+            <form action="{{ url_for('playbooks.clone_playbook', playbook_id=policy.id) }}" method="POST" style="display: inline;">
+                 <button type="submit" class="clone-btn" title="Clone Policy"><i class="fas fa-clone"></i></button>
+            </form>
+            {% if g.user and policy.user_id == g.user.id %}
+            <form action="{{ url_for('playbooks.delete_playbook', playbook_id=policy.id) }}" method="POST" style="display: inline;">
+                <button type="submit" class="delete-btn" title="Delete Policy" onclick="return confirm('Are you sure you want to delete this playbook?');"><i class="fas fa-trash"></i></button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
     {% else %}
-        <p>No policies found.</p>
+        <p style="padding: 20px;">No policies found.</p>
     {% endfor %}
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script src="{{ url_for('static', filename='js/playbooks.js') }}"></script>
 {% endblock %}

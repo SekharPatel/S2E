@@ -9,7 +9,6 @@ from app.models import User, Project, Task, Target, Playbook
 # Define the blueprint for this feature
 home_bp = Blueprint('home', __name__, template_folder='../templates')
 
-
 @home_bp.route('/')
 @home_bp.route('/home')
 @login_required
@@ -56,5 +55,3 @@ def home():
         dashboard_data["linked_playbooks"] = []
         
     return render_template('home.html', data=dashboard_data)
-
-

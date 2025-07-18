@@ -1,9 +1,9 @@
 # /S2E/app/__init__.py
 
-from flask import Flask
+from flask import Flask, g
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from flask_login import LoginManager
+from flask_login import LoginManager, current_user
 import json
 import os
 
@@ -15,7 +15,6 @@ def create_app():
     app = Flask(__name__)
 
     # Configuration
-    # Use SQLite by default (production might use a different DB)
     app.config['SECRET_KEY'] = '2e8e1e3c6b7a9f4d5c8a1b3e6f9c2d5e8b7a4c1f6e9d2b5a8c1e4f7b0a3d6c9f2e5'
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -32,6 +31,7 @@ def create_app():
     db.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
+    login_manager.login_view = 'auth.login' # Redirect to login page if not authenticated
 
     # Register Blueprints
     from app.auth.routes import auth_bp
@@ -53,6 +53,12 @@ def create_app():
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
+
+    # FIX: This function will now run before every request,
+    # ensuring g.user is always available for templates.
+    @app.before_request
+    def before_request_func():
+        g.user = current_user
 
     import click
     @app.cli.command('init-db')
@@ -156,7 +162,6 @@ def create_app():
                     raise click.ClickException(str(e))
 
         # --- Main logic ---
-        # Prompt for credentials if not provided
         if not username:
             username = click.prompt(click.style('Enter username for initial admin user', fg="yellow"), type=str)
         if not password:
@@ -193,7 +198,6 @@ def create_app():
         if not skip_playbooks:
             c_echo('✓ Default playbooks seeded', fg="green")
         c_echo('\nYou can now start the application with: flask run', fg="cyan")
-        # Print initial user and password at the end
         c_echo(f"\n{chr(0x2714)} Initial admin credentials:", fg="magenta", bold=True)
         c_echo(f"    Username: {username}", fg="magenta")
         c_echo(f"    Password: {password}", fg="magenta")

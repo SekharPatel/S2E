@@ -1,17 +1,63 @@
+/* /S2E/app/static/css/playbooks.css */
+
 .main-pane-header {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     margin-bottom: 16px;
+}
+
+.main-pane-header h1 {
+    margin: 0;
+}
+
+.actions .btn {
+    margin-left: 10px;
 }
 
 .policy-table-header,
 .policy-row {
     display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1fr;
-    padding: 8px;
+    grid-template-columns: 3fr 1fr 1fr 1fr 150px;
+    padding: 12px 8px;
     border-bottom: 1px solid var(--border);
+    align-items: center;
 }
 
 .policy-table-header {
     font-weight: bold;
+    color: var(--text-muted);
+}
+
+.policy-row:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.policy-actions button, .policy-actions a {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-right: 5px;
+    transition: all 0.2s;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.policy-actions .edit-btn:hover {
+    background-color: var(--primary);
+    border-color: var(--primary);
+}
+
+.policy-actions .clone-btn:hover {
+    background-color: var(--warning);
+    border-color: var(--warning);
+    color: var(--bg);
+}
+
+.policy-actions .delete-btn:hover {
+    background-color: var(--danger);
+    border-color: var(--danger);
 }

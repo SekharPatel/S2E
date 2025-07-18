@@ -1,24 +1,23 @@
+// /S2E/app/static/js/home.js
+
 document.addEventListener('DOMContentLoaded', function () {
-    const newProjectFab = document.querySelector('.new-project-fab');
-    const slideOverPanel = document.querySelector('.slide-over-panel');
-    const closeSlideOver = document.querySelector('.close-slide-over');
+    const searchInput = document.getElementById('project-search');
+    const projectGrid = document.getElementById('project-grid');
 
-    if (newProjectFab && slideOverPanel && closeSlideOver) {
-        newProjectFab.addEventListener('click', () => {
-            slideOverPanel.classList.add('open');
-        });
-
-        closeSlideOver.addEventListener('click', () => {
-            slideOverPanel.classList.remove('open');
+    // Homepage Search Functionality
+    if (searchInput && projectGrid) {
+        searchInput.addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const rows = projectGrid.querySelectorAll('.project-row');
+            rows.forEach(row => {
+                const name = row.dataset.projectName || '';
+                if (name.includes(searchTerm)) {
+                    // Use an empty string to revert to the stylesheet's display property (grid)
+                    row.style.display = ''; 
+                } else {
+                    row.style.display = 'none';
+                }
+            });
         });
     }
-
-    const sidebar = document.querySelector('.sidebar');
-    // Add logic to collapse/expand sidebar, e.g., on a button click
-    // const toggleSidebarBtn = document.querySelector('#toggle-sidebar-btn');
-    // if (sidebar && toggleSidebarBtn) {
-    //     toggleSidebarBtn.addEventListener('click', () => {
-    //         sidebar.classList.toggle('collapsed');
-    //     });
-    // }
 });

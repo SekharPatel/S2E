@@ -6,59 +6,42 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
 {% endblock %}
 
-{% macro project_row(project) %}
-<div class="project-row">
-    <div class="project-cell project-name">{{ project.name }}</div>
-    <div class="project-cell project-status"><span class="status-badge status-{{ project.status|lower }}">{{ project.status }}</span></div>
-    <div class="project-cell project-last-scan">{{ project.last_scan_time }}</div>
-    <div class="project-cell project-actions">
-        <button class="quick-run-btn" title="Run Default Playbook">▶</button>
-        <button class="delete-btn" title="Delete Project">🗑</button>
-    </div>
-</div>
-{% endmacro %}
-
 {% block content %}
 <div class="main-pane-header">
-    <div class="filters">
-        <!-- Add filter controls here -->
-    </div>
+    <h1>{{ data.active_project.name if data.active_project else "All Projects" }}</h1>
     <div class="search-sort">
-        <input type="search" placeholder="Search projects..." />
-        <select>
-            <option>Sort by Name</option>
-            <option>Sort by Status</option>
-            <option>Sort by Last Scan</option>
-        </select>
+        <input type="search" id="project-search" placeholder="Search projects..." />
     </div>
 </div>
 
 <div class="project-grid-header">
     <div>Project Name</div>
-    <div>Status</div>
+    <div>Targets</div>
+    <div>Tasks</div>
     <div>Last Scan</div>
-    <div>Quick Run</div>
+    <div>Actions</div>
 </div>
 
-<div class="project-grid">
-    {% for project in projects %}
-        {{ project_row(project) }}
+<div class="project-grid" id="project-grid">
+    {% for project in data.all_projects %}
+    <div class="project-row" data-project-name="{{ project.name | lower }}">
+        <div>{{ project.name }}</div>
+        <div>{{ project.targets.count() }}</div>
+        <div>{{ project.tasks.count() }}</div>
+        <div>N/A</div>
+        <div class="project-actions">
+            <button class="run-btn" title="Run Default Playbook"><i class="fas fa-play"></i></button>
+            <button class="delete-btn" title="Delete Project"><i class="fas fa-trash"></i></button>
+        </div>
+    </div>
     {% else %}
-        <p>No projects found.</p>
+        <p style="padding: 20px;">No projects found. Create one to get started!</p>
     {% endfor %}
 </div>
 
-<button class="fab new-project-fab">+</button>
+<button class="fab" id="new-project-fab-main">+</button>
 
-<div class="slide-over-panel">
-    <div class="slide-over-header">
-        <h2>New Project</h2>
-        <button class="close-slide-over">×</button>
-    </div>
-    <div class="slide-over-content">
-        <!-- New project form goes here -->
-    </div>
-</div>
+
 {% endblock %}
 
 {% block extra_js %}

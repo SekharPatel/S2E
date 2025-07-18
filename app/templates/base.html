@@ -3,69 +3,90 @@
 <head>
     <meta charset="UTF-8" />
     <title>{% block title %}S2E - Scan 2 Exploit{% endblock %}</title>
-
-    <!-- Boxicons CDN Link -->
-    <link href="https://unpkg.com/boxicons@2.1.2/css/boxicons.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}" />
     <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}" />
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
-
     {% block extra_css %}{% endblock %}
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 </head>
 <body>
     <header class="header">
-        <div class="header-content">
+        <div class="header-left">
             <div class="logo">S2E</div>
+            {% if g.user and g.user.is_authenticated %}
             <nav class="header-nav">
-                <a href="{{ url_for('home.home') }}" class="header-tab">Home</a>
-                <a href="{{ url_for('playbooks.list_playbooks') }}" class="header-tab">Playbooks</a>
-                <a href="#" class="header-tab">Tasks</a>
+                <a href="{{ url_for('home.home') }}" class="header-tab {% if request.endpoint == 'home.home' %}active{% endif %}">Home</a>
+                <a href="{{ url_for('playbooks.list_playbooks') }}" class="header-tab {% if request.endpoint.startswith('playbooks.') %}active{% endif %}">Playbooks</a>
+                <a href="{{ url_for('tasks.list_tasks') }}" class="header-tab {% if request.endpoint.startswith('tasks.') %}active{% endif %}">Tasks</a>
                 <a href="#" class="header-tab">Settings</a>
             </nav>
+            {% endif %}
+        </div>
+        <div class="header-right">
+            {% if g.user and g.user.is_authenticated %}
+            <div class="user-info">
+                <span class="username">{{ g.user.username }}</span>
+                <a href="{{ url_for('auth.logout') }}" class="logout-link" title="Logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
+            </div>
+            {% endif %}
         </div>
     </header>
 
     <div class="page-container">
-        <aside class="sidebar">
-            <button class="new-project-btn">+ New Project</button>
-            <nav class="project-nav">
-                <ul class="project-tree">
-                    <li>
-                        <span>All Projects</span>
-                        <ul>
-                            <li>
-                                <span>Project Name</span>
-                                <ul>
-                                    <li><a href="#">Targets</a></li>
-                                    <li><a href="#">Scans (tasks)</a></li>
-                                    <li><a href="#">Playbooks</a></li>
-                                </ul>
-                            </li>
-                        </ul>
-                    </li>
-                    <li>
-                        <a href="#">System Playbooks</a>
-                    </li>
-                </ul>
-            </nav>
+        {% if g.user and g.user.is_authenticated %}
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <button class="btn btn-primary" id="new-project-sidebar-btn"><i class="fas fa-plus"></i> New Project</button>
+            </div>
+            <h2 class="sidebar-title">Projects</h2>
+            <ul class="sidebar-nav-list" id="project-list-container">
+                <li>
+                    <a href="#"><i class="fas fa-spinner fa-spin fa-fw"></i> <span>Loading Projects...</span></a>
+                </li>
+            </ul>
         </aside>
+        {% endif %}
 
-        <main class="main-pane">
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    <div class="flash-messages">
-                        {% for category, message in messages %}
-                            <div class="flash-message flash-{{ category }}">
-                                {{ message }}
-                                <button type="button" class="close-flash" onclick="this.parentElement.style.display='none';">&times;</button>
-                            </div>
-                        {% endfor %}
-                    </div>
-                {% endif %}
-            {% endwith %}
+        <main class="main-pane {% if not g.user or not g.user.is_authenticated %}unauthenticated{% endif %}">
             {% block content %}{% endblock %}
         </main>
+    </div>
+
+    <!-- New Project Slide-over Panel (now global) -->
+    <div class="slide-over-panel" id="slide-over-panel">
+        <div class="slide-over-header">
+            <h2>New Project</h2>
+            <button class="close-slide-over" id="close-slide-over">&times;</button>
+        </div>
+        <div class="slide-over-content">
+            <form id="new-project-form">
+                <div class="form-group">
+                    <label for="project-name">Project Name</label>
+                    <input type="text" id="project-name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="project-description">Description</label>
+                    <textarea id="project-description" name="description" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="project-targets">Targets (one per line)</label>
+                    <textarea id="project-targets" name="targets" rows="5"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="project-playbooks">Link Playbooks</label>
+                    <select id="project-playbooks" name="playbook_ids" multiple>
+                        <!-- Options will be loaded by JS if needed, or passed from home.html for initial load -->
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancel-new-project">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Project</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <script src="{{ url_for('static', filename='js/base.js') }}"></script>
