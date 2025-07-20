@@ -1,51 +1,44 @@
 // /S2E/app/static/js/base.js
 
+// Create a global namespace for our app's functions
+window.s2e = window.s2e || {};
+
 document.addEventListener('DOMContentLoaded', function() {
     
-    // --- Helper to prevent XSS ---
     function escapeHTML(str) {
         if (typeof str !== 'string') return '';
         return str.replace(/[&<>"']/g, function(match) {
-            return {
-                '&': '&amp;', '<': '&lt;', '>': '&gt;',
-                '"': '&quot;', "'": '&#39;'
-            }[match];
+            return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[match];
         });
     }
 
-    // --- Sidebar Project Loading ---
-    function loadSidebarProjects() {
+    // --- REFACTORED: This function now RENDERS data, it doesn't fetch it ---
+    function renderSidebarProjects(data) {
         const container = document.getElementById('project-list-container');
         if (!container) return;
 
-        fetch('/api/sidebar_data')
-            .then(response => response.json())
-            .then(data => {
-                container.innerHTML = ''; // Clear loading state
-                if (data.all_projects && data.all_projects.length > 0) {
-                    data.all_projects.forEach(project => {
-                        const li = document.createElement('li');
-                        const a = document.createElement('a');
-                        a.href = '#';
-                        a.className = 'project-link';
-                        if (data.active_project_id === project.id) {
-                            a.classList.add('active');
-                        }
-                        a.dataset.projectId = project.id;
-                        a.innerHTML = `<i class="fas fa-folder fa-fw"></i> <span>${escapeHTML(project.name)}</span>`;
-                        li.appendChild(a);
-                        container.appendChild(li);
-                    });
-                } else {
-                    container.innerHTML = `<li><a href="#"><i class="fas fa-info-circle fa-fw"></i> <span>No projects yet.</span></a></li>`;
+        container.innerHTML = ''; // Clear content
+        if (data.all_projects && data.all_projects.length > 0) {
+            data.all_projects.forEach(project => {
+                const li = document.createElement('li');
+                const a = document.createElement('a');
+                a.href = '#';
+                a.className = 'project-link';
+                if (data.active_project_id === project.id) {
+                    a.classList.add('active');
                 }
-                attachProjectLinkListeners();
-            })
-            .catch(error => {
-                console.error('Error fetching sidebar data:', error);
-                container.innerHTML = `<li><a href="#" style="color: var(--danger);"><i class="fas fa-exclamation-triangle fa-fw"></i> <span>Error loading.</span></a></li>`;
+                a.dataset.projectId = project.id;
+                a.innerHTML = `<i class="fas fa-folder fa-fw"></i> <span>${escapeHTML(project.name)}</span>`;
+                li.appendChild(a);
+                container.appendChild(li);
             });
+        } else {
+            container.innerHTML = `<li><a href="#"><i class="fas fa-info-circle fa-fw"></i> <span>No projects yet.</span></a></li>`;
+        }
+        attachProjectLinkListeners();
     }
+    // Expose the function to the global s2e namespace so home.js can call it
+    window.s2e.renderSidebarProjects = renderSidebarProjects;
 
     function attachProjectLinkListeners() {
         document.querySelectorAll('.project-link').forEach(link => {
@@ -69,7 +62,22 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // --- New Project Slide-Over Panel Logic (Single Source of Truth) ---
+    // --- Initial Load Logic ---
+    function initialLoad() {
+        if (!document.getElementById('sidebar')) return;
+
+        fetch('/api/projects_data')
+            .then(response => response.json())
+            .then(data => {
+                renderSidebarProjects(data);
+            })
+            .catch(error => {
+                console.error('Error fetching initial sidebar data:', error);
+                const container = document.getElementById('project-list-container');
+                if(container) container.innerHTML = `<li><a href="#" style="color: var(--danger);"><i class="fas fa-exclamation-triangle fa-fw"></i> <span>Error loading.</span></a></li>`;
+            });
+    }
+
     const slideOverPanel = document.getElementById('slide-over-panel');
     const newProjectBtnSidebar = document.getElementById('new-project-sidebar-btn');
     const newProjectFabMain = document.getElementById('new-project-fab-main');
@@ -77,7 +85,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const cancelNewProjectBtn = document.getElementById('cancel-new-project');
     const newProjectForm = document.getElementById('new-project-form');
     const playbookSelect = document.getElementById('project-playbooks');
-    let isSubmitting = false; // Submission guard flag
+    let isSubmitting = false;
 
     function openSlideOver() {
         if (slideOverPanel) {
@@ -106,7 +114,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if (newProjectForm) {
         newProjectForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            
             if (isSubmitting) return;
             isSubmitting = true;
             
@@ -144,8 +151,5 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // --- Initial Load ---
-    if (document.getElementById('sidebar')) {
-        loadSidebarProjects();
-    }
+    initialLoad();
 });

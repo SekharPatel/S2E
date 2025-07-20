@@ -12,42 +12,49 @@ from app.utils.validation import (
 
 projects_bp = Blueprint('projects', __name__)
 
-# --- NEW API ENDPOINT FOR SIDEBAR ---
-@projects_bp.route('/api/sidebar_data')
+# --- CONSOLIDATED API ENDPOINT for all project list data ---
+@projects_bp.route('/api/projects_data')
 @login_required
-def get_sidebar_data_api():
-    """API endpoint to fetch data for the sidebar."""
+def get_projects_data_api():
+    """API endpoint to fetch full project data for the main grid and sidebar."""
     user = User.query.filter_by(username=session['username']).first_or_404()
     all_projects = user.projects.order_by(Project.created_at.desc()).all()
     active_project_id = session.get('active_project_id')
     
-    projects_list = [{'id': p.id, 'name': p.name} for p in all_projects]
+    projects_list = []
+    for p in all_projects:
+        projects_list.append({
+            'id': p.id,
+            'name': p.name,
+            'targets_count': p.targets.count(),
+            'tasks_count': p.tasks.count()
+        })
     
     return jsonify({
         'all_projects': projects_list,
         'active_project_id': active_project_id
     })
-# -----------------------------------------
+# ---------------------------------------------------------
 
-@projects_bp.route('/api/playbooks/<playbook_id>/run', methods=['POST'])
+@projects_bp.route('/api/projects/<int:project_id>/run_default_playbook', methods=['POST'])
 @login_required
-def run_playbook(playbook_id):
-    # ... (rest of the file is unchanged)
-    active_project_id = session.get('active_project_id')
-    if not active_project_id:
-        return jsonify({'status': 'error', 'message': 'No active project selected'}), 400
+def run_default_playbook(project_id):
+    user = User.query.filter_by(username=session['username']).first_or_404()
+    project = user.projects.filter_by(id=project_id).first_or_404()
 
-    if not isinstance(playbook_id, str) or len(playbook_id) > 64:
-        return jsonify({'status': 'error', 'message': 'Invalid playbook ID'}), 400
+    if not project.linked_playbooks:
+        return jsonify({'status': 'error', 'message': 'No playbooks are linked to this project.'}), 400
+
+    playbook_to_run = project.linked_playbooks[0]
 
     job_data = {
-        'playbook_id': playbook_id,
-        'project_id': active_project_id
+        'playbook_id': playbook_to_run.id,
+        'project_id': project.id
     }
     
-    job_id = add_job_to_queue('playbook', job_data, priority=1, project_id=active_project_id)
+    job_id = add_job_to_queue('playbook', job_data, priority=1, project_id=project.id)
     if job_id:
-        return jsonify({'status': 'success', 'message': f"Playbook '{playbook_id}' has been queued."})
+        return jsonify({'status': 'success', 'message': f"Playbook '{playbook_to_run.name}' has been queued."})
     else:
         return jsonify({'status': 'error', 'message': 'Failed to queue playbook'}), 500
 
@@ -92,19 +99,16 @@ def create_project():
         try:
             from app.models import Playbook
             for playbook_id in playbook_ids:
-                if not isinstance(playbook_id, int):
-                    try:
-                        playbook_id = int(playbook_id)
-                    except (ValueError, TypeError):
-                        db.session.rollback()
-                        return jsonify({'status': 'error', 'message': f'Invalid playbook ID: {playbook_id}'}), 400
-                
+                playbook_id = int(playbook_id)
                 playbook = Playbook.query.get(playbook_id)
                 if not playbook:
                     db.session.rollback()
                     return jsonify({'status': 'error', 'message': f'Playbook with ID {playbook_id} not found'}), 400
                 
                 new_project.linked_playbooks.append(playbook)
+        except (ValueError, TypeError):
+            db.session.rollback()
+            return jsonify({'status': 'error', 'message': 'Invalid playbook ID format.'}), 400
         except Exception as e:
             db.session.rollback()
             return jsonify({'status': 'error', 'message': f'Error linking playbooks: {str(e)}'}), 400
@@ -147,3 +151,20 @@ def set_active_project():
     session['active_project_id'] = project_id
     return jsonify({'status': 'success', 'message': f'Active project set to: {project.name}'})
 
+@projects_bp.route('/api/projects/<int:project_id>', methods=['DELETE'])
+@login_required
+def delete_project(project_id):
+    user = User.query.filter_by(username=session['username']).first_or_404()
+    project = user.projects.filter_by(id=project_id).first_or_404()
+
+    try:
+        db.session.delete(project)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'status': 'error', 'message': 'Database error occurred'}), 500
+    
+    if session.get('active_project_id') == project_id:
+        session.pop('active_project_id', None)
+        
+    return jsonify({'status': 'success', 'message': 'Project deleted successfully'})

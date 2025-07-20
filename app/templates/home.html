@@ -6,6 +6,10 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
 {% endblock %}
 
+{% block sidebar %}
+    <!-- The sidebar content is now rendered dynamically by base.js -->
+{% endblock %}
+
 {% block content %}
 <div class="main-pane-header">
     <h1>{{ data.active_project.name if data.active_project else "All Projects" }}</h1>
@@ -24,7 +28,7 @@
 
 <div class="project-grid" id="project-grid">
     {% for project in data.all_projects %}
-    <div class="project-row" data-project-name="{{ project.name | lower }}">
+    <div class="project-row" data-project-name="{{ project.name | lower }}" data-project-id="{{ project.id }}">
         <div>{{ project.name }}</div>
         <div>{{ project.targets.count() }}</div>
         <div>{{ project.tasks.count() }}</div>
@@ -40,7 +44,6 @@
 </div>
 
 <button class="fab" id="new-project-fab-main">+</button>
-
 
 {% endblock %}
 
