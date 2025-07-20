@@ -19,7 +19,7 @@
                 <a href="{{ url_for('home.home') }}" class="header-tab {% if request.endpoint == 'home.home' %}active{% endif %}">Home</a>
                 <a href="{{ url_for('playbooks.list_playbooks') }}" class="header-tab {% if request.endpoint.startswith('playbooks.') %}active{% endif %}">Playbooks</a>
                 <a href="{{ url_for('tasks.list_tasks') }}" class="header-tab {% if request.endpoint.startswith('tasks.') %}active{% endif %}">Tasks</a>
-                <a href="#" class="header-tab">Settings</a>
+                <a href="{{ url_for('settings.settings_home') }}" class="header-tab {% if request.endpoint.startswith('settings.') %}active{% endif %}">Settings</a>
             </nav>
             {% endif %}
         </div>
@@ -43,9 +43,19 @@
             </div>
             <h2 class="sidebar-title">Projects</h2>
             <ul class="sidebar-nav-list" id="project-list-container">
-                <li>
-                    <a href="#"><i class="fas fa-spinner fa-spin fa-fw"></i> <span>Loading Projects...</span></a>
-                </li>
+                {# FIX: Render the initial project list from the server #}
+                {% if base_data and base_data.all_projects %}
+                    {% for project in base_data.all_projects %}
+                    <li>
+                        <a href="#" class="project-link {% if base_data.active_project_id == project.id %}active{% endif %}" data-project-id="{{ project.id }}">
+                            <i class="fas fa-folder fa-fw"></i>
+                            <span>{{ project.name }}</span>
+                        </a>
+                    </li>
+                    {% endfor %}
+                {% else %}
+                    <li><a href="#"><i class="fas fa-info-circle fa-fw"></i> <span>No projects yet.</span></a></li>
+                {% endif %}
             </ul>
         </aside>
         {% endif %}
@@ -55,35 +65,19 @@
         </main>
     </div>
 
-    <!-- New Project Slide-over Panel (now global) -->
-    <div class="slide-over-panel" id="slide-over-panel">
-        <div class="slide-over-header">
-            <h2>New Project</h2>
-            <button class="close-slide-over" id="close-slide-over">&times;</button>
-        </div>
-        <div class="slide-over-content">
-            <form id="new-project-form">
+    <!-- MODAL for New Project -->
+    <div id="new-project-modal" class="modal-backdrop" style="display: none;">
+        <div class="modal">
+            <h2>Create a New Project</h2>
+            <p>Enter a name for your new project. You can add targets and other settings on the next screen.</p>
+            <form id="new-project-modal-form">
                 <div class="form-group">
-                    <label for="project-name">Project Name</label>
-                    <input type="text" id="project-name" name="name" required>
+                    <label for="new-project-name">Project Name</label>
+                    <input type="text" id="new-project-name" class="form-control" required>
                 </div>
-                <div class="form-group">
-                    <label for="project-description">Description</label>
-                    <textarea id="project-description" name="description" rows="3"></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="project-targets">Targets (one per line)</label>
-                    <textarea id="project-targets" name="targets" rows="5"></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="project-playbooks">Link Playbooks</label>
-                    <select id="project-playbooks" name="playbook_ids" multiple>
-                        <!-- Options will be loaded by JS if needed, or passed from home.html for initial load -->
-                    </select>
-                </div>
-                <div class="form-actions">
-                    <button type="button" class="btn btn-secondary" id="cancel-new-project">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Create Project</button>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" id="cancel-modal-btn">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create and Configure</button>
                 </div>
             </form>
         </div>

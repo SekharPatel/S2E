@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const searchInput = document.getElementById('project-search');
     const projectGrid = document.getElementById('project-grid');
 
-    function renderProjectGrid(projects) {
+    window.s2e.renderProjectGrid = function(projects) {
         if (!projectGrid) return;
         
         let gridHtml = '';
@@ -60,17 +60,8 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(response => response.json())
             .then(result => {
                 if (result.status === 'success') {
-                    // --- THIS IS THE FIX ---
-                    // Fetch the new, complete data once, then pass it to both render functions
-                    fetch('/api/projects_data')
-                        .then(res => res.json())
-                        .then(data => {
-                            renderProjectGrid(data.all_projects);
-                            if (window.s2e && typeof window.s2e.renderSidebarProjects === 'function') {
-                                window.s2e.renderSidebarProjects(data);
-                            }
-                        });
-                    // -----------------------
+                    alert('Project deleted successfully.');
+                    window.s2e.refreshProjectUI();
                 } else {
                     alert('Error: ' + result.message);
                 }

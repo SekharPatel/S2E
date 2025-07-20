@@ -1,23 +1,19 @@
 // /S2E/app/static/js/base.js
 
-// Create a global namespace for our app's functions
-window.s2e = window.s2e || {};
+// Create a global namespace for our app's functions and state
+window.s2e = {
+    // The global state that all pages can rely on
+    state: {
+        activeProjectId: null,
+        allProjects: []
+    },
 
-document.addEventListener('DOMContentLoaded', function() {
-    
-    function escapeHTML(str) {
-        if (typeof str !== 'string') return '';
-        return str.replace(/[&<>"']/g, function(match) {
-            return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[match];
-        });
-    }
-
-    // --- REFACTORED: This function now RENDERS data, it doesn't fetch it ---
-    function renderSidebarProjects(data) {
+    // Renders the sidebar project list using provided data
+    renderSidebarProjects: function(data) {
         const container = document.getElementById('project-list-container');
         if (!container) return;
 
-        container.innerHTML = ''; // Clear content
+        container.innerHTML = ''; // Clear existing content
         if (data.all_projects && data.all_projects.length > 0) {
             data.all_projects.forEach(project => {
                 const li = document.createElement('li');
@@ -28,23 +24,53 @@ document.addEventListener('DOMContentLoaded', function() {
                     a.classList.add('active');
                 }
                 a.dataset.projectId = project.id;
-                a.innerHTML = `<i class="fas fa-folder fa-fw"></i> <span>${escapeHTML(project.name)}</span>`;
+                a.innerHTML = `<i class="fas fa-folder fa-fw"></i> <span>${this.escapeHTML(project.name)}</span>`;
                 li.appendChild(a);
                 container.appendChild(li);
             });
         } else {
             container.innerHTML = `<li><a href="#"><i class="fas fa-info-circle fa-fw"></i> <span>No projects yet.</span></a></li>`;
         }
-        attachProjectLinkListeners();
-    }
-    // Expose the function to the global s2e namespace so home.js can call it
-    window.s2e.renderSidebarProjects = renderSidebarProjects;
+        this.attachProjectLinkListeners();
+    },
 
-    function attachProjectLinkListeners() {
+    // The main function to refresh all UI components that depend on the project list
+    refreshProjectUI: function() {
+        return fetch('/api/projects_data')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Update the global state
+                this.state.activeProjectId = data.active_project_id;
+                this.state.allProjects = data.all_projects;
+
+                // Render the sidebar with the new data
+                this.renderSidebarProjects(data);
+
+                // If a function to render the project grid exists (on home.html), call it
+                if (typeof this.renderProjectGrid === 'function') {
+                    this.renderProjectGrid(data.all_projects);
+                }
+            });
+    },
+
+    // Attaches click listeners to the project links in the sidebar
+    attachProjectLinkListeners: function() {
         document.querySelectorAll('.project-link').forEach(link => {
-            link.addEventListener('click', function(e) {
+            // Remove any existing listener to prevent duplicates
+            link.replaceWith(link.cloneNode(true));
+        });
+        
+        // Add new listeners
+        document.querySelectorAll('.project-link').forEach(link => {
+            link.addEventListener('click', (e) => {
                 e.preventDefault();
-                const projectId = this.dataset.projectId;
+                const projectId = e.currentTarget.dataset.projectId;
+                
                 fetch('/api/projects/set_active', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -53,103 +79,80 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(response => response.json())
                 .then(result => {
                     if (result.status === 'success') {
-                        window.location.reload();
+                        // Navigate to the correct page after setting the active project
+                        const currentPage = window.location.pathname;
+                        if (currentPage.startsWith('/settings')) {
+                             window.location.href = '/settings';
+                        } else {
+                             window.location.reload();
+                        }
                     } else {
                         alert('Error: ' + result.message);
                     }
                 });
             });
         });
+    },
+
+    // Helper function to prevent XSS
+    escapeHTML: function(str) {
+        if (typeof str !== 'string') return '';
+        return str.replace(/[&<>"']/g, match => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[match]));
+    }
+};
+
+// Main execution block when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Only run the initial data fetch if a sidebar exists on the page
+    if (document.getElementById('sidebar')) {
+        window.s2e.refreshProjectUI();
     }
 
-    // --- Initial Load Logic ---
-    function initialLoad() {
-        if (!document.getElementById('sidebar')) return;
-
-        fetch('/api/projects_data')
-            .then(response => response.json())
-            .then(data => {
-                renderSidebarProjects(data);
-            })
-            .catch(error => {
-                console.error('Error fetching initial sidebar data:', error);
-                const container = document.getElementById('project-list-container');
-                if(container) container.innerHTML = `<li><a href="#" style="color: var(--danger);"><i class="fas fa-exclamation-triangle fa-fw"></i> <span>Error loading.</span></a></li>`;
-            });
-    }
-
-    const slideOverPanel = document.getElementById('slide-over-panel');
+    // --- Modal & New Project Form Logic ---
+    const modal = document.getElementById('new-project-modal');
     const newProjectBtnSidebar = document.getElementById('new-project-sidebar-btn');
     const newProjectFabMain = document.getElementById('new-project-fab-main');
-    const closeSlideOverBtn = document.getElementById('close-slide-over');
-    const cancelNewProjectBtn = document.getElementById('cancel-new-project');
-    const newProjectForm = document.getElementById('new-project-form');
-    const playbookSelect = document.getElementById('project-playbooks');
+    const cancelModalBtn = document.getElementById('cancel-modal-btn');
+    const newProjectForm = document.getElementById('new-project-modal-form');
     let isSubmitting = false;
 
-    function openSlideOver() {
-        if (slideOverPanel) {
-            if (typeof ALL_PLAYBOOKS !== 'undefined' && playbookSelect) {
-                playbookSelect.innerHTML = '';
-                ALL_PLAYBOOKS.forEach(playbook => {
-                    const option = document.createElement('option');
-                    option.value = playbook.id;
-                    option.textContent = playbook.name;
-                    playbookSelect.appendChild(option);
-                });
-            }
-            slideOverPanel.classList.add('open');
-        }
+    function openModal() {
+        if (modal) modal.style.display = 'flex';
     }
 
-    function closeSlideOver() {
-        if (slideOverPanel) slideOverPanel.classList.remove('open');
+    function closeModal() {
+        if (modal) modal.style.display = 'none';
     }
 
-    if (newProjectBtnSidebar) newProjectBtnSidebar.addEventListener('click', openSlideOver);
-    if (newProjectFabMain) newProjectFabMain.addEventListener('click', openSlideOver);
-    if (closeSlideOverBtn) closeSlideOverBtn.addEventListener('click', closeSlideOver);
-    if (cancelNewProjectBtn) cancelNewProjectBtn.addEventListener('click', closeSlideOver);
+    if (newProjectBtnSidebar) newProjectBtnSidebar.addEventListener('click', openModal);
+    if (newProjectFabMain) newProjectFabMain.addEventListener('click', openModal);
+    if (cancelModalBtn) cancelModalBtn.addEventListener('click', closeModal);
 
     if (newProjectForm) {
         newProjectForm.addEventListener('submit', function(e) {
             e.preventDefault();
             if (isSubmitting) return;
             isSubmitting = true;
-            
-            const submitButton = this.querySelector('button[type="submit"]');
-            const originalButtonText = submitButton.innerHTML;
-            submitButton.disabled = true;
-            submitButton.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Creating...`;
 
-            const formData = new FormData(this);
-            const data = Object.fromEntries(formData.entries());
-            const playbookIds = Array.from(playbookSelect.selectedOptions).map(opt => opt.value);
-            data.playbook_ids = playbookIds;
+            const projectName = document.getElementById('new-project-name').value;
+            const submitButton = this.querySelector('button[type="submit"]');
+            submitButton.disabled = true;
 
             fetch('/api/projects', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
+                body: JSON.stringify({ name: projectName })
             })
             .then(response => response.json())
             .then(result => {
-                if (result.status === 'success') {
-                    window.location.reload();
+                if (result.status === 'success' && result.redirect_url) {
+                    window.location.href = result.redirect_url;
                 } else {
                     alert('Error: ' + result.message);
-                    submitButton.disabled = false;
-                    submitButton.innerHTML = originalButtonText;
                     isSubmitting = false;
+                    submitButton.disabled = false;
                 }
-            })
-            .catch(error => {
-                submitButton.disabled = false;
-                submitButton.innerHTML = originalButtonText;
-                isSubmitting = false;
             });
         });
     }
-
-    initialLoad();
 });

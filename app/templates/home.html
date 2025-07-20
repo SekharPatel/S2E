@@ -7,12 +7,11 @@
 {% endblock %}
 
 {% block sidebar %}
-    <!-- The sidebar content is now rendered dynamically by base.js -->
-{% endblock %}
+    {% endblock %}
 
 {% block content %}
 <div class="main-pane-header">
-    <h1>{{ data.active_project.name if data.active_project else "All Projects" }}</h1>
+    <h1>{{ active_project.name if active_project else "All Projects" }}</h1>
     <div class="search-sort">
         <input type="search" id="project-search" placeholder="Search projects..." />
     </div>
@@ -27,20 +26,7 @@
 </div>
 
 <div class="project-grid" id="project-grid">
-    {% for project in data.all_projects %}
-    <div class="project-row" data-project-name="{{ project.name | lower }}" data-project-id="{{ project.id }}">
-        <div>{{ project.name }}</div>
-        <div>{{ project.targets.count() }}</div>
-        <div>{{ project.tasks.count() }}</div>
-        <div>N/A</div>
-        <div class="project-actions">
-            <button class="run-btn" title="Run Default Playbook"><i class="fas fa-play"></i></button>
-            <button class="delete-btn" title="Delete Project"><i class="fas fa-trash"></i></button>
-        </div>
-    </div>
-    {% else %}
-        <p style="padding: 20px;">No projects found. Create one to get started!</p>
-    {% endfor %}
+    {# The project grid is now rendered by home.js #}
 </div>
 
 <button class="fab" id="new-project-fab-main">+</button>

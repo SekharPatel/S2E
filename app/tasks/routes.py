@@ -1,45 +1,44 @@
 # /S2E/app/tasks/routes.py
-# UPDATED: All routes now query the Task model from the database.
 
-from flask import Blueprint, render_template, redirect, url_for, jsonify, current_app
-from markupsafe import escape
-import os
-import psutil
-
-# Import DB and models, remove old storage
+from flask import Blueprint, jsonify, render_template, session, current_app
 from app import db
-from app.models import Task
+from app.models import Task, Project
 from app.auth.routes import login_required
+from app.home.routes import get_base_data
+
+import psutil, os
+from html import escape
 
 tasks_bp = Blueprint('tasks', __name__, template_folder='../templates')
-
-PROBE_PROCESSES = {} # Ephemeral dict to store live process objects for stopping
-
-# --- Web Page Routes ---
 
 @tasks_bp.route('/tasks')
 @login_required
 def list_tasks():
+    """Lists tasks for the currently active project."""
+    base_data = get_base_data()
+    active_project_id = base_data.get('active_project_id')
+    active_project = Project.query.get(active_project_id) if active_project_id else None
+    
+    query = Task.query.order_by(Task.start_time.desc())
+    if active_project_id:
+        query = query.filter_by(project_id=active_project_id)
+
+    tasks_from_db = query.all()
+
     task_list = []
     TOOLS = current_app.config.get('TOOLS', {})
-    
-    # Query database for all tasks, newest first
-    tasks_from_db = Task.query.order_by(Task.start_time.desc()).all()
-
     for task in tasks_from_db:
-        serializable_task = {
+        task_list.append({
             'task_id': task.id,
-            'tool_id': task.tool_id,
             'tool_name': TOOLS.get(task.tool_id, {}).get('name', 'Unknown Tool'),
-            'command': task.command,
-            # --- THIS IS THE FIX ---
-            # Pass the raw datetime object, not a string version of it.
             'start_time': task.start_time,
             'status': task.status,
-        }
-        task_list.append(serializable_task)
+        })
 
-    return render_template('tasks.html', tasks=task_list)
+    return render_template('tasks.html', 
+                           tasks=task_list, 
+                           active_project=active_project,
+                           base_data=base_data)
 
 @tasks_bp.route('/task/<int:task_id>')
 @login_required

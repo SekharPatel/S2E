@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Settings{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/settings.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="settings-container">
+    <aside class="settings-sidebar">
+        {# The project list is now globally managed by base.js #}
+        <h2 class="settings-project-title">Loading...</h2>
+        <nav>
+            <ul>
+                <li><a href="" class="settings-nav-link active" data-target="project-settings"><i class="fas fa-folder-cog fa-fw"></i> Project</a></li>
+                <li><a href="" class="settings-nav-link" data-target="playbook-settings"><i class="fas fa-book fa-fw"></i> Playbooks</a></li>
+                <li><a href="" class="settings-nav-link" data-target="global-settings"><i class="fas fa-globe fa-fw"></i> Global</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <main class="settings-content">
+        {# FIX: Added the full HTML structure that settings.js expects #}
+        <section id="project-settings" class="settings-section active">
+            <div class="section-header">
+                <h2>Project Settings</h2>
+                <button id="save-project-settings" class="btn btn-primary"><i class="fas fa-save"></i> Save Changes</button>
+            </div>
+            <form id="project-settings-form">
+                <div class="form-group">
+                    <label for="project-name">Project Name</label>
+                    <input type="text" id="project-name" name="name" class="form-control" value="Loading..." required>
+                </div>
+                <div class="form-group">
+                    <label for="project-description">Description</label>
+                    <textarea id="project-description" name="description" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="project-targets">Targets (one per line)</label>
+                    <textarea id="project-targets" name="targets" class="form-control" rows="5"></textarea>
+                </div>
+            </form>
+            <div class="danger-zone">
+                <h3>Danger Zone</h3>
+                <div class="danger-item">
+                    <div>
+                        <strong>Delete this project</strong>
+                        <p>Once you delete a project, there is no going back. Please be certain.</p>
+                    </div>
+                    <button class="btn btn-danger" id="delete-project-btn"><i class="fas fa-trash"></i> Delete Project</button>
+                </div>
+            </div>
+        </section>
+        
+        <section id="playbook-settings" class="settings-section">
+            <div class="section-header">
+                <h2>Playbook Management</h2>
+            </div>
+            <div class="playbook-manager">
+                <div class="playbook-column">
+                    <h3>Linked Playbooks</h3>
+                    <ul id="linked-playbooks-list" class="playbook-list">
+                        <li class="empty-state">Loading...</li>
+                    </ul>
+                </div>
+                <div class="playbook-column">
+                    <h3>Available Playbooks</h3>
+                    <div class="form-group">
+                        <select id="available-playbooks-select" class="form-control">
+                            <option value="">Loading...</option>
+                        </select>
+                    </div>
+                    <button id="link-playbook-btn" class="btn btn-primary"><i class="fas fa-link"></i> Link Selected</button>
+                </div>
+            </div>
+        </section>
+        
+        <section id="global-settings" class="settings-section">
+            <div class="section-header">
+                <h2>Global Settings</h2>
+            </div>
+            <p>Global settings are not yet implemented.</p>
+        </section>
+    </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const ACTIVE_PROJECT_ID = {{ base_data.active_project_id or 'null' }};
+</script>
+<script src="{{ url_for('static', filename='js/settings.js') }}"></script>
+{% endblock %}

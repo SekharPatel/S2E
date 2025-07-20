@@ -19,19 +19,16 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
-    # Paths
     app.config['CONFIG_DIR'] = os.path.join(app.root_path, '..', 'config')
     app.config['OUTPUT_DIR'] = os.path.join(app.root_path, '..', 'output')
     
-    # Load tool configurations
     with open(os.path.join(app.config['CONFIG_DIR'], 'tools.json'), 'r') as f:
         app.config['TOOLS'] = json.load(f)["TOOLS"]
 
-    # Initialize extensions
     db.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
-    login_manager.login_view = 'auth.login' # Redirect to login page if not authenticated
+    login_manager.login_view = 'auth.login'
 
     # Register Blueprints
     from app.auth.routes import auth_bp
@@ -40,6 +37,7 @@ def create_app():
     from app.scanner.routes import scanner_bp
     from app.tasks.routes import tasks_bp
     from app.playbooks.routes import playbooks_bp
+    from app.settings.routes import settings_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(home_bp)
@@ -47,15 +45,13 @@ def create_app():
     app.register_blueprint(scanner_bp)
     app.register_blueprint(tasks_bp)
     app.register_blueprint(playbooks_bp)
+    app.register_blueprint(settings_bp)
 
-    # Initialize login manager user loader
     from app.models import User
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
 
-    # FIX: This function will now run before every request,
-    # ensuring g.user is always available for templates.
     @app.before_request
     def before_request_func():
         g.user = current_user
