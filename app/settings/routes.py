@@ -1,6 +1,6 @@
 # /S2E/app/settings/routes.py
 
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify
+from flask import Blueprint,current_app, render_template, request, redirect, url_for, session, flash, jsonify
 from app import db
 from app.models import User, Project, Target, Playbook
 from app.auth.routes import login_required
@@ -22,7 +22,7 @@ def settings_home():
 
     return render_template('settings.html', base_data=base_data)
 
-@settings_bp.route('/api/settings/<int:project_id>/details')
+@settings_bp.route('/api/project/<int:project_id>/details')
 @login_required
 def get_project_details(project_id):
     """Returns all necessary details for the settings page for a given project."""
@@ -52,42 +52,45 @@ def project_settings(project_id):
     user = User.query.filter_by(username=session['username']).first_or_404()
     project = user.projects.filter_by(id=project_id).first_or_404()
     
-    # Set this as the active project when visiting its settings
     session['active_project_id'] = project_id
-
-    # FIX: Fetch base_data to pass to the template for the sidebar
     base_data = get_base_data()
 
     all_playbooks = Playbook.query.all()
     linked_playbook_ids = {p.id for p in project.linked_playbooks}
     
-    # Filter out already linked playbooks
     available_playbooks = [p for p in all_playbooks if p.id not in linked_playbook_ids]
 
     return render_template('settings.html', 
                            project=project, 
                            all_playbooks=all_playbooks,
                            available_playbooks=available_playbooks,
-                           base_data=base_data) # Pass base_data to the template
+                           base_data=base_data)
 
 @settings_bp.route('/api/settings/project/<int:project_id>/update', methods=['POST'])
 @login_required
 def update_project_settings(project_id):
-    """API endpoint to update project details from the settings page."""
+    """API endpoint to update all project settings, including playbook links."""
     user = User.query.filter_by(username=session['username']).first_or_404()
     project = user.projects.filter_by(id=project_id).first_or_404()
     data = request.json
 
     try:
+        # Update basic details
         project.name = sanitize_project_name(data.get('name', ''))
         project.description = escape_html(data.get('description', ''))
         
-        # Update targets: delete old and create new
+        # Update targets
         Target.query.filter_by(project_id=project.id).delete()
         target_list = sanitize_target_list(data.get('targets', ''))
         for target_value in target_list:
             new_target = Target(value=target_value, project_id=project.id)
             db.session.add(new_target)
+            
+        # Update linked playbooks
+        linked_ids = data.get('linked_playbook_ids', [])
+        # Query all valid playbooks at once to ensure IDs are legitimate
+        playbooks = Playbook.query.filter(Playbook.id.in_(linked_ids)).all()
+        project.linked_playbooks = playbooks
             
         db.session.commit()
         return jsonify({'status': 'success', 'message': 'Project details updated successfully.'})
@@ -96,36 +99,6 @@ def update_project_settings(project_id):
         return jsonify({'status': 'error', 'message': str(e)}), 400
     except Exception as e:
         db.session.rollback()
+        # It's good practice to log the actual error for debugging
+        current_app.logger.error(f"Error updating project {project_id}: {e}")
         return jsonify({'status': 'error', 'message': 'An internal error occurred.'}), 500
-
-@settings_bp.route('/api/settings/project/<int:project_id>/link_playbook', methods=['POST'])
-@login_required
-def link_playbook(project_id):
-    user = User.query.filter_by(username=session['username']).first_or_404()
-    project = user.projects.filter_by(id=project_id).first_or_404()
-    playbook_id = request.json.get('playbook_id')
-    
-    playbook = Playbook.query.get(playbook_id)
-    if not playbook:
-        return jsonify({'status': 'error', 'message': 'Playbook not found.'}), 404
-        
-    project.linked_playbooks.append(playbook)
-    db.session.commit()
-    return jsonify({'status': 'success', 'message': f"Playbook '{playbook.name}' linked."})
-
-@settings_bp.route('/api/settings/project/<int:project_id>/unlink_playbook', methods=['POST'])
-@login_required
-def unlink_playbook(project_id):
-    user = User.query.filter_by(username=session['username']).first_or_404()
-    project = user.projects.filter_by(id=project_id).first_or_404()
-    playbook_id = request.json.get('playbook_id')
-    
-    playbook = Playbook.query.get(playbook_id)
-    if not playbook:
-        return jsonify({'status': 'error', 'message': 'Playbook not found.'}), 404
-        
-    if playbook in project.linked_playbooks:
-        project.linked_playbooks.remove(playbook)
-        db.session.commit()
-    
-    return jsonify({'status': 'success', 'message': f"Playbook '{playbook.name}' unlinked."})

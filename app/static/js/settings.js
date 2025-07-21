@@ -10,15 +10,9 @@ document.addEventListener('DOMContentLoaded', function() {
     navLinks.forEach(link => {
         link.addEventListener('click', function(e) {
             e.preventDefault();
-
-            // Deactivate all links and sections
             navLinks.forEach(l => l.classList.remove('active'));
             sections.forEach(s => s.classList.remove('active'));
-
-            // Activate the clicked link
             this.classList.add('active');
-
-            // Activate the corresponding section
             const targetId = this.getAttribute('data-target');
             const targetSection = document.getElementById(targetId);
             if (targetSection) {
@@ -27,33 +21,29 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // This function fetches and renders the settings for a specific project ID
     function loadProjectSettings(projectId) {
         const contentArea = document.querySelector('.settings-content');
         if (!projectId) {
             contentArea.innerHTML =
-                '<h2>No Project Selected</h2><p>Please select a project from the sidebar or create a new one to view its settings.</p>';
+                '<h2>No Project Selected</h2><p>Please select a project from the sidebar or create a new one.</p>';
             return;
         }
         currentProjectId = projectId;
 
-        fetch(`/api/settings/${projectId}/details`)
+        fetch(`/api/project/${projectId}/details`)
             .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 return response.json();
             })
             .then(data => {
-                // Populate form fields
                 document.getElementById('project-name').value = data.name;
                 document.querySelector('.settings-project-title').textContent = data.name;
                 document.getElementById('project-description').value = data.description;
                 document.getElementById('project-targets').value = data.targets;
 
-                // Populate playbook lists
                 const linkedList = document.getElementById('linked-playbooks-list');
-                const availableSelect = document.getElementById('available-playbooks-select');
+                // FIX: Target the new available playbooks list
+                const availableList = document.getElementById('available-playbooks-list');
 
                 if (linkedList) {
                     linkedList.innerHTML = data.linked_playbooks.length ? '' : '<li class="empty-state">No playbooks linked yet.</li>';
@@ -62,10 +52,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                 }
 
-                if (availableSelect) {
-                    availableSelect.innerHTML = '<option value="">Select a playbook to add...</option>';
+                // FIX: Populate the new available playbooks list
+                if (availableList) {
+                    availableList.innerHTML = data.available_playbooks.length ? '' : '<li class="empty-state">No other playbooks available.</li>';
                     data.available_playbooks.forEach(p => {
-                        availableSelect.innerHTML += `<option value="${p.id}">${p.name}</option>`;
+                        // Added btn-link class for event delegation
+                        availableList.innerHTML += `<li data-playbook-id="${p.id}"><span>${p.name}</span><button class="btn-link"><i class="fas fa-plus"></i></button></li>`;
                     });
                 }
             })
@@ -84,10 +76,15 @@ document.addEventListener('DOMContentLoaded', function() {
     if (saveButton) {
         saveButton.addEventListener('click', function() {
             const form = document.getElementById('project-settings-form');
+            const linkedPlaybookIds = Array.from(document.querySelectorAll('#linked-playbooks-list li'))
+                                           .map(li => li.dataset.playbookId)
+                                           .filter(id => id);
+
             const data = {
                 name: form.querySelector('#project-name').value,
                 description: form.querySelector('#project-description').value,
                 targets: form.querySelector('#project-targets').value,
+                linked_playbook_ids: linkedPlaybookIds
             };
 
             fetch(`/api/settings/project/${currentProjectId}/update`, {
@@ -108,7 +105,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const deleteButton = document.getElementById('delete-project-btn');
     if (deleteButton) {
         deleteButton.addEventListener('click', function() {
-            if (confirm('Are you sure you want to permanently delete this project? This action cannot be undone.')) {
+            if (confirm('Are you sure you want to permanently delete this project?')) {
                 fetch(`/api/projects/${currentProjectId}`, { method: 'DELETE' })
                 .then(response => response.json())
                 .then(result => {
@@ -130,49 +127,54 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    const linkButton = document.getElementById('link-playbook-btn');
-    if(linkButton) {
-        linkButton.addEventListener('click', function() {
-            const select = document.getElementById('available-playbooks-select');
-            const playbookId = select.value;
-            if (!playbookId) return;
+    // FIX: Updated logic to move items between the two lists
+    const availableList = document.getElementById('available-playbooks-list');
+    if (availableList) {
+        availableList.addEventListener('click', function(e) {
+            const linkButton = e.target.closest('.btn-link');
+            if (linkButton) {
+                const liToMove = linkButton.closest('li');
+                const playbookId = liToMove.dataset.playbookId;
+                const playbookName = liToMove.querySelector('span').textContent;
 
-            fetch(`/api/settings/project/${currentProjectId}/link_playbook`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ playbook_id: playbookId })
-            })
-            .then(response => response.json())
-            .then(result => {
-                if (result.status === 'success') {
-                    loadProjectSettings(currentProjectId);
-                } else {
-                    alert('Error: ' + result.message);
+                // Add to linked list UI
+                const linkedList = document.getElementById('linked-playbooks-list');
+                const emptyState = linkedList.querySelector('.empty-state');
+                if (emptyState) emptyState.remove();
+                
+                linkedList.innerHTML += `<li data-playbook-id="${playbookId}"><span>${playbookName}</span><button class="btn-unlink"><i class="fas fa-times"></i></button></li>`;
+
+                // Remove from available list UI
+                liToMove.remove();
+                if (availableList.children.length === 0) {
+                    availableList.innerHTML = '<li class="empty-state">No other playbooks available.</li>';
                 }
-            });
+            }
         });
     }
+
 
     const linkedList = document.getElementById('linked-playbooks-list');
     if (linkedList) {
         linkedList.addEventListener('click', function(e) {
             if (e.target.closest('.btn-unlink')) {
-                const li = e.target.closest('li');
-                const playbookId = li.dataset.playbookId;
-                
-                fetch(`/api/settings/project/${currentProjectId}/unlink_playbook`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ playbook_id: playbookId })
-                })
-                .then(response => response.json())
-                .then(result => {
-                    if (result.status === 'success') {
-                        loadProjectSettings(currentProjectId);
-                    } else {
-                        alert('Error: ' + result.message);
-                    }
-                });
+                const liToMove = e.target.closest('li');
+                const playbookId = liToMove.dataset.playbookId;
+                const playbookName = liToMove.querySelector('span').textContent;
+
+                // Add back to available list
+                const availableList = document.getElementById('available-playbooks-list');
+                const emptyState = availableList.querySelector('.empty-state');
+                if (emptyState) emptyState.remove();
+
+                availableList.innerHTML += `<li data-playbook-id="${playbookId}"><span>${playbookName}</span><button class="btn-link"><i class="fas fa-plus"></i></button></li>`;
+
+                // Remove from linked list UI
+                liToMove.remove();
+
+                if (linkedList.children.length === 0) {
+                    linkedList.innerHTML = '<li class="empty-state">No playbooks linked yet.</li>';
+                }
             }
         });
     }

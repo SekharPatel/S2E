@@ -56,7 +56,7 @@ def create_project():
     return jsonify({
         'status': 'success', 
         'message': 'Project created successfully', 
-        'redirect_url': url_for('settings.project_settings', project_id=new_project.id)
+        'redirect_url': url_for('settings.settings_home')
     }), 201
 
 @projects_bp.route('/api/projects/set_active', methods=['POST'])

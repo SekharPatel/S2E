@@ -9,19 +9,17 @@
 {% block content %}
 <div class="settings-container">
     <aside class="settings-sidebar">
-        {# The project list is now globally managed by base.js #}
         <h2 class="settings-project-title">Loading...</h2>
         <nav>
             <ul>
-                <li><a href="" class="settings-nav-link active" data-target="project-settings"><i class="fas fa-folder-cog fa-fw"></i> Project</a></li>
-                <li><a href="" class="settings-nav-link" data-target="playbook-settings"><i class="fas fa-book fa-fw"></i> Playbooks</a></li>
-                <li><a href="" class="settings-nav-link" data-target="global-settings"><i class="fas fa-globe fa-fw"></i> Global</a></li>
+                <li><a href="#project-settings" class="settings-nav-link active" data-target="project-settings"><i class="fas fa-folder-cog fa-fw"></i> Project</a></li>
+                <li><a href="#playbook-settings" class="settings-nav-link" data-target="playbook-settings"><i class="fas fa-book fa-fw"></i> Playbooks</a></li>
+                <li><a href="#global-settings" class="settings-nav-link" data-target="global-settings"><i class="fas fa-globe fa-fw"></i> Global</a></li>
             </ul>
         </nav>
     </aside>
 
     <main class="settings-content">
-        {# FIX: Added the full HTML structure that settings.js expects #}
         <section id="project-settings" class="settings-section active">
             <div class="section-header">
                 <h2>Project Settings</h2>
@@ -66,12 +64,10 @@
                 </div>
                 <div class="playbook-column">
                     <h3>Available Playbooks</h3>
-                    <div class="form-group">
-                        <select id="available-playbooks-select" class="form-control">
-                            <option value="">Loading...</option>
-                        </select>
-                    </div>
-                    <button id="link-playbook-btn" class="btn btn-primary"><i class="fas fa-link"></i> Link Selected</button>
+                    {# FIX: Replaced dropdown with a list for a better UX #}
+                    <ul id="available-playbooks-list" class="playbook-list">
+                        <li class="empty-state">Loading...</li>
+                    </ul>
                 </div>
             </div>
         </section>
