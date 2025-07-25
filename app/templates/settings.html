@@ -83,8 +83,5 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
-    const ACTIVE_PROJECT_ID = {{ base_data.active_project_id or 'null' }};
-</script>
 <script src="{{ url_for('static', filename='js/settings.js') }}"></script>
 {% endblock %}

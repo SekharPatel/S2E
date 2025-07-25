@@ -22,6 +22,15 @@ def settings_home():
 
     return render_template('settings.html', base_data=base_data)
 
+@settings_bp.route('/api/active-project-id')
+@login_required
+def get_active_project_id():
+    """Returns the active project ID from the session."""
+    active_project_id = session.get('active_project_id')
+    if not active_project_id:
+        return jsonify({'error': 'No active project found'}), 404
+    return jsonify({'active_project_id': active_project_id})
+
 @settings_bp.route('/api/project/<int:project_id>/details')
 @login_required
 def get_project_details(project_id):

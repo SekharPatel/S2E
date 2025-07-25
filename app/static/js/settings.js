@@ -1,7 +1,40 @@
 // /S2E/app/static/js/settings.js
 
 document.addEventListener('DOMContentLoaded', function() {
-    let currentProjectId = typeof ACTIVE_PROJECT_ID !== 'undefined' ? ACTIVE_PROJECT_ID : null;
+    let currentProjectId = null;
+
+    function initializeSettings() {
+        fetch('/api/active-project-id')
+            .then(response => {
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        // No active project, which is a valid state.
+                        // The UI should guide the user to create or select a project.
+                        const contentArea = document.querySelector('.settings-content');
+                        contentArea.innerHTML = '<h2>No Active Project</h2><p>Please create or select a project to see its settings.</p>';
+                        document.querySelector('.settings-project-title').textContent = 'No Project Selected';
+                    } else {
+                        // Other server-side error
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return null; // Stop the promise chain
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data && data.active_project_id) {
+                    currentProjectId = data.active_project_id;
+                    // Now that we have the project ID, load its settings
+                    loadProjectSettings(currentProjectId);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching active project ID:', error);
+                const contentArea = document.querySelector('.settings-content');
+                contentArea.innerHTML = '<h2>Error</h2><p>Could not determine the active project. Please refresh the page.</p>';
+            });
+    }
+
 
     // --- Tab Switching Logic ---
     const navLinks = document.querySelectorAll('.settings-nav-link');
@@ -70,7 +103,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
-    loadProjectSettings(currentProjectId);
+    initializeSettings();
 
     const saveButton = document.getElementById('save-project-settings');
     if (saveButton) {
