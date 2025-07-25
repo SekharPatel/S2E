@@ -83,6 +83,16 @@ def set_active_project():
     session['active_project_id'] = project_id
     return jsonify({'status': 'success', 'message': f'Active project set to: {project.name}'})
 
+
+@projects_bp.route('/api/active-project-id')
+@login_required
+def get_active_project_id():
+    """Returns the active project ID from the session."""
+    active_project_id = session.get('active_project_id')
+    if not active_project_id:
+        return jsonify({'error': 'No active project found'}), 404
+    return jsonify({'active_project_id': active_project_id})
+
 @projects_bp.route('/api/projects/<int:project_id>', methods=['DELETE'])
 @login_required
 def delete_project(project_id):

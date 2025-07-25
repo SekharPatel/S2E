@@ -22,15 +22,6 @@ def settings_home():
 
     return render_template('settings.html', base_data=base_data)
 
-@settings_bp.route('/api/active-project-id')
-@login_required
-def get_active_project_id():
-    """Returns the active project ID from the session."""
-    active_project_id = session.get('active_project_id')
-    if not active_project_id:
-        return jsonify({'error': 'No active project found'}), 404
-    return jsonify({'active_project_id': active_project_id})
-
 @settings_bp.route('/api/project/<int:project_id>/details')
 @login_required
 def get_project_details(project_id):
@@ -53,27 +44,6 @@ def get_project_details(project_id):
         'available_playbooks': available_playbooks
     }
     return jsonify(project_data)
-
-@settings_bp.route('/settings/project/<int:project_id>')
-@login_required
-def project_settings(project_id):
-    """Displays the main settings page for a specific project."""
-    user = User.query.filter_by(username=session['username']).first_or_404()
-    project = user.projects.filter_by(id=project_id).first_or_404()
-    
-    session['active_project_id'] = project_id
-    base_data = get_base_data()
-
-    all_playbooks = Playbook.query.all()
-    linked_playbook_ids = {p.id for p in project.linked_playbooks}
-    
-    available_playbooks = [p for p in all_playbooks if p.id not in linked_playbook_ids]
-
-    return render_template('settings.html', 
-                           project=project, 
-                           all_playbooks=all_playbooks,
-                           available_playbooks=available_playbooks,
-                           base_data=base_data)
 
 @settings_bp.route('/api/settings/project/<int:project_id>/update', methods=['POST'])
 @login_required
