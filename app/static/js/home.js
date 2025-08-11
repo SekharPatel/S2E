@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function loadProjects() {
-        fetch('/api/projects')
+        fetch(`/api/projects?_=${Date.now()}`, { cache: 'no-store' })
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
@@ -165,7 +165,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function loadDashboardStats() {
         // Load total projects
-        fetch('/api/projects')
+        fetch(`/api/projects?_=${Date.now()}`, { cache: 'no-store' })
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
@@ -401,8 +401,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     window.deleteProject = function(projectId) {
         if (confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
-            fetch(`/api/projects/${projectId}`, {
-                method: 'DELETE'
+            fetch(`/api/projects/${projectId}?_=${Date.now()}`, {
+                method: 'DELETE',
+                cache: 'no-store'
             })
             .then(response => response.json())
             .then(data => {

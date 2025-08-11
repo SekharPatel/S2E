@@ -36,7 +36,8 @@ window.s2e = {
 
     // The main function to refresh all UI components that depend on the project list
     refreshProjectUI: function() {
-        return fetch('/api/projects_data')
+        const url = `/api/projects_data?_=${Date.now()}`;
+        return fetch(url, { cache: 'no-store' })
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
