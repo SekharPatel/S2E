@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function setupEventListeners() {
         // New project buttons
         const newProjectHeroBtn = document.getElementById('new-project-hero-btn');
-        const emptyStateCreateBtn = document.getElementById('empty-state-create-btn');
+        const emptyStateCreateBtn = document.getElementById('empty-projects') ? document.getElementById('empty-state-create-btn') : null;
         const newProjectFabMain = document.getElementById('new-project-fab-main');
         
         if (newProjectHeroBtn) {
@@ -65,7 +65,9 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
-                    renderProjects(data.projects || []);
+                    const projects = data.projects || [];
+                    renderProjects(projects);
+                    updateHomeHeroUI(projects.length > 0);
                 } else {
                     console.error('Failed to load projects:', data.message);
                     showEmptyProjectsState();
@@ -273,6 +275,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (projectsGrid) projectsGrid.innerHTML = '';
         if (emptyState) emptyState.style.display = 'block';
+        
+        // Ensure hero shows welcome/create when no projects
+        updateHomeHeroUI(false);
     }
     
     function showLoadingStates() {
@@ -402,10 +407,14 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
-                    // Reload projects
+                    // Reload projects on Home
                     loadProjects();
                     // Reload stats
                     loadDashboardStats();
+                    // Always refresh sidebar across the app
+                    if (window.s2e && typeof window.s2e.refreshProjectUI === 'function') {
+                        window.s2e.refreshProjectUI();
+                    }
                 } else {
                     alert('Error deleting project: ' + data.message);
                 }
@@ -417,15 +426,87 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     
+    // Provide lowercase aliases to avoid casing errors from inline handlers
+    // e.g., openproject(int) or editproject(int)
+    window.openproject = window.openProject;
+    window.editproject = window.editProject;
+    window.deleteproject = window.deleteProject;
+    
+    // Define a render hook so global refresh updates the Home project grid too
+    if (window.s2e) {
+        window.s2e.renderProjectGrid = function(allProjects) {
+            try {
+                renderProjects(allProjects || []);
+                updateHomeHeroUI(Array.isArray(allProjects) && allProjects.length > 0);
+            } catch (e) {
+                console.error('Error rendering project grid from global refresh:', e);
+            }
+        };
+    }
+    
     // Refresh functionality for the existing s2e object
     if (window.s2e && window.s2e.refreshProjectUI) {
         // Override the existing refresh function to work with new UI
         const originalRefresh = window.s2e.refreshProjectUI;
         window.s2e.refreshProjectUI = function() {
+            // Keep Home dashboard sections in sync
             loadDashboardData();
+            // Call original refresh to update sidebar and invoke renderProjectGrid
             if (originalRefresh) {
-                originalRefresh();
+                return originalRefresh();
             }
         };
+    }
+
+    // Toggle hero UI based on whether projects exist
+    function updateHomeHeroUI(hasProjects) {
+        const heroSection = document.querySelector('.hero-section');
+        const title = heroSection ? heroSection.querySelector('h1') : null;
+        const subtitle = heroSection ? heroSection.querySelector('p') : null;
+        const heroActions = heroSection ? heroSection.querySelector('.hero-actions') : null;
+        const existingScanBtn = document.getElementById('quick-scan-btn');
+        const createBtn = document.getElementById('new-project-hero-btn');
+
+        if (!heroSection) return;
+
+        if (hasProjects) {
+            // Hide welcome messaging
+            if (title) title.style.display = 'none';
+            if (subtitle) subtitle.style.display = 'none';
+
+            // Replace the create button with a scan button
+            if (createBtn) {
+                const scanBtn = createBtn.cloneNode(true);
+                scanBtn.id = 'quick-scan-btn';
+                scanBtn.innerHTML = '<i class="fas fa-search"></i> Quick Scan';
+                // Remove any previous listeners by replacing node
+                createBtn.parentNode.replaceChild(scanBtn, createBtn);
+                scanBtn.addEventListener('click', handleQuickScan);
+            } else if (!existingScanBtn && heroActions) {
+                // Ensure a scan button exists if the create button isn't present
+                const scanBtn = document.createElement('a');
+                scanBtn.className = 'btn btn-secondary btn-lg';
+                scanBtn.id = 'quick-scan-btn';
+                scanBtn.innerHTML = '<i class="fas fa-search"></i> Quick Scan';
+                scanBtn.href = '#';
+                scanBtn.addEventListener('click', (e) => { e.preventDefault(); handleQuickScan(); });
+                heroActions.prepend(scanBtn);
+            }
+        } else {
+            // Show welcome messaging and ensure create button exists
+            if (title) title.style.display = '';
+            if (subtitle) subtitle.style.display = '';
+            
+            // If the hero button was converted to scan, convert it back to create
+            const scanBtnNow = document.getElementById('quick-scan-btn');
+            if (scanBtnNow) {
+                const createBtnNew = scanBtnNow.cloneNode(true);
+                createBtnNew.id = 'new-project-hero-btn';
+                createBtnNew.className = 'btn btn-primary btn-lg';
+                createBtnNew.innerHTML = '<i class="fas fa-plus"></i> Create New Project';
+                scanBtnNow.parentNode.replaceChild(createBtnNew, scanBtnNow);
+                createBtnNew.addEventListener('click', openNewProjectModal);
+            }
+        }
     }
 });
