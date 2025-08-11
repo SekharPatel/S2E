@@ -3,7 +3,7 @@
 from flask import Blueprint, request, jsonify, session, render_template, redirect, url_for, flash
 from app import db
 from app.models import User, Playbook, PlaybookRule
-from app.auth.routes import login_required
+from app.routes.auth.routes import login_required
 from app.utils.validation import (
     sanitize_project_name, ValidationError, escape_html
 )

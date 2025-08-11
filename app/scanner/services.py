@@ -7,7 +7,7 @@ import time
 
 from app import db
 from app.models import Task
-from app.tasks.task_manager import add_job_to_queue
+from app.routes.tasks.task_manager import add_job_to_queue
 from app.utils.validation import (
     validate_tool_id, sanitize_command_options, validate_target, 
     validate_file_path, ValidationError, normalize_path

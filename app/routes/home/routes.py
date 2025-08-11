@@ -1,6 +1,6 @@
 # /S2E/app/home/routes.py
 from flask import Blueprint, render_template, session, current_app
-from app.auth.routes import login_required
+from app.routes.auth.routes import login_required
 from app.models import User, Project, Playbook
 
 home_bp = Blueprint('home', __name__, template_folder='../templates')

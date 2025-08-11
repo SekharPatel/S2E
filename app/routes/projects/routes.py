@@ -3,7 +3,7 @@
 from flask import Blueprint, request, jsonify, session, url_for
 from app import db
 from app.models import User, Project
-from app.auth.routes import login_required
+from app.routes.auth.routes import login_required
 from app.utils.validation import sanitize_project_name, ValidationError
 
 projects_bp = Blueprint('projects', __name__)

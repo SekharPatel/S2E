@@ -3,7 +3,7 @@
 from flask import Blueprint, redirect, url_for, current_app, request, flash, jsonify, session
 import os
 
-from app.auth.routes import login_required
+from app.routes.auth.routes import login_required
 from app.models import Task
 from .parsers import parse_nmap_xml_python_nmap, parse_nmap_output_simple
 from .services import add_project_scan_to_queue, add_single_task_to_queue

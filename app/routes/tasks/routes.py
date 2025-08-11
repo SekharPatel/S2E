@@ -3,8 +3,8 @@
 from flask import Blueprint, jsonify, render_template, session, current_app
 from app import db
 from app.models import Task, Project
-from app.auth.routes import login_required
-from app.home.routes import get_base_data
+from app.routes.auth.routes import login_required
+from app.routes.home.routes import get_base_data
 
 import psutil, os
 from html import escape

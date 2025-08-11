@@ -31,13 +31,13 @@ def create_app():
     login_manager.login_view = 'auth.login'
 
     # Register Blueprints
-    from app.auth.routes import auth_bp
-    from app.home.routes import home_bp
-    from app.projects.routes import projects_bp
+    from app.routes.auth.routes import auth_bp
+    from app.routes.home.routes import home_bp
+    from app.routes.projects.routes import projects_bp
     from app.scanner.routes import scanner_bp
-    from app.tasks.routes import tasks_bp
-    from app.playbooks.routes import playbooks_bp
-    from app.settings.routes import settings_bp
+    from app.routes.tasks.routes import tasks_bp
+    from app.routes.playbooks.routes import playbooks_bp
+    from app.routes.settings.routes import settings_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(home_bp)

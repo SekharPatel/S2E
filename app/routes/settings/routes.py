@@ -3,9 +3,9 @@
 from flask import Blueprint,current_app, render_template, request, redirect, url_for, session, flash, jsonify
 from app import db
 from app.models import User, Project, Target, Playbook
-from app.auth.routes import login_required
+from app.routes.auth.routes import login_required
 from app.utils.validation import sanitize_project_name, sanitize_target_list, ValidationError, escape_html
-from app.home.routes import get_base_data # Import the helper function
+from app.routes.home.routes import get_base_data # Import the helper function
 
 settings_bp = Blueprint('settings', __name__, template_folder='../templates')
 
