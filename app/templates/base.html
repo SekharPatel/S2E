@@ -5,20 +5,38 @@
     <title>{% block title %}S2E - Scan 2 Exploit{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}" />
     <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
     {% block extra_css %}{% endblock %}
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <meta name="description" content="S2E - Professional Cybersecurity Scanning Orchestration Platform" />
+    <meta name="theme-color" content="#00d4ff" />
 </head>
 <body>
     <header class="header">
         <div class="header-left">
+            <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="Toggle navigation menu">
+                <i class="fas fa-bars"></i>
+            </button>
             <div class="logo">S2E</div>
             {% if g.user and g.user.is_authenticated %}
-            <nav class="header-nav">
-                <a href="{{ url_for('home.home') }}" class="header-tab {% if request.endpoint == 'home.home' %}active{% endif %}">Home</a>
-                <a href="{{ url_for('playbooks.list_playbooks') }}" class="header-tab {% if request.endpoint.startswith('playbooks.') %}active{% endif %}">Playbooks</a>
-                <a href="{{ url_for('tasks.list_tasks') }}" class="header-tab {% if request.endpoint.startswith('tasks.') %}active{% endif %}">Tasks</a>
-                <a href="{{ url_for('settings.settings_home') }}" class="header-tab {% if request.endpoint.startswith('settings.') %}active{% endif %}">Settings</a>
+            <nav class="header-nav" aria-label="Main navigation">
+                <a href="{{ url_for('home.home') }}" class="header-tab {% if request.endpoint == 'home.home' %}active{% endif %}">
+                    <i class="fas fa-home"></i>
+                    <span>Home</span>
+                </a>
+                <a href="{{ url_for('playbooks.list_playbooks') }}" class="header-tab {% if request.endpoint.startswith('playbooks.') %}active{% endif %}">
+                    <i class="fas fa-playbook"></i>
+                    <span>Playbooks</span>
+                </a>
+                <a href="{{ url_for('tasks.list_tasks') }}" class="header-tab {% if request.endpoint.startswith('tasks.') %}active{% endif %}">
+                    <i class="fas fa-tasks"></i>
+                    <span>Tasks</span>
+                </a>
+                <a href="{{ url_for('settings.settings_home') }}" class="header-tab {% if request.endpoint.startswith('settings.') %}active{% endif %}">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
             </nav>
             {% endif %}
         </div>
@@ -26,7 +44,7 @@
             {% if g.user and g.user.is_authenticated %}
             <div class="user-info">
                 <span class="username">{{ g.user.username }}</span>
-                <a href="{{ url_for('auth.logout') }}" class="logout-link" title="Logout">
+                <a href="{{ url_for('auth.logout') }}" class="logout-link" title="Logout" aria-label="Logout">
                     <i class="fas fa-sign-out-alt"></i>
                 </a>
             </div>
@@ -36,42 +54,54 @@
 
     <div class="page-container">
         {% if g.user and g.user.is_authenticated %}
-        <aside class="sidebar" id="sidebar">
+        <aside class="sidebar" id="sidebar" aria-label="Project navigation">
             <div class="sidebar-header">
-                <button class="btn btn-primary" id="new-project-sidebar-btn"><i class="fas fa-plus"></i> New Project</button>
+                <button class="btn btn-primary" id="new-project-sidebar-btn" aria-label="Create new project">
+                    <i class="fas fa-plus"></i> 
+                    <span>New Project</span>
+                </button>
             </div>
             <h2 class="sidebar-title">Projects</h2>
             <ul class="sidebar-nav-list" id="project-list-container">
                 {% if base_data and base_data.all_projects %}
                     {% for project in base_data.all_projects %}
                     <li>
-                        <a href="#" class="project-link {% if base_data.active_project_id == project.id %}active{% endif %}" data-project-id="{{ project.id }}">
-                            <i class="fas fa-folder fa-fw"></i>
+                        <a href="#" class="project-link {% if base_data.active_project_id == project.id %}active{% endif %}" 
+                           data-project-id="{{ project.id }}" 
+                           aria-label="Open project: {{ project.name }}">
+                            <i class="fas fa-folder fa-fw" aria-hidden="true"></i>
                             <span>{{ project.name }}</span>
                         </a>
                     </li>
                     {% endfor %}
                 {% else %}
-                    <li><a href="#"><i class="fas fa-info-circle fa-fw"></i> <span>No projects yet.</span></a></li>
+                    <li>
+                        <a href="#" class="project-link disabled" aria-label="No projects available">
+                            <i class="fas fa-info-circle fa-fw" aria-hidden="true"></i> 
+                            <span>No projects yet.</span>
+                        </a>
+                    </li>
                 {% endif %}
             </ul>
         </aside>
         {% endif %}
 
-        <main class="main-pane {% if not g.user or not g.user.is_authenticated %}unauthenticated{% endif %}">
+        <main class="main-pane {% if not g.user or not g.user.is_authenticated %}unauthenticated{% endif %}" role="main">
             {% block content %}{% endblock %}
         </main>
     </div>
 
     <!-- MODAL for New Project -->
-    <div id="new-project-modal" class="modal-backdrop" style="display: none;">
+    <div id="new-project-modal" class="modal-backdrop" style="display: none;" role="dialog" aria-labelledby="modal-title" aria-hidden="true">
         <div class="modal">
-            <h2>Create a New Project</h2>
+            <h2 id="modal-title">Create a New Project</h2>
             <p>Enter a name for your new project. You can add targets and other settings on the next screen.</p>
             <form id="new-project-modal-form">
                 <div class="form-group">
                     <label for="new-project-name">Project Name</label>
-                    <input type="text" id="new-project-name" class="form-control" required>
+                    <input type="text" id="new-project-name" class="form-control" required 
+                           placeholder="Enter project name" aria-describedby="project-name-help">
+                    <small id="project-name-help" class="form-text">Choose a descriptive name for your cybersecurity project.</small>
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="btn btn-secondary" id="cancel-modal-btn">Cancel</button>
@@ -80,6 +110,9 @@
             </form>
         </div>
     </div>
+
+    <!-- Mobile Menu Overlay -->
+    <div id="mobile-menu-overlay" class="mobile-menu-overlay" style="display: none;"></div>
 
     <script src="{{ url_for('static', filename='js/base.js') }}"></script>
     {% block extra_js %}{% endblock %}

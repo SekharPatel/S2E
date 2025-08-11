@@ -108,6 +108,64 @@ document.addEventListener('DOMContentLoaded', function() {
         window.s2e.refreshProjectUI();
     }
 
+    // --- Mobile Menu Functionality ---
+    const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+    const sidebar = document.getElementById('sidebar');
+    const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
+
+    function toggleMobileMenu() {
+        if (sidebar && mobileMenuOverlay) {
+            const isOpen = sidebar.classList.contains('open');
+            
+            if (isOpen) {
+                sidebar.classList.remove('open');
+                mobileMenuOverlay.classList.remove('active');
+                mobileMenuOverlay.style.display = 'none';
+                document.body.style.overflow = '';
+            } else {
+                sidebar.classList.add('open');
+                mobileMenuOverlay.style.display = 'block';
+                setTimeout(() => {
+                    mobileMenuOverlay.classList.add('active');
+                }, 10);
+                document.body.style.overflow = 'hidden';
+            }
+        }
+    }
+
+    function closeMobileMenu() {
+        if (sidebar && mobileMenuOverlay) {
+            sidebar.classList.remove('open');
+            mobileMenuOverlay.classList.remove('active');
+            mobileMenuOverlay.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+    }
+
+    // Mobile menu toggle
+    if (mobileMenuToggle) {
+        mobileMenuToggle.addEventListener('click', toggleMobileMenu);
+    }
+
+    // Close menu when clicking overlay
+    if (mobileMenuOverlay) {
+        mobileMenuOverlay.addEventListener('click', closeMobileMenu);
+    }
+
+    // Close menu on escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeMobileMenu();
+        }
+    });
+
+    // Close menu on window resize (if switching from mobile to desktop)
+    window.addEventListener('resize', function() {
+        if (window.innerWidth > 992) {
+            closeMobileMenu();
+        }
+    });
+
     // --- Modal & New Project Form Logic ---
     const modal = document.getElementById('new-project-modal');
     const newProjectBtnSidebar = document.getElementById('new-project-sidebar-btn');

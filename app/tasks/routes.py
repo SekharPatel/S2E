@@ -2,7 +2,7 @@
 
 from flask import Blueprint, jsonify, render_template, session, current_app
 from app import db
-from app.models import Task, Project
+from app.models import Task, Project, User
 from app.auth.routes import login_required
 from app.home.routes import get_base_data
 
@@ -61,6 +61,35 @@ def task_details(task_id):
     )
 
 # --- API Endpoints ---
+
+@tasks_bp.route('/api/tasks')
+@login_required
+def get_tasks():
+    """API endpoint to fetch all tasks for the home page."""
+    user = User.query.filter_by(username=session['username']).first_or_404()
+    active_project_id = session.get('active_project_id')
+    
+    query = Task.query.join(Project).filter(Project.owner == user)
+    if active_project_id:
+        query = query.filter_by(project_id=active_project_id)
+    
+    tasks_from_db = query.order_by(Task.created_at.desc()).limit(10).all()
+    
+    task_list = []
+    for task in tasks_from_db:
+        task_list.append({
+            'id': task.id,
+            'name': f"{task.tool_id} scan",
+            'type': task.tool_id,
+            'status': task.status,
+            'created_at': task.created_at.isoformat() if task.created_at else None,
+            'updated_at': task.updated_at.isoformat() if task.updated_at else None
+        })
+    
+    return jsonify({
+        'status': 'success',
+        'tasks': task_list
+    })
 
 @tasks_bp.route('/api/task/<int:task_id>/output')
 @login_required

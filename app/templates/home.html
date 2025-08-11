@@ -1,35 +1,144 @@
 {% extends "base.html" %}
 
-{% block title %}Home - My Scans{% endblock %}
+{% block title %}Home - S2E Dashboard{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
 {% endblock %}
 
-{% block sidebar %}
-    {% endblock %}
-
 {% block content %}
-<div class="main-pane-header">
-    <h1>{{ active_project.name if active_project else "All Projects" }}</h1>
-    <div class="search-sort">
-        <input type="search" id="project-search" placeholder="Search projects..." />
+<!-- Hero Section -->
+<section class="hero-section fade-in-up">
+    <h1>Welcome to S2E</h1>
+    <p>Professional Cybersecurity Scanning Orchestration Platform</p>
+    <div class="hero-actions">
+        <button class="btn btn-primary btn-lg" id="new-project-hero-btn">
+            <i class="fas fa-plus"></i>
+            Create New Project
+        </button>
+        <a href="{{ url_for('playbooks.list_playbooks') }}" class="btn btn-secondary btn-lg">
+            <i class="fas fa-play"></i>
+            View Playbooks
+        </a>
     </div>
-</div>
+</section>
 
-<div class="project-grid-header">
-    <div>Project Name</div>
-    <div>Targets</div>
-    <div>Tasks</div>
-    <div>Last Scan</div>
-    <div>Actions</div>
-</div>
+<!-- Stats Grid -->
+<section class="stats-grid stagger-animation">
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-folder"></i>
+        </div>
+        <div class="stat-number" id="total-projects">-</div>
+        <div class="stat-label">Total Projects</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-crosshairs"></i>
+        </div>
+        <div class="stat-number" id="total-targets">-</div>
+        <div class="stat-label">Active Targets</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-tasks"></i>
+        </div>
+        <div class="stat-number" id="total-tasks">-</div>
+        <div class="stat-label">Running Tasks</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-shield-alt"></i>
+        </div>
+        <div class="stat-number" id="completed-scans">-</div>
+        <div class="stat-label">Completed Scans</div>
+    </div>
+</section>
 
-<div class="project-grid" id="project-grid">
-    {# The project grid is now rendered by home.js #}
-</div>
+<!-- Quick Actions -->
+<section class="quick-actions">
+    <h2>Quick Actions</h2>
+    <div class="actions-grid">
+        <a href="#" class="action-card" id="quick-scan-btn">
+            <div class="action-icon">
+                <i class="fas fa-search"></i>
+            </div>
+            <div class="action-title">Quick Scan</div>
+            <div class="action-description">Run a quick network scan</div>
+        </a>
+        
+        <a href="{{ url_for('playbooks.list_playbooks') }}" class="action-card">
+            <div class="action-icon">
+                <i class="fas fa-playbook"></i>
+            </div>
+            <div class="action-title">Run Playbook</div>
+            <div class="action-description">Execute automated workflows</div>
+        </a>
+        
+        <a href="{{ url_for('tasks.list_tasks') }}" class="action-card">
+            <div class="action-icon">
+                <i class="fas fa-list"></i>
+            </div>
+            <div class="action-title">View Tasks</div>
+            <div class="action-description">Monitor active scans</div>
+        </a>
+        
+        <a href="{{ url_for('settings.settings_home') }}" class="action-card">
+            <div class="action-icon">
+                <i class="fas fa-cog"></i>
+            </div>
+            <div class="action-title">Settings</div>
+            <div class="action-description">Configure your environment</div>
+        </a>
+    </div>
+</section>
 
-<button class="fab" id="new-project-fab-main">+</button>
+<!-- Recent Activity -->
+<section class="recent-activity">
+    <h2>Recent Activity</h2>
+    <div class="activity-list" id="recent-activity-list">
+        <!-- Activity items will be populated by JavaScript -->
+        <div class="activity-item">
+            <div class="activity-icon">
+                <i class="fas fa-info-circle"></i>
+            </div>
+            <div class="activity-content">
+                <div class="activity-title">Loading recent activity...</div>
+                <div class="activity-time">Just now</div>
+            </div>
+            <div class="activity-status pending">Loading</div>
+        </div>
+    </div>
+</section>
+
+<!-- Projects Section -->
+<section class="projects-section">
+    <h2>Your Projects</h2>
+    <div class="projects-grid" id="projects-grid">
+        <!-- Projects will be populated by JavaScript -->
+    </div>
+    
+    <!-- Empty State -->
+    <div class="empty-state" id="empty-projects" style="display: none;">
+        <div class="empty-icon">
+            <i class="fas fa-folder-open"></i>
+        </div>
+        <h3>No Projects Yet</h3>
+        <p>Get started by creating your first cybersecurity project. You'll be able to add targets, configure scans, and run automated workflows.</p>
+        <button class="btn btn-primary btn-lg" id="empty-state-create-btn">
+            <i class="fas fa-plus"></i>
+            Create Your First Project
+        </button>
+    </div>
+</section>
+
+<!-- Floating Action Button -->
+<button class="fab" id="new-project-fab-main" aria-label="Create new project">
+    <i class="fas fa-plus"></i>
+</button>
 
 {% endblock %}
 
