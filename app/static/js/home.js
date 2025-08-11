@@ -452,9 +452,9 @@ document.addEventListener('DOMContentLoaded', function() {
         window.s2e.refreshProjectUI = function() {
             // Keep Home dashboard sections in sync
             loadDashboardData();
-            // Call original refresh to update sidebar and invoke renderProjectGrid
+            // Call original refresh with correct context to update sidebar and invoke renderProjectGrid
             if (originalRefresh) {
-                return originalRefresh();
+                return originalRefresh.call(window.s2e);
             }
         };
     }
