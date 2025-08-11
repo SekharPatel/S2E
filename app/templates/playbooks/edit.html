@@ -3,462 +3,115 @@
 {% block title %}Edit {{ playbook.name }} - S2E{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/playbooks.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/drawflow/drawflow.min.css') }}">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
-.playbook-form-container {
-    max-width: 800px;
-    margin: 0 auto;
-}
+    .playbook-editor-container {
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 120px); /* Adjust based on your header/footer height */
+    }
 
-.page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
-    border-bottom: 2px solid #2c3e50;
-}
+    .editor-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        background-color: #1a252f;
+        border-bottom: 1px solid #34495e;
+    }
 
-.page-header h1 {
-    color: #ffffff;
-    margin: 0;
-    font-size: 2rem;
-}
+    .editor-header h1 {
+        margin: 0;
+        font-size: 1.5rem;
+    }
 
-.btn {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 14px;
-    font-weight: 500;
-    transition: background-color 0.3s;
-}
+    .editor-body {
+        display: flex;
+        flex-grow: 1;
+    }
 
-.btn-secondary {
-    background-color: #95a5a6;
-    color: white;
-}
+    .nodes-palette {
+        width: 200px;
+        background-color: #2c3e50;
+        padding: 1rem;
+        border-right: 1px solid #34495e;
+        color: #ecf0f1;
+    }
 
-.btn-secondary:hover {
-    background-color: #7f8c8d;
-}
+    .nodes-palette h3 {
+        margin-top: 0;
+        border-bottom: 1px solid #3498db;
+        padding-bottom: 0.5rem;
+    }
 
-.btn-primary {
-    background-color: #3498db;
-    color: white;
-}
+    .palette-node {
+        background-color: #34495e;
+        padding: 0.5rem;
+        margin-bottom: 0.5rem;
+        border-radius: 4px;
+        cursor: grab;
+        text-align: center;
+    }
 
-.btn-primary:hover {
-    background-color: #2980b9;
-}
+    .workflow-canvas {
+        flex-grow: 1;
+        position: relative;
+    }
 
-.btn-success {
-    background-color: #27ae60;
-    color: white;
-}
+    #drawflow {
+        width: 100%;
+        height: 100%;
+    }
 
-.btn-success:hover {
-    background-color: #229954;
-}
-
-.btn-danger {
-    background-color: #e74c3c;
-    color: white;
-}
-
-.btn-danger:hover {
-    background-color: #c0392b;
-}
-
-.playbook-form {
-    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-    border-radius: 8px;
-    padding: 2rem;
-    border: 1px solid #34495e;
-}
-
-.form-section {
-    margin-bottom: 2rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 1px solid #34495e;
-}
-
-.form-section:last-child {
-    border-bottom: none;
-    margin-bottom: 0;
-}
-
-.section-title {
-    color: #3498db;
-    font-size: 1.3rem;
-    margin-bottom: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.form-group {
-    margin-bottom: 1rem;
-}
-
-.form-group label {
-    display: block;
-    color: #ffffff;
-    margin-bottom: 0.5rem;
-    font-weight: 500;
-}
-
-.form-control {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #34495e;
-    border-radius: 4px;
-    background-color: #1a252f;
-    color: #ffffff;
-    font-size: 14px;
-}
-
-.form-control:focus {
-    outline: none;
-    border-color: #3498db;
-    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
-}
-
-.form-control::placeholder {
-    color: #7f8c8d;
-}
-
-textarea.form-control {
-    resize: vertical;
-    min-height: 80px;
-}
-
-select.form-control {
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23ffffff"><path d="M7 10l5 5 5-5z"/></svg>');
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    background-size: 20px;
-    appearance: none;
-}
-
-.form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-}
-
-.rules-container {
-    margin-top: 1rem;
-}
-
-.rule-item {
-    background: #1a252f;
-    border: 1px solid #34495e;
-    border-radius: 4px;
-    padding: 1rem;
-    margin-bottom: 1rem;
-    position: relative;
-}
-
-.rule-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-}
-
-.rule-title {
-    color: #3498db;
-    font-weight: 600;
-    margin: 0;
-}
-
-.remove-rule-btn {
-    background: none;
-    border: none;
-    color: #e74c3c;
-    font-size: 18px;
-    cursor: pointer;
-    padding: 0;
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.remove-rule-btn:hover {
-    background-color: rgba(231, 76, 60, 0.1);
-    border-radius: 50%;
-}
-
-.add-rule-btn {
-    background-color: #27ae60;
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 14px;
-}
-
-.add-rule-btn:hover {
-    background-color: #229954;
-}
-
-.form-actions {
-    display: flex;
-    gap: 1rem;
-    justify-content: flex-end;
-    margin-top: 2rem;
-    padding-top: 1rem;
-    border-top: 1px solid #34495e;
-}
-
-.help-text {
-    font-size: 12px;
-    color: #7f8c8d;
-    margin-top: 0.25rem;
-    line-height: 1.3;
-}
-
-.playbook-meta {
-    background: #1a252f;
-    padding: 1rem;
-    border-radius: 4px;
-    margin-bottom: 1.5rem;
-    border-left: 4px solid #3498db;
-}
-
-.meta-info {
-    color: #bdc3c7;
-    font-size: 0.9rem;
-    margin-bottom: 0.5rem;
-}
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="playbook-form-container">
-    <div class="page-header">
-        <h1><i class="fas fa-edit"></i> Edit Playbook</h1>
-        <a href="{{ url_for('playbooks.list_playbooks') }}" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Back to Playbooks
-        </a>
-    </div>
-
-    <div class="playbook-meta">
-        <div class="meta-info">
-            <strong>Created:</strong> {{ playbook.created_at.strftime('%Y-%m-%d %H:%M') }}
-        </div>
-        <div class="meta-info">
-            <strong>Current Rules:</strong> {{ playbook.rules.count() }}
-        </div>
-        <div class="meta-info">
-            <strong>Linked Projects:</strong> {{ playbook.linked_projects|length }}
+<div class="playbook-editor-container">
+    <div class="editor-header">
+        <h1><i class="fas fa-edit"></i> Edit Playbook: {{ playbook.name }}</h1>
+        <div>
+            <a href="{{ url_for('playbooks.list_playbooks') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back</a>
+            <button id="save-button" class="btn btn-primary"><i class="fas fa-save"></i> Save Changes</button>
         </div>
     </div>
 
-    <form method="POST" class="playbook-form">
-        <!-- Basic Information -->
-        <div class="form-section">
-            <h2 class="section-title">
-                <i class="fas fa-info-circle"></i>
-                Basic Information
-            </h2>
-            
-            <div class="form-group">
-                <label for="name">Playbook Name *</label>
-                <input type="text" id="name" name="name" class="form-control" 
-                       value="{{ playbook.name }}" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="description">Description</label>
-                <textarea id="description" name="description" class="form-control" rows="3">{{ playbook.description or '' }}</textarea>
-            </div>
-        </div>
-
-        <!-- Trigger Configuration -->
-        <div class="form-section">
-            <h2 class="section-title">
-                <i class="fas fa-play"></i>
-                Trigger Configuration
-            </h2>
-            <p class="help-text">The trigger is the initial scan that starts this playbook. It will run against all targets in the project.</p>
-            
-            <div class="form-group">
-                <label for="trigger_name">Trigger Name *</label>
-                <input type="text" id="trigger_name" name="trigger_name" class="form-control" 
-                       value="{{ playbook.trigger_name }}" required>
-            </div>
-            
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="trigger_tool_id">Tool *</label>
-                    <select id="trigger_tool_id" name="trigger_tool_id" class="form-control" required>
-                        <option value="">Select a tool...</option>
-                        {% for tool_id, tool_config in tools.items() %}
-                        <option value="{{ tool_id }}" {% if tool_id == playbook.trigger_tool_id %}selected{% endif %}>
-                            {{ tool_config.name }} ({{ tool_id }})
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="trigger_options">Tool Options *</label>
-                    <input type="text" id="trigger_options" name="trigger_options" class="form-control" 
-                           value="{{ playbook.trigger_options }}" required>
-                    <div class="help-text">Command line options for the tool. Use {host} for target placeholder.</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Rules Configuration -->
-        <div class="form-section">
-            <h2 class="section-title">
-                <i class="fas fa-cogs"></i>
-                Rules Configuration
-            </h2>
-            <p class="help-text">Rules define what actions to take when specific services are discovered by the trigger scan.</p>
-            
-            <div class="rules-container" id="rulesContainer">
-                <!-- Existing rules will be loaded here -->
-            </div>
-            
-            <button type="button" class="add-rule-btn" onclick="addRule()">
-                <i class="fas fa-plus"></i>
-                Add Rule
-            </button>
-        </div>
-
-        <!-- Form Actions -->
-        <div class="form-actions">
-            <a href="{{ url_for('playbooks.list_playbooks') }}" class="btn btn-secondary">
-                <i class="fas fa-times"></i> Cancel
-            </a>
-            <button type="submit" class="btn btn-primary">
-                <i class="fas fa-save"></i> Save Changes
-            </button>
-        </div>
-    </form>
-</div>
-
-<!-- Rule Template (hidden) -->
-<div id="ruleTemplate" style="display: none;">
-    <div class="rule-item">
-        <div class="rule-header">
-            <h4 class="rule-title">Rule #{INDEX}</h4>
-            <button type="button" class="remove-rule-btn" onclick="removeRule(this)" title="Remove Rule">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        
+    <div class="form-section" style="padding: 1rem; background-color: #2c3e50;">
         <div class="form-group">
-            <label>Services (comma-separated) *</label>
-            <input type="text" name="rule_{INDEX}_services" class="form-control" 
-                   placeholder="e.g., http, https, http-proxy" required>
-            <div class="help-text">List of service names this rule applies to (separated by commas)</div>
+            <label for="name">Playbook Name *</label>
+            <input type="text" id="playbook-name" name="name" class="form-control" value="{{ playbook.name }}" required>
         </div>
-        
         <div class="form-group">
-            <label>Action Name *</label>
-            <input type="text" name="rule_{INDEX}_action_name" class="form-control" 
-                   placeholder="e.g., Web Directory Enumeration" required>
+            <label for="description">Description</label>
+            <textarea id="playbook-description" name="description" class="form-control" rows="2">{{ playbook.description or '' }}</textarea>
         </div>
-        
-        <div class="form-row">
-            <div class="form-group">
-                <label>Action Tool *</label>
-                <select name="rule_{INDEX}_action_tool" class="form-control" required>
-                    <option value="">Select a tool...</option>
-                    {% for tool_id, tool_config in tools.items() %}
-                    <option value="{{ tool_id }}">{{ tool_config.name }} ({{ tool_id }})</option>
-                    {% endfor %}
-                </select>
+    </div>
+
+    <div class="editor-body">
+        <div class="nodes-palette">
+            <h3>Available Tools</h3>
+            {% for tool_id, tool_config in tools.items() %}
+            <div class="palette-node" draggable="true" data-node-name="{{ tool_id }}">
+                <strong>{{ tool_config.name }}</strong>
             </div>
-            
-            <div class="form-group">
-                <label>Action Options *</label>
-                <input type="text" name="rule_{INDEX}_action_options" class="form-control" 
-                       placeholder="e.g., dir -w wordlist.txt -u {protocol}://{host}:{port}" required>
-                <div class="help-text">Use {host}, {port}, {protocol} as placeholders</div>
-            </div>
+            {% endfor %}
+        </div>
+        <div class="workflow-canvas">
+            <div id="drawflow"></div>
         </div>
     </div>
 </div>
 
-<!-- Existing Rules Data -->
-<script>
-const existingRules = {{ playbook.to_dict()['rules'] | tojson }};
-</script>
 {% endblock %}
 
 {% block extra_js %}
+<script src="{{ url_for('static', filename='js/drawflow/drawflow.min.js') }}"></script>
 <script>
-let ruleIndex = 0;
-
-function addRule(ruleData = null) {
-    ruleIndex++;
-    const template = document.getElementById('ruleTemplate').innerHTML;
-    let ruleHtml = template.replace(/{INDEX}/g, ruleIndex);
-    
-    const container = document.getElementById('rulesContainer');
-    const div = document.createElement('div');
-    div.innerHTML = ruleHtml;
-    const ruleElement = div.firstElementChild;
-    
-    // If we have rule data, populate it
-    if (ruleData) {
-        const servicesInput = ruleElement.querySelector(`[name="rule_${ruleIndex}_services"]`);
-        const actionNameInput = ruleElement.querySelector(`[name="rule_${ruleIndex}_action_name"]`);
-        const actionToolSelect = ruleElement.querySelector(`[name="rule_${ruleIndex}_action_tool"]`);
-        const actionOptionsInput = ruleElement.querySelector(`[name="rule_${ruleIndex}_action_options"]`);
-        
-        if (servicesInput) servicesInput.value = ruleData.on_service.join(', ');
-        if (actionNameInput) actionNameInput.value = ruleData.action.name;
-        if (actionToolSelect) actionToolSelect.value = ruleData.action.tool_id;
-        if (actionOptionsInput) actionOptionsInput.value = ruleData.action.options;
-    }
-    
-    container.appendChild(ruleElement);
-}
-
-function removeRule(button) {
-    const ruleItem = button.closest('.rule-item');
-    ruleItem.remove();
-    updateRuleNumbers();
-}
-
-function updateRuleNumbers() {
-    const rules = document.querySelectorAll('.rule-item');
-    rules.forEach((rule, index) => {
-        const title = rule.querySelector('.rule-title');
-        title.textContent = `Rule #${index + 1}`;
-    });
-}
-
-// Load existing rules when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    // Load existing rules
-    if (existingRules && existingRules.length > 0) {
-        existingRules.forEach(rule => {
-            addRule(rule);
-        });
-    } else {
-        // Add one empty rule if no existing rules
-        addRule();
-    }
-});
+    // Pass initial data to the workflow editor script
+    const playbookData = {{ playbook.to_dict() | tojson }};
+    const tools = {{ tools | tojson }};
 </script>
+<script src="{{ url_for('static', filename='js/workflow-editor.js') }}"></script>
 {% endblock %}

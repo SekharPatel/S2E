@@ -135,6 +135,9 @@ class Playbook(db.Model):
     
     # Foreign Key to associate playbook with the user who created it
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    # NEW: Field to store the workflow data as JSON
+    workflow_data = db.Column(db.Text, nullable=True)
     
     # Relationships
     rules = db.relationship('PlaybookRule', backref='playbook', lazy='dynamic', cascade="all, delete-orphan")
@@ -143,7 +146,7 @@ class Playbook(db.Model):
         return f'<Playbook {self.name}>'
 
     def to_dict(self):
-        """Convert playbook to dictionary format similar to the old JSON structure."""
+        """Convert playbook to dictionary format, including new workflow data."""
         return {
             'id': str(self.id),  # Keep as string for compatibility
             'name': self.name,
@@ -153,7 +156,8 @@ class Playbook(db.Model):
                 'tool_id': self.trigger_tool_id,
                 'options': self.trigger_options
             },
-            'rules': [rule.to_dict() for rule in self.rules.all()]
+            'rules': [rule.to_dict() for rule in self.rules.all()],
+            'workflow_data': self.workflow_data
         }
 
 

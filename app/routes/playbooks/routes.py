@@ -42,76 +42,43 @@ def new_playbook():
 def create_playbook():
     """Handle creation of a new playbook."""
     user = User.query.filter_by(username=session['username']).first_or_404()
-    
+    data = request.get_json()
+
     try:
-        # Get and validate basic playbook data
-        name = request.form.get('name', '').strip()
-        description = request.form.get('description', '').strip()
-        trigger_name = request.form.get('trigger_name', '').strip()
-        trigger_tool_id = request.form.get('trigger_tool_id', '').strip()
-        trigger_options = request.form.get('trigger_options', '').strip()
-        
-        if not all([name, trigger_name, trigger_tool_id, trigger_options]):
-            flash('All trigger fields are required.', 'error')
-            return redirect(url_for('playbooks.new_playbook'))
-        
+        name = data.get('name', '').strip()
+        description = data.get('description', '').strip()
+        workflow_data = data.get('workflow_data')
+
+        if not name:
+            return jsonify({'success': False, 'message': 'Playbook name is required.'}), 400
+
         # Sanitize inputs
-        name = sanitize_project_name(name)  # Reuse validation logic
+        name = sanitize_project_name(name)
         description = escape_html(description[:500])
-        trigger_name = escape_html(trigger_name[:128])
-        
+
         # Create the playbook
         new_playbook = Playbook(
             name=name,
             description=description,
-            trigger_name=trigger_name,
-            trigger_tool_id=trigger_tool_id,
-            trigger_options=trigger_options,
-            user_id=user.id
+            workflow_data=workflow_data,
+            user_id=user.id,
+            # Add dummy data for legacy fields
+            trigger_name="Workflow Trigger",
+            trigger_tool_id="n/a",
+            trigger_options=""
         )
         
         db.session.add(new_playbook)
-        db.session.flush()  # Get the ID for rules
-        
-        # Process rules (dynamic form fields)
-        rule_count = 0
-        for key, value in request.form.items():
-            if key.startswith('rule_') and key.endswith('_services'):
-                # Extract rule index
-                rule_index = key.split('_')[1]
-                
-                # Get rule data
-                services_str = value.strip()
-                action_name = request.form.get(f'rule_{rule_index}_action_name', '').strip()
-                action_tool_id = request.form.get(f'rule_{rule_index}_action_tool', '').strip()
-                action_options = request.form.get(f'rule_{rule_index}_action_options', '').strip()
-                
-                if services_str and action_name and action_tool_id and action_options:
-                    # Parse services (comma-separated)
-                    services_list = [s.strip() for s in services_str.split(',') if s.strip()]
-                    
-                    if services_list:
-                        new_rule = PlaybookRule(
-                            action_name=escape_html(action_name[:128]),
-                            action_tool_id=action_tool_id,
-                            action_options=action_options,
-                            playbook_id=new_playbook.id
-                        )
-                        new_rule.set_on_service_list(services_list)
-                        db.session.add(new_rule)
-                        rule_count += 1
-        
         db.session.commit()
-        flash(f'Playbook "{name}" created successfully with {rule_count} rules!', 'success')
-        return redirect(url_for('playbooks.list_playbooks'))
+
+        flash(f'Playbook "{name}" created successfully!', 'success')
+        return jsonify({'success': True, 'redirect': url_for('playbooks.list_playbooks')})
         
     except ValidationError as e:
-        flash(str(e), 'error')
-        return redirect(url_for('playbooks.new_playbook'))
+        return jsonify({'success': False, 'message': str(e)}), 400
     except Exception as e:
         db.session.rollback()
-        flash(f'Error creating playbook: {str(e)}', 'error')
-        return redirect(url_for('playbooks.new_playbook'))
+        return jsonify({'success': False, 'message': f'Error creating playbook: {str(e)}'}), 500
 
 
 @playbooks_bp.route('/playbooks/<int:playbook_id>/edit')
@@ -134,73 +101,35 @@ def update_playbook(playbook_id):
     """Handle updating an existing playbook."""
     user = User.query.filter_by(username=session['username']).first_or_404()
     playbook = user.playbooks.filter_by(id=playbook_id).first_or_404()
-    
+    data = request.get_json()
+
     try:
-        # Get and validate basic playbook data
-        name = request.form.get('name', '').strip()
-        description = request.form.get('description', '').strip()
-        trigger_name = request.form.get('trigger_name', '').strip()
-        trigger_tool_id = request.form.get('trigger_tool_id', '').strip()
-        trigger_options = request.form.get('trigger_options', '').strip()
-        
-        if not all([name, trigger_name, trigger_tool_id, trigger_options]):
-            flash('All trigger fields are required.', 'error')
-            return redirect(url_for('playbooks.edit_playbook', playbook_id=playbook_id))
-        
+        name = data.get('name', '').strip()
+        description = data.get('description', '').strip()
+        workflow_data = data.get('workflow_data')
+
+        if not name:
+            return jsonify({'success': False, 'message': 'Playbook name is required.'}), 400
+
         # Sanitize inputs
         name = sanitize_project_name(name)
         description = escape_html(description[:500])
-        trigger_name = escape_html(trigger_name[:128])
-        
+
         # Update playbook
         playbook.name = name
         playbook.description = description
-        playbook.trigger_name = trigger_name
-        playbook.trigger_tool_id = trigger_tool_id
-        playbook.trigger_options = trigger_options
-        
-        # Delete existing rules and create new ones
-        PlaybookRule.query.filter_by(playbook_id=playbook.id).delete()
-        
-        # Process rules (dynamic form fields)
-        rule_count = 0
-        for key, value in request.form.items():
-            if key.startswith('rule_') and key.endswith('_services'):
-                # Extract rule index
-                rule_index = key.split('_')[1]
-                
-                # Get rule data
-                services_str = value.strip()
-                action_name = request.form.get(f'rule_{rule_index}_action_name', '').strip()
-                action_tool_id = request.form.get(f'rule_{rule_index}_action_tool', '').strip()
-                action_options = request.form.get(f'rule_{rule_index}_action_options', '').strip()
-                
-                if services_str and action_name and action_tool_id and action_options:
-                    # Parse services (comma-separated)
-                    services_list = [s.strip() for s in services_str.split(',') if s.strip()]
-                    
-                    if services_list:
-                        new_rule = PlaybookRule(
-                            action_name=escape_html(action_name[:128]),
-                            action_tool_id=action_tool_id,
-                            action_options=action_options,
-                            playbook_id=playbook.id
-                        )
-                        new_rule.set_on_service_list(services_list)
-                        db.session.add(new_rule)
-                        rule_count += 1
+        playbook.workflow_data = workflow_data
         
         db.session.commit()
-        flash(f'Playbook "{name}" updated successfully with {rule_count} rules!', 'success')
-        return redirect(url_for('playbooks.list_playbooks'))
+
+        flash(f'Playbook "{name}" updated successfully!', 'success')
+        return jsonify({'success': True, 'redirect': url_for('playbooks.list_playbooks')})
         
     except ValidationError as e:
-        flash(str(e), 'error')
-        return redirect(url_for('playbooks.edit_playbook', playbook_id=playbook_id))
+        return jsonify({'success': False, 'message': str(e)}), 400
     except Exception as e:
         db.session.rollback()
-        flash(f'Error updating playbook: {str(e)}', 'error')
-        return redirect(url_for('playbooks.edit_playbook', playbook_id=playbook_id))
+        return jsonify({'success': False, 'message': f'Error updating playbook: {str(e)}'}), 500
 
 
 @playbooks_bp.route('/playbooks/<int:playbook_id>/delete', methods=['POST'])
