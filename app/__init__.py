@@ -81,32 +81,29 @@ def create_app():
 
         def drop_database():
             c_echo('Dropping existing database tables...', fg="yellow")
-            with app.app_context():
-                db.drop_all()
-                c_echo('✓ All tables dropped successfully', fg="green")
+            db.drop_all()
+            c_echo('✓ All tables dropped successfully', fg="green")
 
         def create_database():
             c_echo('Creating database tables...', fg="yellow")
-            with app.app_context():
-                db.create_all()
-                c_echo('✓ Database tables created successfully', fg="green")
+            db.create_all()
+            c_echo('✓ Database tables created successfully', fg="green")
 
         def create_initial_user(username, password):
             c_echo(f"Creating initial user '{username}'...", fg="yellow")
-            with app.app_context():
-                existing_user = User.query.filter_by(username=username).first()
-                if existing_user:
-                    c_echo(f"✓ User '{username}' already exists", fg="cyan")
-                    return existing_user
-                user = User()
-                user.username = username
-                user.set_password(password)
-                db.session.add(user)
-                db.session.commit()
-                c_echo(f"✓ User '{username}' created successfully", fg="green")
-                return user
+            existing_user = User.query.filter_by(username=username).first()
+            if existing_user:
+                c_echo(f"✓ User '{username}' already exists", fg="cyan")
+                return existing_user
+            user = User()
+            user.username = username
+            user.set_password(password)
+            db.session.add(user)
+            db.session.commit()
+            c_echo(f"✓ User '{username}' created successfully", fg="green")
+            return user
 
-        def seed_playbooks(user_id):
+        def seed_playbooks(user):
             c_echo('Seeding playbooks from playbooks.json...', fg="yellow")
             playbooks_path = os.path.join(app.config['CONFIG_DIR'], 'playbooks.json')
             try:
@@ -118,44 +115,43 @@ def create_app():
             except json.JSONDecodeError as e:
                 c_echo(f"Error parsing playbooks.json: {e}", fg="red", bold=True)
                 return
-            with app.app_context():
-                user = db.session.get(User, user_id)
-                playbooks_created = 0
-                rules_created = 0
-                for playbook_data in playbooks_data.get('PLAYBOOKS', []):
-                    existing_playbook = Playbook.query.filter_by(name=playbook_data['name']).first()
-                    if existing_playbook:
-                        c_echo(f"  - Playbook '{playbook_data['name']}' already exists, skipping...", fg="cyan")
-                        continue
-                    trigger = playbook_data['trigger']
-                    new_playbook = Playbook()
-                    new_playbook.name = playbook_data['name']
-                    new_playbook.description = playbook_data.get('description', '')
-                    new_playbook.trigger_name = trigger['name']
-                    new_playbook.trigger_tool_id = trigger.get('tool_id')
-                    new_playbook.trigger_options = trigger.get('options', {})
-                    new_playbook.user_id = user.id if user else None
-                    db.session.add(new_playbook)
-                    db.session.flush()
-                    for rule_data in playbook_data.get('rules', []):
-                        action = rule_data['action']
-                        new_rule = PlaybookRule()
-                        new_rule.action_name = action['name']
-                        new_rule.action_tool_id = action['tool_id']
-                        new_rule.action_options = action['options']
-                        new_rule.playbook_id = new_playbook.id
-                        new_rule.set_on_service_list(rule_data['on_service'])
-                        db.session.add(new_rule)
-                        rules_created += 1
-                    playbooks_created += 1
-                    c_echo(f"  ✓ Created playbook: {playbook_data['name']} with {len(playbook_data.get('rules', []))} rules", fg="green")
-                try:
-                    db.session.commit()
-                    c_echo(f"✓ Successfully created {playbooks_created} playbooks and {rules_created} rules!", fg="green", bold=True)
-                except Exception as e:
-                    db.session.rollback()
-                    c_echo(f"Error committing playbooks to database: {e}", fg="red", bold=True)
-                    raise click.ClickException(str(e))
+            
+            playbooks_created = 0
+            rules_created = 0
+            for playbook_data in playbooks_data.get('PLAYBOOKS', []):
+                existing_playbook = Playbook.query.filter_by(name=playbook_data['name']).first()
+                if existing_playbook:
+                    c_echo(f"  - Playbook '{playbook_data['name']}' already exists, skipping...", fg="cyan")
+                    continue
+                trigger = playbook_data['trigger']
+                new_playbook = Playbook()
+                new_playbook.name = playbook_data['name']
+                new_playbook.description = playbook_data.get('description', '')
+                new_playbook.trigger_name = trigger['name']
+                new_playbook.trigger_tool_id = trigger.get('tool_id')
+                new_playbook.trigger_options = trigger.get('options', {})
+                new_playbook.user_id = user.id if user else None
+                db.session.add(new_playbook)
+                db.session.flush()
+                for rule_data in playbook_data.get('rules', []):
+                    action = rule_data['action']
+                    new_rule = PlaybookRule()
+                    new_rule.action_name = action['name']
+                    new_rule.action_tool_id = action['tool_id']
+                    new_rule.action_options = action['options']
+                    new_rule.playbook_id = new_playbook.id
+                    new_rule.set_on_service_list(rule_data['on_service'])
+                    db.session.add(new_rule)
+                    rules_created += 1
+                playbooks_created += 1
+                c_echo(f"  ✓ Created playbook: {playbook_data['name']} with {len(playbook_data.get('rules', []))} rules", fg="green")
+            try:
+                db.session.commit()
+                c_echo(f"✓ Successfully created {playbooks_created} playbooks and {rules_created} rules!", fg="green", bold=True)
+            except Exception as e:
+                db.session.rollback()
+                c_echo(f"Error committing playbooks to database: {e}", fg="red", bold=True)
+                raise click.ClickException(str(e))
 
         # --- Main logic ---
         if not username:
@@ -170,24 +166,26 @@ def create_app():
                 c_echo('Error: Passwords do not match', fg="red", bold=True)
                 raise click.ClickException('Passwords do not match')
 
-        db_exists = check_database_exists()
-        if db_exists:
-            if force:
-                c_echo('Database exists. Force flag provided, recreating...', fg="yellow", bold=True)
-                drop_database()
-            else:
-                c_echo('Database already exists!', fg="red", bold=True)
-                if click.confirm(click.style('Do you want to recreate it? This will delete all existing data.', fg="yellow"), default=False):
+        with app.app_context():
+            db_exists = check_database_exists()
+            if db_exists:
+                if force:
+                    c_echo('Database exists. Force flag provided, recreating...', fg="yellow", bold=True)
                     drop_database()
                 else:
-                    c_echo('Database initialization cancelled.', fg="red", bold=True)
-                    return
-        create_database()
-        user = create_initial_user(username, password)
-        if not skip_playbooks:
-            seed_playbooks(user.id)
-        else:
-            c_echo('Skipping playbook seeding as requested.', fg="yellow")
+                    c_echo('Database already exists!', fg="red", bold=True)
+                    if click.confirm(click.style('Do you want to recreate it? This will delete all existing data.', fg="yellow"), default=False):
+                        drop_database()
+                    else:
+                        c_echo('Database initialization cancelled.', fg="red", bold=True)
+                        return
+            create_database()
+            user = create_initial_user(username, password)
+            if not skip_playbooks:
+                seed_playbooks(user)
+            else:
+                c_echo('Skipping playbook seeding as requested.', fg="yellow")
+        
         c_echo('\n=== Database Initialization Complete ===', fg="green", bold=True)
         c_echo('✓ Database initialized successfully', fg="green")
         c_echo(f'✓ Admin user created: {username}', fg="green")

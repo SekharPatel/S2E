@@ -31,14 +31,14 @@
                         <tbody>
                             {% for task in tasks %}
                             <tr class="task-row" data-task-id="{{ task.task_id }}" data-status="{{ task.status|lower }}">
-                                <td class="col-task-id"><code class="task-id-code">{{ task.task_id }}</code></td>
-                                <td class="col-tool">{{ task.tool_name }}</td>
-                                <td class="col-start-time">
+                                <td class="col-task-id" data-label="Task ID"><code class="task-id-code">{{ task.task_id }}</code></td>
+                                <td class="col-tool" data-label="Tool">{{ task.tool_name }}</td>
+                                <td class="col-start-time" data-label="Start Time">
                                     <span title="{{ task.start_time }}">
                                         {{ task.start_time.strftime('%Y-%m-%d %H:%M:%S') if task.start_time else 'N/A' }}
                                     </span>
                                 </td>
-                                <td class="col-status">
+                                <td class="col-status" data-label="Status">
                                     <span class="task-status-badge status-{{ task.status|lower }}">
                                         {% if task.status|lower == 'running' or task.status|lower == 'starting' %}
                                             <span class="custom-loader"></span>
@@ -57,7 +57,7 @@
                                         {% endif %}
                                     </span>
                                 </td>
-                                <td class="task-actions col-actions">
+                                <td class="task-actions col-actions" data-label="Actions">
                                     <button class="signin-button btn-small view-task-preview" data-task-id="{{ task.task_id }}">
                                         <i class="fas fa-eye me-1"></i>View
                                     </button>

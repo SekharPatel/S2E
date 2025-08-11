@@ -12,10 +12,10 @@ document.addEventListener('DOMContentLoaded', function () {
             projects.forEach(project => {
                 gridHtml += `
                     <div class="project-row" data-project-name="${project.name.toLowerCase()}" data-project-id="${project.id}">
-                        <div>${escapeHTML(project.name)}</div>
-                        <div>${project.targets_count}</div>
-                        <div>${project.tasks_count}</div>
-                        <div>N/A</div>
+                        <div data-label="Project Name">${escapeHTML(project.name)}</div>
+                        <div data-label="Targets">${project.targets_count}</div>
+                        <div data-label="Tasks">${project.tasks_count}</div>
+                        <div data-label="Last Scan">N/A</div>
                         <div class="project-actions">
                             <button class="run-btn" title="Run Default Playbook"><i class="fas fa-play"></i></button>
                             <button class="delete-btn" title="Delete Project"><i class="fas fa-trash"></i></button>

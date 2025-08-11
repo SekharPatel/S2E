@@ -155,4 +155,48 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
+
+    // --- Responsive Header & Sidebar Logic ---
+    const sidebar = document.getElementById('sidebar');
+    const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
+    const mobileMenuToggleBtn = document.getElementById('mobile-menu-toggle-btn');
+    const headerNav = document.getElementById('header-nav');
+    const pageContainer = document.getElementById('page-container');
+
+    function handleSidebarToggle() {
+        if (window.innerWidth <= 992) {
+            sidebar.classList.toggle('open');
+        } else {
+            sidebar.classList.toggle('collapsed');
+            pageContainer.classList.toggle('sidebar-collapsed');
+        }
+    }
+
+    if (sidebarToggleBtn && sidebar && pageContainer) {
+        sidebarToggleBtn.addEventListener('click', handleSidebarToggle);
+    }
+
+    if (mobileMenuToggleBtn && headerNav) {
+        mobileMenuToggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            headerNav.classList.toggle('is-open');
+        });
+    }
+
+    // --- Click outside handlers ---
+    document.addEventListener('click', function(event) {
+        // Close mobile nav
+        if (headerNav && headerNav.classList.contains('is-open')) {
+            if (!headerNav.contains(event.target) && !mobileMenuToggleBtn.contains(event.target)) {
+                headerNav.classList.remove('is-open');
+            }
+        }
+        
+        // Close sidebar on mobile
+        if (sidebar && sidebar.classList.contains('open')) {
+             if (!sidebar.contains(event.target) && !sidebarToggleBtn.contains(event.target)) {
+                sidebar.classList.remove('open');
+            }
+        }
+    });
 });

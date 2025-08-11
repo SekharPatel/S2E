@@ -386,3 +386,122 @@ body {
     justify-content: flex-end;
     gap: 1rem;
 }
+
+/* --- Responsive Design & Sidebar --- */
+
+.menu-button {
+    background: none;
+    border: none;
+    color: var(--text);
+    font-size: 20px;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+
+.menu-button:hover {
+    background-color: var(--border);
+}
+
+#mobile-menu-toggle-btn {
+    display: none; /* Hidden by default */
+}
+
+/* Collapsed sidebar styles */
+.sidebar.collapsed {
+    width: 80px;
+}
+
+.sidebar.collapsed .sidebar-header .btn span,
+.sidebar.collapsed .sidebar-title,
+.sidebar.collapsed .sidebar-nav-list span {
+    display: none;
+}
+
+.sidebar.collapsed .sidebar-header .btn {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    font-size: 1.2rem;
+}
+
+.sidebar.collapsed .sidebar-nav-list li a {
+    justify-content: center;
+}
+
+#page-container.sidebar-collapsed .main-pane {
+    /* Adjust main pane when sidebar is collapsed if needed */
+}
+
+
+@media (max-width: 992px) {
+    .sidebar {
+        position: fixed;
+        left: -260px;
+        top: 0;
+        height: 100%;
+        z-index: 1100;
+        transition: left 0.3s ease;
+    }
+
+    .sidebar.open {
+        left: 0;
+    }
+
+    .main-pane {
+        width: 100%;
+        margin-left: 0;
+    }
+}
+
+
+@media (max-width: 768px) {
+    .header {
+        padding: 0 16px;
+    }
+
+    .header-nav {
+        display: none;
+        position: absolute;
+        top: 60px;
+        left: 0;
+        right: 0;
+        background-color: var(--surface);
+        flex-direction: column;
+        padding: 10px;
+        border-bottom: 1px solid var(--border);
+        z-index: 99;
+    }
+
+    .header-nav.is-open {
+        display: flex;
+    }
+
+    .header-tab {
+        padding: 12px 16px;
+    }
+
+    #mobile-menu-toggle-btn {
+        display: flex;
+    }
+    
+    .user-info .username {
+        display: none;
+    }
+
+    .header-left, .header-right {
+        gap: 12px;
+    }
+}
+
+@media (max-width: 600px) {
+    .modal {
+        padding: 16px;
+        margin: 0 16px;
+        max-width: calc(100% - 32px);
+    }
+}

@@ -12,16 +12,19 @@
 <body>
     <header class="header">
         <div class="header-left">
+            <button class="menu-button" id="sidebar-toggle-btn"><i class="fas fa-bars"></i></button>
             <div class="logo">S2E</div>
-            {% if g.user and g.user.is_authenticated %}
-            <nav class="header-nav">
-                <a href="{{ url_for('home.home') }}" class="header-tab {% if request.endpoint == 'home.home' %}active{% endif %}">Home</a>
-                <a href="{{ url_for('playbooks.list_playbooks') }}" class="header-tab {% if request.endpoint.startswith('playbooks.') %}active{% endif %}">Playbooks</a>
-                <a href="{{ url_for('tasks.list_tasks') }}" class="header-tab {% if request.endpoint.startswith('tasks.') %}active{% endif %}">Tasks</a>
-                <a href="{{ url_for('settings.settings_home') }}" class="header-tab {% if request.endpoint.startswith('settings.') %}active{% endif %}">Settings</a>
-            </nav>
-            {% endif %}
         </div>
+        
+        {% if g.user and g.user.is_authenticated %}
+        <nav class="header-nav" id="header-nav">
+            <a href="{{ url_for('home.home') }}" class="header-tab {% if request.endpoint == 'home.home' %}active{% endif %}">Home</a>
+            <a href="{{ url_for('playbooks.list_playbooks') }}" class="header-tab {% if request.endpoint.startswith('playbooks.') %}active{% endif %}">Playbooks</a>
+            <a href="{{ url_for('tasks.list_tasks') }}" class="header-tab {% if request.endpoint.startswith('tasks.') %}active{% endif %}">Tasks</a>
+            <a href="{{ url_for('settings.settings_home') }}" class="header-tab {% if request.endpoint.startswith('settings.') %}active{% endif %}">Settings</a>
+        </nav>
+        {% endif %}
+
         <div class="header-right">
             {% if g.user and g.user.is_authenticated %}
             <div class="user-info">
@@ -30,15 +33,16 @@
                     <i class="fas fa-sign-out-alt"></i>
                 </a>
             </div>
+            <button class="menu-button" id="mobile-menu-toggle-btn"><i class="fas fa-ellipsis-v"></i></button>
             {% endif %}
         </div>
     </header>
 
-    <div class="page-container">
+    <div class="page-container" id="page-container">
         {% if g.user and g.user.is_authenticated %}
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <button class="btn btn-primary" id="new-project-sidebar-btn"><i class="fas fa-plus"></i> New Project</button>
+                <button class="btn btn-primary" id="new-project-sidebar-btn"><i class="fas fa-plus"></i> <span>New Project</span></button>
             </div>
             <h2 class="sidebar-title">Projects</h2>
             <ul class="sidebar-nav-list" id="project-list-container">

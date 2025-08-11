@@ -61,3 +61,45 @@
     background-color: var(--danger);
     border-color: var(--danger);
 }
+
+@media (max-width: 768px) {
+    .policy-table-header {
+        display: none;
+    }
+
+    .policy-row {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        padding: 16px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        margin-bottom: 16px;
+    }
+
+    .policy-row > div {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 4px 0;
+    }
+
+    .policy-row > div::before {
+        content: attr(data-label);
+        font-weight: bold;
+        color: var(--text-muted);
+    }
+
+    .policy-actions {
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 10px;
+    }
+
+    .policy-actions::before {
+        display: none;
+    }
+
+    .policy-actions form {
+        display: inline-block;
+    }
+}

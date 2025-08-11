@@ -22,11 +22,11 @@
 <div class="policy-table">
     {% for policy in user_playbooks + system_playbooks %}
     <div class="policy-row">
-        <div>{{ policy.name }}</div>
-        <div>{{ policy.trigger_tool_id }}</div>
-        <div>{{ policy.rules.count() }}</div>
-        <div>{{ policy.owner.username }}</div>
-        <div class="policy-actions">
+        <div data-label="Policy Name">{{ policy.name }}</div>
+        <div data-label="Trigger Tool">{{ policy.trigger_tool_id }}</div>
+        <div data-label="Rules">{{ policy.rules.count() }}</div>
+        <div data-label="Owner">{{ policy.owner.username }}</div>
+        <div class="policy-actions" data-label="Actions">
             <a href="{{ url_for('playbooks.edit_playbook', playbook_id=policy.id) }}" class="edit-btn" title="Edit Policy"><i class="fas fa-edit"></i></a>
             <form action="{{ url_for('playbooks.clone_playbook', playbook_id=policy.id) }}" method="POST" style="display: inline;">
                  <button type="submit" class="clone-btn" title="Clone Policy"><i class="fas fa-clone"></i></button>

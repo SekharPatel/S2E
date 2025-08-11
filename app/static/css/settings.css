@@ -167,3 +167,44 @@
     cursor: pointer;
     font-size: 1rem;
 }
+
+@media (max-width: 768px) {
+    .settings-container {
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    .settings-sidebar {
+        padding-right: 0;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 16px;
+    }
+
+    .settings-sidebar nav ul {
+        display: flex;
+        gap: 10px;
+        overflow-x: auto;
+    }
+
+    .settings-sidebar nav a {
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .danger-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .playbook-manager {
+        grid-template-columns: 1fr;
+    }
+}
